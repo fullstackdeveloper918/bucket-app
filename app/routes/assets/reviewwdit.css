@@ -1,0 +1,53 @@
+.icon_child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 20px;
+}
+.icon_child {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    align-self: center;
+    padding: 10px ;
+}
+.icon_child.Click_rate {
+    padding: 10px;
+}
+.icon_child.Click_rate div p , .icon_child.Click_rate div span {
+    padding: 0px 1.5rem;
+}
+.icon_feature {
+    background: #e5f7ed;
+    padding: 15px;
+    border-radius: 100%;
+}
+
+.icon_feature img {height: 30px;width: 30px;}
+  
+  
+.Polaris-Tabs__Tab--active{
+    background: linear-gradient(to left, #005BEA,#00C6FB) !important;
+
+  }
+  .Polaris-Tabs__TabContainer .Polaris-Tabs__Tab--active{
+    background: linear-gradient(to left, #005BEA,#00C6FB) !important;
+  }
+  .product_infor {
+    display: flex;
+    align-items: center;
+}
+
+.product_infor h3 {
+    padding-left: 2rem;
+}
+table.table_rating {
+    margin-top: 1rem;
+}
+table.table_rating tr th {
+    padding: 0px 2rem;
+}
+table.table_rating td {
+    padding: 0 1rem;
+}

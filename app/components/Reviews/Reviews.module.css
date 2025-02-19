@@ -1,0 +1,863 @@
+.containerDiv {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0px auto;
+  padding: 0px 30px;
+}
+
+.upper_box .PolarisBox {
+  background: #fff;
+  box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
+  border-radius: 36px;
+  min-height: 131px;
+  display: flex;
+  align-items: center;
+  padding: 25px 30px;
+}
+.inlineStack {
+  display: flex;
+  gap: 20px;
+  align-items: end;
+}
+.upper_box .Polaris-ShadowBevel {
+  border: 0px;
+  background: transparent !important;
+  box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
+}
+
+.upper_box .Polaris-ShadowBevel::before {
+  display: none;
+}
+
+.upper_box {
+  background: transparent !important;
+}
+
+.inline_stack > .Polaris-InlineStack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+.upper_box .Polaris-InlineStack {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: end;
+}
+.upper_box .card_img {
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #00ac4f1a;
+  border-radius: 90px;
+}
+.upper_box img {
+  object-fit: contain;
+}
+
+.upper_box .ContentWraper h6 {
+  font-family: Poppins;
+  font-size: 16.28px;
+  font-weight: 400;
+  line-height: 24.42px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: rgba(172, 172, 172, 1);
+  margin: 0px 0px 7px;
+}
+.inline_stackwraper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.upper_box .ContentWraper h3 {
+  font-family: Poppins;
+  font-size: 37.22px;
+  font-weight: 600;
+  line-height: 37.22px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+}
+
+.containerDiv .Polaris-Page {
+  max-width: 1134px !important;
+  width: 100%;
+}
+
+.checked_btn {
+  margin: 40px 0px 30px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.checked_btn .Polaris-Layout__Section {
+  margin-top: 0px;
+}
+
+.checked_btn .btn_one {
+  cursor: pointer;
+  padding: 10px 30px;
+  border-radius: 25px;
+  border: 1px solid rgba(226, 226, 226, 1) !important;
+  background: transparent;
+  font-family: Poppins;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 29.66px;
+  text-align: center;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #7b7b7b;
+  transition: 0.5s all;
+}
+.checked_btn button:hover,
+.checked_btn .btn_one.active {
+  color: #fff;
+  background: linear-gradient(
+    to left,
+    rgba(0, 91, 234, 1),
+    rgba(0, 198, 251, 1)
+  );
+}
+.table_content {
+  width: 100%;
+  box-shadow: 0px 13.8px 82.79px 0px #e2ecf980;
+  padding: 50px 20px;
+  background: #fff;
+  border-radius: 41.39px;
+}
+
+.table_content {
+  width: 100%;
+}
+.table_content .Polaris-Layout__Section .Polaris-LegacyCard::before {
+  display: none;
+}
+.search_select input[type="text"] {
+  background: #f9fbff;
+  border: 0px;
+  min-height: 52px;
+  max-width: 419px;
+  width: 100%;
+  border-radius: 13.8px;
+  padding: 10px 15px 10px 47px;
+  font-family: Poppins;
+  font-size: 16.56px;
+}
+
+.search_select input[type="text"]::placeholder {
+  font-family: Poppins;
+  font-size: 16.56px;
+  font-weight: 400;
+  line-height: 24.84px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #b5b7c0;
+}
+.search_images {
+  position: relative;
+  width: 100%;
+}
+.search_images img {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.search_select {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 30px 30px;
+  gap: 20px;
+}
+.search_select input[type="text"]:focus-visible {
+  outline: 0px;
+  offset: none;
+}
+.search_select .selectDiv {
+  background: #f9fbff;
+  border: 0px;
+  max-width: 220.49px;
+  width: 100%;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #3d3c42;
+  padding: 10px 14px;
+}
+
+.search_select .selectDiv label {
+  font-family: Poppins;
+  font-size: 16.56px;
+  font-weight: 400;
+  line-height: 24.84px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+
+  color: rgba(126, 126, 126, 1);
+}
+.search_select .selectDiv select {
+  border: 0;
+  font-weight: 600;
+  font-size: 16.56px;
+  padding: 0 10px 0 0;
+  font-family: Poppins;
+  line-height: 24.84px;
+  letter-spacing: -0.01em;
+}
+.search_select .selectDiv select:focus-visible {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+.tableWarpper table {
+  width: 100%;
+  padding: 0px 30px;
+}
+.tableWarpper table thead {
+  border-bottom: 1.38px solid #eeeeee !important;
+}
+.tableWarpper table th {
+  font-family: Poppins;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28.98px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #c3c3c3;
+  border-bottom: 1.38px solid #eeeeee !important;
+  padding: 10px 0px;
+  text-align: center;
+}
+.tableWarpper table tr > td:first-child img {
+  border-radius: 15px;
+}
+.tableWarpper table tr td {
+  border-bottom: 1.38px solid #eeeeee !important;
+  font-family: Poppins;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28.98px;
+  letter-spacing: -0.01em;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #292d32;
+  padding: 10px 0px;
+  text-align: center;
+
+}
+.ImportBtnwraper, .editbuttons{
+  text-align: right;
+  }
+.myButton{
+  color: red;
+}
+ 
+
+.tableWarpper table tr td button {
+  font-family: Poppins;
+  font-size: 19.32px;
+  font-weight: 500;
+  line-height: 28.98px;
+  letter-spacing: -0.5877550840377808px;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #202224;
+  background: #4646461a;
+  border: 0px;
+  min-height: 45px;
+  max-width: 135px;
+  min-width: 80px;
+  width: 100%;
+  text-align: center;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.tableWarpper table tr td button.importBtn {
+  background: linear-gradient(
+    85.59deg,
+    rgba(0, 198, 251, 0.1) 0.01%,
+    rgba(0, 91, 234, 0.1) 102.97%
+  );
+}
+
+.btn_Back {
+  background: #fff;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  box-shadow: 3px 3px 35px rgba(0, 0, 0, 0.05);
+  border-radius: 12.25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.btn_Back img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.butttonsTab{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+} 
+.arrowActive svg path{
+fill:#00AC4F;
+}
+.InactiveButton .arrowActive svg path{
+  fill:#525252; 
+}
+.sortBy .arrowActive svg path{
+  fill:#3D3C42; 
+}
+.butttonsTab span, .selectDropdown li{
+  font-family: Poppins;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 26.98px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+}
+.sortBy .butttonsTab span, .sortBy .selectDropdown li{
+  font-size: 16px;
+}
+.selectDropdown{
+  position: absolute;
+  padding: 15.52px 18px;
+  gap: 15px;
+  border-radius: 12px;
+  color: rgba(0, 172, 79, 1);
+  font-family: Poppins;
+  font-size: 19.32px;
+  font-weight: 500;
+  line-height: 28.98px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  top: calc(100% - 38%);
+  background: #d8eae0;
+}
+.selectDropdown li{
+  list-style: none;
+  color: #000;
+}
+.flexWrapper {
+  display: flex;
+  justify-content: space-between;
+  margin: 30px 0;
+}
+.headingFlex {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+.headingFlex h2 {
+  font-family: Poppins;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 40.47px;
+  letter-spacing: -0.14398494362831116px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+}
+.checkbtnwrapper{
+  gap: 15px;
+  display: flex;
+  }
+.headingFlex h2 {
+  font-family: Poppins;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 40.47px;
+  letter-spacing: -0.14398494362831116px;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+}
+
+.activeButton {
+  border: 0;
+  height: 51px;
+  padding: 5.52px 40px;
+  gap: 8px;
+  border-radius: 12px;
+  background-color: rgba(0, 172, 79, 0.1);
+  color: rgba(0, 172, 79, 1);
+  font-family: Poppins;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 28.98px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+.InactiveButton, .InactiveButton .selectDropdown{
+  background: #5252521A;
+  color: #525252;
+}
+.sortBy, .sortBy .selectDropdown{
+  background: #F9FBFF;
+  color: #7E7E7E;
+  width: 100%;
+  max-width:200px;
+}
+.sortBy .butttonsTab{
+  justify-content: space-between;
+  width: 100%;
+}
+.sortBy b {
+color: #3D3C42;
+}
+.sortBy .selectDropdown{
+  align-items: flex-start;
+}
+/* General styles for pagination container */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  gap: 15px;
+}
+
+/* Style each pagination item */
+.pagination a {
+  text-decoration: none;
+  padding: 8px 12px;
+  font-size: #404b52;
+  color: #404b52;
+  background-color: #f5f5f5;
+  border: 1px solid #eeeeee;
+  border-radius: 5px;
+  font-family: Poppins;
+  font-size: 16.56px;
+  font-weight: 500;
+  line-height: 16.56px;
+  letter-spacing: -0.01em;
+}
+
+/* Hover and active state */
+.pagination a:hover,
+.pagination a.active {
+  background: linear-gradient(222.51deg, #005bea -0.04%, #00c6fb 101.42%);
+  color: white;
+}
+
+a.prev.dot {
+  background-color: transparent;
+  border: 0;
+}
+
+.customer_review {
+  font-family: Nunito Sans;
+  font-size: 15.49px;
+  font-weight: 500;
+  line-height: 27.53px;
+  text-align: center;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  text-align: center;
+}
+
+.paginationFlex {
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 30px;
+  align-items: center;
+  margin-top: 40px;
+}
+
+.paginationFlex p {
+  font-family: Poppins;
+  font-size: 19.32px;
+  font-weight: 500;
+  line-height: 28.98px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  color: #b5b7c0;
+  margin: 0;
+}
+
+.showMore{
+  font-family: Nunito Sans;
+font-size: 10.3px;
+font-weight: 400;
+line-height: 13.73px;
+text-align: left;
+text-decoration-line: underline;
+text-decoration-style: solid;
+text-decoration-skip-ink: none;
+color: rgb(170, 170, 170);
+}
+.btnLivePreview button{
+  font-family: Poppins;
+  font-size: 15.93px;
+  font-weight: 400;
+  line-height: 23.89px;
+  text-align: center;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  border: 1px solid #CECECE;
+  border-radius: 20.16px;
+  padding: 7px 21px;
+  background-color: transparent;
+  color: #484848;  
+}
+.btnLivePreview{
+  text-align: center;
+}
+
+
+
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 65px;
+  height: 35px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+  border-radius: 15px;
+}
+
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 25px;
+  width: 25px;
+  left: 7px;
+  bottom: 5px;
+  background-color: white;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+  border-radius: 10px;
+}
+
+input:checked + .slider {
+  background-color: #000;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #000;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+.editbuttons {
+  display: flex;
+  justify-content: end;
+}
+.ImportBtnwraper{
+  text-align: right;
+}
+/* Rounded sliders */
+.slider.round {
+  border-radius: 24px;
+}
+.tableWarpper .deletedBtn {
+  background: #f2474733;
+  max-width: 55px;
+  min-width: 55px;
+  width: 100%;
+  min-height: 35px;
+  border-radius: 10px;
+  font-family: Poppins;
+  font-weight: 500;
+  line-height: 30.57px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  color: #f24747;
+  border: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  cursor: pointer;
+}
+.buttonFlexer{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gradientText{
+  background: linear-gradient(83.47deg, #01c2fb 51.33%, #015ceb 104.56%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.SweetenBtn .activebtn{
+  background-image: linear-gradient(83deg, #00c6fb 0%, #005bea 100%);
+  background-origin: border-box;
+  box-shadow: inset 0 100vw white;
+  border: 2px solid transparent;
+  background-clip: border-box;
+  border-radius: 14px;
+  padding: 2px;
+  color: #fff;
+}
+.activebtn span{
+  position: relative;
+  z-index: 99999;
+  color: #000;
+}
+
+
+@media (max-width: 1440px) {
+  .upper_box .card_img {
+    width: 67px;
+    height: 67px;
+    min-width: 67px;
+    min-height: 67px;
+  }
+  .activeButton, .btnFlexWrapper .btn_one {
+    height: 40px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 28.98px;
+    padding: 10px 20px;
+  }
+  .headingWrapper h4 {
+    font-size: 22px;
+    line-height: 34px;
+}
+  .activeButton.sortBy{
+    width: 100%;
+    max-width: 188px;
+  }
+  .select_box {
+    background-size: 14px;
+}
+  .butttonsTab span, .selectDropdown li {
+    font-size: 13px;
+}
+  .containerDiv {
+    max-width: 980px;
+    width: 100%;
+  }
+  .upper_box .ContentWraper h3 {
+    font-size: 26px;
+    line-height: 26px;
+  }
+  .requestReview h3 {
+    font-size: 22px;
+    line-height: 34px;
+  }
+  .requestReview p.paragraph_div {
+    font-size: 14px;
+    line-height: 23.15px;
+    max-width: 29rem;
+  }
+  .timing_after > div label {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 16px;
+  }
+  .timing_after > div .inputTiming input {
+    box-shadow: 6px 6px 47.8px 0px #00000026;
+    background: #f9fbff;
+    border: 0px;
+    min-height: 58px;
+    max-width: 100%;
+    width: 100%;
+    border-radius: 19px;
+    padding: 10px 24px;
+    font-family: Poppins;
+    font-size: 14.56px;
+  }
+  .timing_after > div .inputTiming input::placeholder{
+    color: #888888 !important;
+  }
+  .active_tabs button.active {
+    border-radius: 20px;
+  }
+  .active_tabs button {
+    font-size: 16px;
+    line-height: 28.98px;
+    min-height: 58px;
+  }
+  .active_tabs {
+    border-radius: 19px;
+  }
+  .h4_content {
+    font-size: 24px;
+    line-height: 29px;
+  }
+  .input_labelCustomize label {
+    font-size: 16px;
+    line-height: 16px;
+  }
+  .input_labelCustomize input,
+  .input_labelCustomize textarea {
+    min-height: 58px;
+    border-radius: 10px;
+    padding: 15px 24px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 22px;
+  }
+  .modal_content .Backbtn,
+  .modal_content .NextBtn {
+    max-width: 100%;
+    font-size: 13px;
+    min-height: 40px;
+  }
+
+  .Backbtn,
+  .NextBtn {
+    max-width: 100%;
+    font-size: 13px;
+    min-height: 40px;
+    border-radius: 8px;
+  }
+  .SweetenBtn button {
+    height: 52px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 23.98px;
+}
+.SweetenBtn.activebtn::after {
+  border-radius: 10px;
+}
+.bundle_product {
+  min-height: 48px;
+  border-radius: 10px;
+}
+.timing_after .bundle_product label {
+  font-size: 16px;
+}
+  .input_labelCustomize p,
+  .input_labelContent {
+    font-size: 14px;
+    line-height: 24px;
+  }
+  .input_labelCustomize textarea {
+    min-height: 159px !important;
+  }
+  .product_title p {
+    font-size: 14px;
+    line-height: 24px;
+  }
+  .product_title span {
+    font-size: 13px;
+    line-height: 22px;
+  }
+  .starIcon img {
+    width: 20px;
+    height: 20px;
+  }
+  .reviewAdd span.rating_content {
+    font-size: 13.08px;
+    line-height: 22px;
+  }
+  .reviewAdd input {
+    width: 16px;
+    height: 16px;
+  }
+  .starIcon {
+    min-width: 101px;
+  }
+  .product_title img {
+    width: 60px;
+    height: 60px;
+  }
+  .add_richtext textarea,
+  .add_richtext textarea::placeholder {
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .add_richtext textarea {
+    min-height: 120px;
+    padding: 20px;
+  }
+  .submit_btn {
+    min-height: 58px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 22px;
+    border-radius: 15px;
+  }
+  .receivedEmail {
+    font-size: 13.08px;
+    line-height: 20.12px;
+  }
+  .tableWarpper table tr td {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 18px;
+  }
+  .tableWarpper table tr td button {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 14px;
+  }
+  .headingFlex9 h2 {
+    font-size: 30.32px;
+  }
+}
+/* Hide pagination links if there are too many pages */
+@media (max-width: 1280px) {
+  .headingFlex h2 {
+    font-size: 28px;
+    line-height: 40.47px;
+  }
+}
+/* Hide pagination links if there are too many pages */
+@media (max-width: 600px) {
+  .pagination a {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}

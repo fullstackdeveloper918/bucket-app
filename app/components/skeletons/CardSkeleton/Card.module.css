@@ -1,0 +1,60 @@
+.card {
+    height: 147px;
+    width: 370px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 15px 25px rgba(255, 255, 255, 0.2);
+    padding: 20px 30px;
+  }
+  
+  .profile_thumb {
+    position: relative;
+    background: #e5e5e5;
+    width: 97px;
+    height: 97px;
+    border-radius: 50%;
+    float: left;
+  }
+  
+  .post_title {
+    background: #e5e5e5;
+    width: 190px;
+    height: 30px;
+    float: right;
+    border-radius: 8px;
+    margin-right: 5px;
+    margin-top: 5px;
+  }
+  
+  .paragraph {
+    border-radius: 8px;
+    background: #e5e5e5;
+    margin-top: 15px;
+    float: right;
+    width: 195px;
+    height: 55px;
+  }
+  
+  .card {
+    border-radius: 36px; 
+  }
+  .card * {
+    background: linear-gradient(
+      120deg,
+      #e5e5e5 30%,
+      #f0f0f0 38%,
+      #f0f0f0 40%,
+      #e5e5e5 48%
+    );
+    background-size: 200% 100%;
+    background-position: 100% 0;
+    box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
+    animation: run 2s infinite;
+  }
+  
+  @keyframes run {
+    100% {
+      background-position: -100% 0;
+    }
+  }
+  

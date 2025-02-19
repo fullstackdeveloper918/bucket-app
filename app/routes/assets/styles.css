@@ -1,0 +1,28 @@
+.imageGridWrapper {
+    display: flex;
+    overflow-x: auto;  /* Enables horizontal scrolling */
+    gap: 10px; /* Space between images */
+    padding: 10px 0; /* Optional: Add padding for spacing */
+  }
+  
+  .imageBox {
+    flex-shrink: 0; /* Prevents images from shrinking */
+    width: 150px;  /* Set a fixed width for each image */
+    height: 150px; /* Set a fixed height for each image */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image fits the box */
+  }
+  .Polaris-Tabs__Tab--active{
+    background: linear-gradient(to right, #005BEA,#00C6FB) !important;
+
+  }
+  .Polaris-Tabs__TabContainer .Polaris-Tabs__Tab--active{
+    background: linear-gradient(to right, #005BEA,#00C6FB) !important;
+  }

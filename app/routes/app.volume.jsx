@@ -1,0 +1,2097 @@
+import axios from "axios";
+import { Text } from "@shopify/polaris";
+import db from "../db.server";
+import { TitleBar } from "@shopify/app-bridge-react";
+import React, { useEffect, useState } from "react";
+import preview_mockup from "../routes/assets/preview_mockup.svg";
+import deletedIcon from "../routes/assets/deleted.svg";
+import DorpDownIcon from "../routes/assets/dropDown.svg";
+import Productpreview from "../routes/assets/product_sample.png";
+import dropdown from "../routes/assets/drop_downImg.svg";
+import downArrow from "../routes/assets/drop_downImg.svg";
+import styles from "../styles/main.module.css";
+import offerIcon from "../../app/routes/assets/offerIcon.svg";
+import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
+import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
+import editIcon from "../../app/routes/assets/edit_icon.svg";
+import copy_icon from "../../app/routes/assets/cpyIcon.png";
+import { authenticate } from "../shopify.server";
+import {
+  Form,
+  json,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "@remix-run/react";
+import { getAllBundle } from "../api/volume.server";
+import { Toaster, toast as notify } from "sonner";
+import DeletePopup from "../components/DeletePopup/Deletepopup";
+
+export async function loader({ request }) {
+  try {
+    const { admin, session } = await authenticate.admin(request);
+    const { shop } = session;
+
+    // Perform Promise.all and wait for both responses
+    const [graphqlResponse, totalBundleResponse] = await Promise.all([
+      admin.graphql(`
+        {
+          products(first: 50) {
+            edges {
+              node {
+                id
+                title
+                variants(first: 10) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price
+                      sku
+                      inventoryQuantity
+                      image {
+                        src
+                        altText
+                      }
+                    }
+                  }
+                }
+                images(first: 5) {
+                  edges {
+                    node {
+                      src
+                      altText
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `),
+      getAllBundle(shop),
+    ]);
+
+    const parsedGraphqlResponse = await graphqlResponse.json();
+    const products = parsedGraphqlResponse?.data?.products?.edges || [];
+
+    const totalBundle = totalBundleResponse?.data || [];
+    return json({ products, totalBundle });
+  } catch (error) {
+    console.error(error);
+    return json(
+      { message: "Error occurred while fetching data", error: error.message },
+      { status: 500 },
+    );
+  }
+}
+
+export async function action({ request }) {
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (request.method === "POST") {
+    const bundle_id = formData.get("bundle_id");
+    const bundle_title = formData.get("bundle_title");
+    const discount_method = formData.get("discount_method");
+    const tier = formData.get("tier");
+    const [tierData] = JSON.parse(tier);
+
+    try {
+      const existingBundle = await db.volumeDiscount.findUnique({
+        where: {
+          id: parseInt(bundle_id),
+        },
+      });
+      if (existingBundle) {
+        let discount_id, discount_info, data, config;
+        if (discount_method === "Percentage") {
+          data = JSON.stringify({
+            query:
+              "mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) { discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) { automaticDiscountNode { id automaticDiscount { ... on DiscountAutomaticBasic { title startsAt combinesWith { productDiscounts shippingDiscounts orderDiscounts } minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } } customerGets { value { ... on DiscountPercentage { percentage } } items { ... on AllDiscountItems { allItems } } } } } } userErrors { field code message } } }",
+            variables: {
+              automaticBasicDiscount: {
+                title: bundle_title,
+                startsAt: "2025-01-07T01:28:55-05:00",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: tierData?.quantity,
+                  },
+                },
+                customerGets: {
+                  value: {
+                    percentage: JSON.parse(tierData?.discount) / 100,
+                  },
+                  items: {
+                    all: true,
+                  },
+                },
+                combinesWith: {
+                  productDiscounts: true,
+                  shippingDiscounts: false,
+                  orderDiscounts: false,
+                },
+              },
+            },
+          });
+        } else if (discount_method === "Fixed Amount") {
+          data = JSON.stringify({
+            query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+              discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
+                automaticDiscountNode {
+                  id
+                  automaticDiscount {
+                    ... on DiscountAutomaticBasic {
+                      title
+                      startsAt
+                      combinesWith { productDiscounts shippingDiscounts orderDiscounts }
+                      minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } }
+                      customerGets {
+                        value { ... on DiscountAmount { amount { amount currencyCode } } }
+                        items { ... on AllDiscountItems { allItems } }
+                      }
+                    }
+                  }
+                }
+                userErrors { field code message }
+              }
+            }`,
+            variables: {
+              automaticBasicDiscount: {
+                title: bundle_title,
+                startsAt: "2025-01-07T01:28:55-05:00",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: tierData?.quantity,
+                  },
+                },
+                customerGets: {
+                  value: {
+                    discountAmount: {
+                      amount: tierData?.discount,
+                      appliesOnEachItem: false,
+                    },
+                  },
+                  items: {
+                    all: true,
+                  },
+                },
+                combinesWith: {
+                  productDiscounts: true,
+                  shippingDiscounts: false,
+                  orderDiscounts: false,
+                },
+              },
+            },
+          });
+        }
+
+        config = {
+          method: "post",
+          maxBodyLength: Infinity,
+          url: `https://${shop}/admin/api/2025-01/graphql.json`,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": session?.accessToken,
+          },
+          data: data,
+        };
+
+        try {
+          const response = await axios.request(config);
+          discount_id =
+            response?.data?.data?.discountAutomaticBasicCreate
+              ?.automaticDiscountNode?.id;
+          discount_info = response?.data?.data;
+
+          const updatedDiscount = await db.volumeDiscount.update({
+            where: { id: parseInt(bundle_id) },
+            data: {
+              discount_method,
+              discount_id,
+              discount_info,
+              tier,
+            },
+          });
+
+          return json({
+            message: "Data updated successfully",
+            data: updatedDiscount,
+            status: 200,
+            step: "second",
+          });
+        } catch (error) {
+          console.error("Error creating discount:", error);
+          return json({
+            message: "Error creating discount",
+            status: 500,
+            step: "second",
+          });
+        }
+      }
+    } catch (error) {
+      console.log(error, "errorhence");
+      return json({
+        message: "Failed to process the request",
+        error: error.message,
+        status: 500,
+        step: "second",
+      });
+    }
+    if (intent === "stepThird") {
+      const bundle_id = formData.get("bundle_id");
+      const position = formData.get("position");
+      const section = formData.get("section");
+      const above_title_section = {
+        text: formData.get("titleSectionText"),
+        size: formData.get("titleSectionSize"),
+        color: formData.get("titleSectionColor"),
+      };
+      const title = {
+        text: formData.get("titleText"),
+        size: formData.get("titleSize"),
+        color: formData.get("titleColor"),
+      };
+
+      const Tiers = {
+        save: formData.get("tierSave"),
+        comparedPrice: formData.get("tierComparedPrice"),
+        color: formData.get("tierColor"),
+        badgeColor: formData.get("badge_color"),
+        text: formData.get("tierText"),
+        size: formData.get("tierSize"),
+      };
+      const call_to_action_button = {
+        text: formData.get("ctaText"),
+        size: formData.get("ctaSize"),
+        color: formData.get("ctaColor"),
+      };
+
+      const text_below_cta = {
+        text: formData.get("tbText"),
+        size: formData.get("tbSize"),
+        color: formData.get("tbColor"),
+      };
+
+      const background = {
+        color: formData.get("backgroundColor"),
+        shadow: formData.get("backgroundShadow"),
+      };
+      try {
+        if (!bundle_id) {
+          return json({ message: "Missing required fields" }, { status: 400 });
+        }
+
+        const existingBundle = await db.volumeDiscount.findUnique({
+          where: {
+            id: parseInt(bundle_id),
+          },
+        });
+
+        if (existingBundle) {
+          const updatedDiscount = await db.volumeDiscount.update({
+            where: { id: parseInt(bundle_id) },
+            data: {
+              position,
+              section,
+              above_title_section,
+              title,
+              Tiers,
+              call_to_action_button,
+              text_below_cta,
+              background,
+              domainName: shop,
+            },
+          });
+
+          return json({
+            message: "Data updated successfully",
+            data: updatedDiscount,
+            status: 200,
+            step: "third",
+          });
+        } else {
+          const savedDiscount = await db.volumeDiscount.create({
+            data: {
+              id: parseInt(bundle_id),
+              position,
+              section,
+              above_title_section,
+              title,
+              Tiers,
+              call_to_action_button,
+              text_below_cta,
+              background,
+              domainName: shop,
+            },
+          });
+          return json({
+            message: "Data saved successfully",
+            data: savedDiscount,
+            status: 200,
+            step: "third",
+          });
+        }
+      } catch (error) {
+        console.log(error, "check errior");
+        return json({
+          message: "Failed to process the request",
+          error: error.message,
+          status: 500,
+        });
+      }
+    } else if (name === "bundle") {
+      console.log("yes triggerd");
+    }
+  } else if (request.method === "DELETE") {
+    try {
+      const domainName = shop;
+      const productId = formData.get("product_id");
+      const discount_id = formData.get("discount_id");
+      console.log(productId, "productbvfdj");
+      console.log(discount_id, "easypeesy");
+
+      if (!domainName || !productId) {
+        return json({
+          message: "Missing 'domainName' or 'product_id'",
+          status: 400,
+        });
+      }
+
+      // Prepare GraphQL mutation
+      const data = JSON.stringify({
+        query: `
+          mutation discountAutomaticDelete($id: ID!) {
+            discountAutomaticDelete(id: $id) {
+              deletedAutomaticDiscountId
+              userErrors {
+                field
+                code
+                message
+              }
+            }
+          }
+        `,
+        variables: {
+          id: discount_id,
+        },
+      });
+
+      // Configure Axios request
+      const config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2025-01/graphql.json`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
+        data: data,
+      };
+
+      // Make the request to Shopify
+      const response = await axios.request(config);
+      const responseData = response.data;
+
+      // Handle user errors from Shopify
+      if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
+        console.error(
+          "Shopify Errors:",
+          responseData.data.discountAutomaticDelete.userErrors,
+        );
+        return json({
+          message: "Failed to delete discount on Shopify",
+          errors: responseData.data.discountAutomaticDelete.userErrors,
+          status: 400,
+        });
+      }
+
+      console.log("Shopify Response:", JSON.stringify(responseData));
+
+      // Delete from your local database
+      const result = await db.volumeDiscount.deleteMany({
+        where: {
+          AND: [{ id: parseInt(productId) }, { domainName: shop }],
+        },
+      });
+
+      if (result.count === 0) {
+        return json({
+          message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
+          status: 404,
+        });
+      }
+
+      return json({
+        message: "Bundle successfully deleted",
+        status: 200,
+        method: "delete",
+        step: 4,
+      });
+    } catch (error) {
+      console.error("Error in delete process:", error);
+      return json({
+        message: "Failed to delete discount",
+        error: error.message,
+        status: 500,
+        method: "delete",
+        step: 4,
+      });
+    }
+  } else {
+    return undefined;
+  }
+}
+
+const svgs = [
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="26"
+    height="30"
+    fill="none"
+    viewBox="0 0 36 40"
+  >
+    <path
+      fill="#00AC4F"
+      fillRule="evenodd"
+      d="M9.485 9.166v1.387H5.808a3.47 3.47 0 0 0-3.451 3.107L.019 35.867a3.47 3.47 0 0 0 3.451 3.834h28.686a3.47 3.47 0 0 0 3.45-3.834L33.27 13.66a3.47 3.47 0 0 0-3.45-3.107H26.14V9.167a8.328 8.328 0 1 0-16.656 0m8.328-5.552a5.55 5.55 0 0 0-5.552 5.552v1.387h11.104V9.167a5.55 5.55 0 0 0-5.552-5.552M12.26 18.88a5.552 5.552 0 0 0 11.104 0v-1.388a1.388 1.388 0 1 1 2.776 0v1.388a8.328 8.328 0 1 1-16.656 0v-1.388a1.388 1.388 0 1 1 2.776 0z"
+      clipRule="evenodd"
+    ></path>
+  </svg>,
+
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="29"
+    height="28"
+    fill="none"
+    viewBox="0 0 39 38"
+  >
+    <path
+      fill="#00AC4F"
+      fillRule="evenodd"
+      d="M6.685 0A5.73 5.73 0 0 0 .953 5.732v8.25c0 1.52.604 2.977 1.679 4.052l18.305 18.305c1.756 1.756 4.564 2.266 6.777.817A36 36 0 0 0 38.11 26.76c1.449-2.213.94-5.021-.817-6.777L18.987 1.679A5.73 5.73 0 0 0 14.934 0zm2.149 10.03a2.15 2.15 0 1 0 0-4.298 2.15 2.15 0 0 0 0 4.298"
+      clipRule="evenodd"
+    ></path>
+  </svg>,
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="25"
+    height="25"
+    fill="none"
+    viewBox="0 0 35 35"
+  >
+    <path
+      fill="#00AC4F"
+      fillRule="evenodd"
+      d="M3.399 2.037c4.654-.79 9.435-1.2 14.312-1.2s9.658.41 14.312 1.2a3.24 3.24 0 0 1 2.688 3.2v1.821a5.23 5.23 0 0 1-1.532 3.699L22.4 21.536a2.62 2.62 0 0 0-.766 1.849v5.104a5.23 5.23 0 0 1-2.892 4.679l-3.062 1.53a1.308 1.308 0 0 1-1.892-1.169V23.385c0-.694-.276-1.359-.766-1.85L2.243 10.758A5.23 5.23 0 0 1 .711 7.058v-1.82a3.24 3.24 0 0 1 2.688-3.201"
+      clipRule="evenodd"
+    ></path>
+  </svg>,
+];
+
+export default function VolumePage() {
+  const { products, totalBundle } = useLoaderData();
+  const actionResponse = useActionData();
+  const submit = useSubmit();
+
+  console.log(actionResponse, "actionResponse");
+  const [showComponent, setShowComponent] = useState(1);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [showPosition, setShowPosition] = useState(false);
+  const [details, setDetails] = useState({});
+  const [position, setPosition] = useState("Below Section");
+  const [section, setSection] = useState("Buy Buttons");
+  const [values, setValues] = useState({
+    bundle_name: "Example Bundle 1",
+    product: "All Products",
+    discount_method: "Percentage",
+  });
+
+  const [activeTab, setActiveTab] = useState("Home");
+  const [id, setId] = useState(null);
+
+  const [all, setAll] = useState("first");
+  const [activeApp, setActiveApp] = useState("Active");
+  const [active, setActive] = useState(false);
+  const [tier, setTier] = useState([{ id: 1,  }]);
+  const [titleSection, seTitleSection] = useState({
+    titleSectionText: "Limited Time Offer",
+    titleSectionSize: 5,
+    titleSectionColor: "#000000",
+  });
+
+  const [title, seTitle] = useState({
+    titleText: "Add More & Save",
+    titleSize: 5,
+    titleColor: "#000000",
+  });
+
+  const [tiers, setTiers] = useState({
+    tierColor: "#000000",
+    badge_color: "#000000",
+    tierComparedPrice: true,
+    tierSave: true,
+  });
+
+  const [textBelow, setTextBelow] = useState({
+    tbText: "Lifetime warranty & Free Returns",
+    tbSize: 5,
+    tbColor: "#555555",
+  });
+
+  const [callAction, setCallAction] = useState({
+    ctaText: "Add To Cart",
+    ctaSize: 5,
+    ctaColor: "#000000",
+  });
+
+  const [background, setBackGround] = useState({
+    backgroundColor: "#FFFFFF",
+    backgroundShadow: true,
+  });
+
+  const handleTitleSection = (e) => {
+    const { name, value } = e.target;
+    seTitleSection((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleTitle = (e) => {
+    const { name, value } = e.target;
+    seTitle((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleTier = (e) => {
+    const { name, type, checked, value } = e.target;
+    setTiers((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleCallToAction = (e) => {
+    const { name, value } = e.target;
+    setCallAction((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleTextBelow = (e) => {
+    const { name, value } = e.target;
+    setTextBelow((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleBackground = (e) => {
+    const { name, type, checked, value } = e.target;
+    setBackGround((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const addAnotherTier = () => {
+    setTier((prevSections) => [
+      ...prevSections,
+      { id: prevSections.length + 1 },
+    ]);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setValues((prevValues) => ({
+      ...prevValues,
+      [name]: value,
+    }));
+  };
+
+  const handleActive = (item) => {
+    setActiveApp(item);
+    setActive(false);
+  };
+
+  const handleDesign = () => {
+    setAll("first");
+    setActiveTab("Products");
+  };
+
+  const handleFirst = () => {
+    if (values.bundle_name === "") {
+      notify.success("Bundle Name is Required", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else {
+      setShowComponent(2);
+    }
+  };
+
+  const getLabelText = (method) => {
+    switch (method) {
+      case "Percentage":
+        return "Percentage";
+      case "Fixed Amount":
+        return "Amount";
+      case "Set Selling Price":
+        return "Price";
+      default:
+        return "";
+    }
+  };
+
+  const handleSecond = () => {
+
+    console.log(tier.length,'check tire');
+
+    if(values.product === "All Products") {
+       
+    }
+
+    // if (values.discount_method === "Percentage") {
+    //   if (values.amount == 100) {
+    //     notify.success("Discount can not be 100%", {
+    //       position: "top-center",
+    //       style: {
+    //         background: "red",
+    //         color: "white",
+    //       },
+    //     });
+    //   } else if (values.amount > 100) {
+    //     notify.success("Discount can not be more than 100%", {
+    //       position: "top-center",
+    //       style: {
+    //         background: "red",
+    //         color: "white",
+    //       },
+    //     });
+    //   } else {
+    //     setShowComponent(3);
+    //   }
+    // } else {
+    //   setShowComponent(3);
+    // }
+  };
+
+  const handleTierChange = (index, field, value) => {
+    const updatedTier = [...tier];
+    const errorMessages = [...errors];
+
+    if (field === "quantity" || field === "discount") {
+      if (!/^\d*$/.test(value)) {
+        errorMessages[index] = {
+          ...errorMessages[index],
+          [field]: "Only numbers are allowed.",
+        };
+      } else {
+        errorMessages[index] = { ...errorMessages[index], [field]: "" };
+      }
+    } else if (field === "title" || field === "badge") {
+      if (/[^a-zA-Z\s]/.test(value)) {
+        errorMessages[index] = {
+          ...errorMessages[index],
+          [field]: "Only letters are allowed.",
+        };
+      } else {
+        errorMessages[index] = { ...errorMessages[index], [field]: "" };
+      }
+    }
+
+    updatedTier[index][field] = value;
+    setTier(updatedTier);
+  };
+
+  const handleCheckboxChange = (id) => {
+    submit();
+  };
+
+  const handleEdit = (item) => {
+    setDetails(item);
+    setShowEdit(true);
+    setActiveTab("Products");
+    setShowComponent(1);
+  };
+
+  useEffect(() => {
+    if (actionResponse?.status === 200) {
+      if (actionResponse?.step === "Fourth") {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+        setActiveTab("Return");
+      }
+      setShowComponent(actionResponse?.step);
+    } else if (actionResponse?.status === 500) {
+      notify.success(actionResponse?.error, {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    }
+  }, [actionResponse]);
+
+  useEffect(() => {
+    if (actionResponse?.step === 4) {
+      if (actionResponse?.status === 200) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+        setShowPopup(false);
+      } else if (actionResponse?.status === 500) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+      }
+    }
+  }, [actionResponse]);
+
+  useEffect(() => {
+    if (showEdit) {
+      console.log(details, "checkdetails");
+      setId(details.id);
+      setValues((prev) => ({
+        ...prev,
+        bundle_name: details.bundle_name,
+        product:
+          details.product_all == 1 ? "All Products" : "Specific Products",
+      }));
+      setPosition(details.position);
+      setSection(details.section);
+      seTitleSection((prev) => ({
+        ...prev,
+        titleSectionText: details.above_title_section.text,
+        titleSectionSize: details.above_title_section.size,
+        titleSectionColor: details.above_title_section.color,
+      }));
+      seTitle((prev) => ({
+        ...prev,
+        titleText: details.title.text,
+        titleSize: details.title.size,
+        titleColor: details.title.color,
+      }));
+
+      setCallAction((prev) => ({
+        ...prev,
+        ctaText: details.call_to_action_button.text,
+        ctaSize: details.call_to_action_button.size,
+        ctaColor: details.call_to_action_button.color,
+      }));
+      setTextBelow((prev) => ({
+        ...prev,
+        tbText: details.text_below_cta.text,
+        tbSize: details.text_below_cta.size,
+        tbColor: details.text_below_cta.color,
+      }));
+      setBackGround((prev) => ({
+        ...prev,
+        backgroundColor: details.background.color,
+        backgroundShadow: details.background.shadow == "on" ? true : false,
+      }));
+    }
+  }, [showEdit]);
+
+  return (
+    <>
+      <div className={styles.containerDiv}>
+        <TitleBar title="Volume Bundles"></TitleBar>
+        <div className={styles.flexWrapper}>
+          <div className={styles.headingFlex}>
+            <button className={styles.btn_Back} onClick={() => setAll("first")}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 20 17"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M8.78033 0.21967C9.07322 0.512563 9.07322 0.987437 8.78033 1.28033L2.56066 7.5H18.75C19.1642 7.5 19.5 7.83579 19.5 8.25C19.5 8.66421 19.1642 9 18.75 9H2.56066L8.78033 15.2197C9.07322 15.5126 9.07322 15.9874 8.78033 16.2803C8.48744 16.5732 8.01256 16.5732 7.71967 16.2803L0.21967 8.78033C-0.0732233 8.48744 -0.0732233 8.01256 0.21967 7.71967L7.71967 0.21967C8.01256 -0.0732233 8.48744 -0.0732233 8.78033 0.21967Z"
+                  fill="#0F172A"
+                />
+              </svg>
+            </button>
+            <h2>Volume Discount</h2>
+          </div>
+          <div
+            className={` ${styles.activeButton} ${activeApp === "Inactive" ? styles.InactiveButton : ""} `}
+            id="second"
+            onClick={() => setActive(!active)}
+          >
+            <div className={styles.butttonsTab}>
+              <span className={styles.selected}>{activeApp}</span>
+              <div className={styles.arrowActive}>
+                <svg
+                  width="15"
+                  height="8"
+                  viewBox="0 0 22 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                    fill="#0F172A"
+                  />
+                </svg>
+              </div>
+            </div>
+            {active && (
+              <ul className={styles.selectDropdown}>
+                <li data-value="option1" onClick={() => handleActive("Active")}>
+                  Active
+                </li>
+                <li
+                  data-value="option2"
+                  onClick={() => handleActive("Inactive")}
+                >
+                  Inactive
+                </li>
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {activeTab === "Home" && (
+          <div className={styles.inline_stackwraper}>
+            {Array.from({ length: 3 }).map((item, index) => (
+              <React.Fragment>
+                <div className={styles.upper_box}>
+                  <div className={styles.PolarisBox}>
+                    <div className={styles.inlineStack}>
+                      <div className={styles.card_img}>{svgs[index]}</div>
+
+                      <div className={styles.ContentWraper}>
+                        <Text variant="headingXs" as="h6">
+                          Reviews Collected
+                        </Text>
+
+                        <Text as="h3" variant="heading2xl">
+                          280
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "Home" && (
+          <>
+            <div className={styles.bundleHeading}>
+              <h2>All Bundles</h2>
+              <div className={styles.btnFlexWrapper}>
+                <button className={styles.activeButton}>
+                  This Month{" "}
+                  <img
+                    src={drop_downImg}
+                    className={styles.inactiveImg}
+                    width={15}
+                    height={8}
+                  />{" "}
+                </button>
+                <button
+                  onClick={() => setActiveTab("Products")}
+                  className={`${styles.btn_one} ${styles.active}`}
+                >
+                  Create Volume Discount
+                </button>
+              </div>
+            </div>
+
+            {totalBundle &&
+              totalBundle.map((card) => (
+                <React.Fragment key={card.id}>
+                  <div className={styles.exampleBundle}>
+                    <div className={styles.bundleHeading}>
+                      <Form method="POST">
+                        <div
+                          className={styles.btnFlexWrapper}
+                          style={{ alignItems: "center" }}
+                        >
+                          <label className={styles.switch}>
+                            <input
+                              type="checkbox"
+                              name="intent"
+                              value="bundle"
+                              checked={card?.isActive === 1 ? false : true}
+                              onChange={() =>
+                                handleCheckboxChange(card.discount_id)
+                              }
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
+                          <input
+                            type="hidden"
+                            name="product_id"
+                            value={card?.discount_id}
+                          />
+                          <h2 className={styles.cardHeading}>
+                            {card?.bundle_name}
+                          </h2>
+                        </div>
+                      </Form>
+                      <div className={styles.btnFlexWrapper}>
+                        <Form method="DELETE">
+                          <input
+                            type="hidden"
+                            name="product_id"
+                            value={card?.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="discount_id"
+                            value={card?.discount_id}
+                          />
+
+                          <button
+                            className={styles.deletedBtn}
+                            type="button"
+                            onClick={() => setShowPopup(true)}
+                          >
+                            <svg
+                              width="20"
+                              height="24"
+                              viewBox="0 0 18 20"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                clipRule="evenodd"
+                                d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
+                                fill="#F24747"
+                              />
+                            </svg>
+                          </button>
+                          {showPopup && (
+                            <DeletePopup
+                              setShowPopup={setShowPopup}
+                              actionResponse={actionResponse}
+                            />
+                          )}
+                        </Form>
+                        <button
+                          className={styles.copyIcon}
+                          // onClick={() => handleCopy(card.id)}
+                        >
+                          <img src={copy_icon} width={20} height={20} />
+                        </button>
+                        <button
+                          className={styles.edit_Btn}
+                          onClick={() => handleEdit(card)}
+                        >
+                          <img src={editIcon} width={20} height={20} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className={styles.inline_stackwraper}>
+                      {Array.from({ length: 3 }).map((item, index) => (
+                        <React.Fragment>
+                          <div className={styles.upper_box}>
+                            <div className={styles.PolarisBox}>
+                              <div className={styles.inlineStack}>
+                                <div className={styles.card_img}>
+                                  {svgs[index]}
+                                </div>
+
+                                <div className={styles.ContentWraper}>
+                                  <Text variant="headingXs" as="h6">
+                                    Reviews Collected
+                                  </Text>
+                                  <Text as="h3" variant="heading2xl">
+                                    280
+                                  </Text>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                </React.Fragment>
+              ))}
+          </>
+        )}
+
+        {activeTab === "Products" && (
+          <div className={styles.main_bundle}>
+            <div className={styles.bundleWraper}>
+              <span
+                className={
+                  showComponent == 1 ? styles.active_tab : styles.bordercolor
+                }
+              >
+                <div className={`${styles.tabImage} ${styles.complet_pro}`}>
+                  {showComponent >= 1 ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="16"
+                      fill="none"
+                      viewBox="0 0 29 23"
+                    >
+                      <path
+                        stroke="#fff"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="4.187"
+                        d="m2.453 13.096 6.98 6.979L26.88 2.627"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      viewBox="0 0 26 26"
+                    >
+                      <path
+                        fill="url(#paint0_linear_904_10273)"
+                        fillRule="evenodd"
+                        d="M3.922 0A3.92 3.92 0 0 0 0 3.922v5.644c0 1.04.413 2.038 1.149 2.773l12.524 12.524c1.202 1.202 3.123 1.55 4.637.56a24.6 24.6 0 0 0 7.112-7.113c.992-1.514.643-3.435-.559-4.637L12.34 1.149A3.92 3.92 0 0 0 9.566 0zm1.47 6.863a1.47 1.47 0 1 0 0-2.941 1.47 1.47 0 0 0 0 2.94"
+                        clipRule="evenodd"
+                      ></path>
+                      <defs>
+                        <linearGradient
+                          id="paint0_linear_904_10273"
+                          x1="26"
+                          x2="0"
+                          y1="-0.238"
+                          y2="25.762"
+                          gradientUnits="userSpaceOnUse"
+                        >
+                          <stop stopColor="#005BEA"></stop>
+                          <stop offset="1" stopColor="#00C6FB"></stop>
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  )}
+                </div>
+                Products
+              </span>
+              <span
+                className={`${showComponent >= 2 ? styles.active_tab : ""} ${activeTab === "Offer" ? styles.bordercolor : ""}`}
+              >
+                <div className={`${styles.tabImage} ${styles.complet_pro}`}>
+                  {showComponent >= 2 ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="16"
+                      fill="none"
+                      viewBox="0 0 29 23"
+                    >
+                      <path
+                        stroke="#fff"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="4.187"
+                        d="m2.453 13.096 6.98 6.979L26.88 2.627"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <img src={offerIcon} width={20} height={20} />
+                  )}
+                </div>
+                Offer
+              </span>
+              <span
+                className={`${showComponent >= 3 ? styles.active_tab : ""} ${activeTab === "Design" ? styles.bordercolor : ""}`}
+              >
+                <div className={`${styles.tabImage} ${styles.complet_pro}`}>
+                  {showComponent >= 3 ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="22"
+                      height="16"
+                      fill="none"
+                      viewBox="0 0 29 23"
+                    >
+                      <path
+                        stroke="#fff"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="4.187"
+                        d="m2.453 13.096 6.98 6.979L26.88 2.627"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <img src={DesignIcon} width={20} height={20} />
+                  )}
+                </div>
+                Design
+              </span>
+            </div>
+
+            <Form method="POST">
+              <div className={styles.table_content}>
+                <div className={styles.requestReview}>
+                  <div className={styles.timing_after}>
+                    {showComponent == 1 && (
+                      <>
+                        <div className={styles.leftContent}>
+                          <h3>
+                            Ready To Increase AOV?
+                            <br></br>
+                            <span>Let’s Get Started</span>
+                          </h3>
+
+                          <div className={styles.input_labelCustomize}>
+                            <label htmlFor="bundle_name">
+                              Name your bundle
+                            </label>
+                            <input
+                              type="text"
+                              placeholder=""
+                              name="bundle_name"
+                              value={values.bundle_name}
+                              onChange={handleChange}
+                              className={styles.inputDiv}
+                            />
+                          </div>
+
+                          <div className={styles.input_labelCustomize}>
+                            <label htmlFor="">
+                              Select Products for Volume Discount
+                            </label>
+                            <div className={styles.bundle_product}>
+                              <input
+                                type="radio"
+                                name="product"
+                                id="first"
+                                value="All Products"
+                                checked={values.product === "All Products"}
+                                onChange={handleChange}
+                              />
+                              <label htmlFor="first">All Products</label>
+                            </div>
+
+                            <div className={styles.bundle_product}>
+                              <input
+                                type="radio"
+                                name="product"
+                                id="second"
+                                value="Specific Products"
+                                checked={values.product === "Specific Products"}
+                                onChange={handleChange}
+                              />
+                              <label htmlFor="second">Specific products</label>
+                            </div>
+                            {values.product === "Specific Products" && (
+                              <div className={styles.bundle_product}>
+                                <div
+                                  className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                  id="second"
+                                  onClick={() => setShowProducts(true)}
+                                >
+                                  <div className={styles.selectBox}>
+                                    <span className={styles.selected}>
+                                      Choose products
+                                    </span>
+                                    <div className={styles.arrow}>
+                                      <img
+                                        src={DorpDownIcon}
+                                        width={20}
+                                        height={16}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className={styles.Margintop50}>
+                            <button
+                              type="button"
+                              className={styles.NextBtn}
+                              onClick={handleFirst}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {showComponent == 2 && (
+                      <>
+                        <div className={styles.leftContent}>
+                          <h3>
+                            Sweeten the Deal,
+                            <br></br>
+                            <span>Pick a killer discount</span>
+                          </h3>
+                          <div className={styles.input_labelCustomize}>
+                            <label htmlFor="">Discount Method</label>
+                            <div className={styles.bundle_product}>
+                              <input
+                                type="radio"
+                                id="Percentage"
+                                name="discount_method"
+                                value="Percentage"
+                                checked={
+                                  values.discount_method === "Percentage"
+                                }
+                                onChange={handleChange}
+                              />
+                              <label htmlFor="Percentage">Percentage</label>
+                            </div>
+
+                            <div className={styles.bundle_product}>
+                              <input
+                                type="radio"
+                                id="Fixed Amount"
+                                name="discount_method"
+                                value="Fixed Amount"
+                                checked={
+                                  values.discount_method === "Fixed Amount"
+                                }
+                                onChange={handleChange}
+                              />
+                              <label htmlFor="Fixed Amount">Fixed Amount</label>
+                            </div>
+
+                            <div className={styles.bundle_product}>
+                              <input
+                                type="radio"
+                                id="Set Selling Price"
+                                name="discount_method"
+                                value="Set Selling Price"
+                                checked={
+                                  values.discount_method === "Set Selling Price"
+                                }
+                                onChange={handleChange}
+                              />
+                              <label htmlFor="Set Selling Price">
+                                Set Selling Price
+                              </label>
+                            </div>
+                          </div>
+
+                          {tier.map((item, index) => (
+                            <React.Fragment>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="">Tier #{index + 1}</label>
+
+                                <div className={styles.formGroup}>
+                                  <input
+                                    type="checkbox"
+                                    id="html"
+                                    onChange={(e) =>
+                                      handleTierChange(
+                                        index,
+                                        "isDefault",
+                                        e.target.checked,
+                                      )
+                                    }
+                                  />
+                                  <label htmlFor="html">Set Default</label>
+                                </div>
+
+                                <div className={styles.input_tier}>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="quantity">Quantity</label>
+                                    <input
+                                      type="number"
+                                      id="quantity"
+                                      name="quantity"
+                                      min="1"
+                                      placeholder="2"
+                                      value={item.quantity}
+                                      onChange={(e) =>
+                                        handleTierChange(
+                                          index,
+                                          "quantity",
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label for="quantity">
+                                      Set {getLabelText(values.discount_method)}
+                                    </label>
+
+                                    <input
+                                      type="number"
+                                      id="discount"
+                                      name="discount"
+                                      min="1"
+                                      placeholder="50"
+                                      value={item.discount}
+                                      onChange={(e) =>
+                                        handleTierChange(
+                                          index,
+                                          "discount",
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label for="quantity">Title</label>
+                                    <input
+                                      type="text"
+                                      name="title"
+                                      id="bundle Product"
+                                      checked
+                                      placeholder="Buy 2 Products"
+                                      value={item.title}
+                                      onChange={(e) =>
+                                        handleTierChange(
+                                          index,
+                                          "title",
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label for="quantity">Badge Text</label>
+                                    <div>
+                                      <input
+                                        type="text"
+                                        name="badge"
+                                        id="bundle Product"
+                                        checked
+                                        placeholder="Most Popular"
+                                        value={item.badge}
+                                        onChange={(e) =>
+                                          handleTierChange(
+                                            index,
+                                            "badge",
+                                            e.target.value,
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className={styles.image_name}>
+                                    <button
+                                      onClick={() => handleDelete(item.id)}
+                                      className={styles.deletedBtn}
+                                    >
+                                      <img
+                                        src={deletedIcon}
+                                        width={20}
+                                        height={20}
+                                      />
+                                      Delete
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </React.Fragment>
+                          ))}
+{/* 
+                          <input type="hidden" name="bundle_id" value={id} />
+                          <input
+                            type="hidden"
+                            name="tier"
+                            value={JSON.stringify(tier)}
+                          />
+                          <input
+                            type="hidden"
+                            name="bundle_title"
+                            value={actionResponse?.data?.bundle_name}
+                          /> */}
+
+                          {values.product !== "All Products" && (
+                            <div className={styles.Addanotherdiv}>
+                              <label
+                                style={{ cursor: "pointer", color: "blue" }}
+                                onClick={addAnotherTier}
+                              >
+                                <span>+</span>Add Another Tier
+                              </label>
+                            </div>
+                          )}
+
+                          <div className={styles.Add_btn}>
+                            <button
+                             type="button"
+                              onClick={() => setShowComponent(1)}
+                              className={styles.Backbtn}
+                            >
+                              Back
+                            </button>
+                            <button
+                            type="button"
+                              className={styles.NextBtn}
+                              onClick={handleSecond}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {showComponent == 3 && (
+                      <>
+                        <div className={styles.table_content}>
+                          <div className={styles.leftContent}>
+                            <>
+                              <h3>
+                                You’re Almost There!
+                                <br></br>
+                                <span>Make It Stand Out</span>
+                              </h3>
+
+                              <div className={styles.divideDiv}>
+                                <div
+                                  className={`${styles.headingWrapper} ${styles.heading_img}`}
+                                >
+                                  <h4>Placement</h4>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="">Position</label>
+
+                                  <div
+                                    className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                    onClick={() =>
+                                      setShowPosition(!showPosition)
+                                    }
+                                  >
+                                    <div
+                                      className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                      id="second"
+                                    >
+                                      <div className={styles.selectBox}>
+                                        <span className={styles.selected}>
+                                          {position
+                                            ? position
+                                            : "Below Section"}
+                                        </span>
+                                        <div className={styles.arrow}>
+                                          <img
+                                            src={DorpDownIcon}
+                                            width={20}
+                                            height={16}
+                                          />
+                                        </div>
+                                      </div>
+                                      {showPosition && (
+                                        <ul
+                                          className={`${styles.selectDropdown} ${styles.newAppdeop} `}
+                                        >
+                                          <li
+                                            data-value="option1"
+                                            onClick={() =>
+                                              setPosition("Below Section")
+                                            }
+                                          >
+                                            Below Section
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() =>
+                                              setPosition("Above Section")
+                                            }
+                                          >
+                                            Above Section
+                                          </li>
+                                        </ul>
+                                      )}
+                                      <input
+                                        type="hidden"
+                                        name="position"
+                                        value={position}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="">Section</label>
+                                <div
+                                  className={` ${styles.bundle_product} ${styles.bundleNewApp} ${section === "Buy Buttons" ? styles.activeTab : ""} `}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="section"
+                                    id="Buy Buttons"
+                                    value="Buy Buttons"
+                                    checked={section === "Buy Buttons"}
+                                    onChange={() => setSection("Buy Buttons")}
+                                  />
+                                  <label htmlFor="Buy Buttons">
+                                    Buy Buttons
+                                  </label>
+                                </div>
+
+                                <div
+                                  className={`${styles.bundle_product} ${section === "Product Description" ? styles.activeTab : ""}`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="section"
+                                    id="Product Description"
+                                    value="Product Description"
+                                    checked={section === "Product Description"}
+                                    onChange={() =>
+                                      setSection("Product Description")
+                                    }
+                                  />
+                                  <label htmlFor="Product Description">
+                                    Product Description
+                                  </label>
+                                </div>
+
+                                <div
+                                  className={`${styles.bundle_product} ${section === "End Of Product Page" ? styles.activeTab : ""}`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="section"
+                                    id="End Of Product Page"
+                                    value="End Of Product Page"
+                                    checked={section === "End Of Product Page"}
+                                    onChange={() =>
+                                      setSection("End Of Product Page")
+                                    }
+                                  />
+                                  <label htmlFor="End Of Product Page">
+                                    End Of Product Page
+                                  </label>
+                                </div>
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="">Manual Placement</label>
+                                <div className={styles.manunalPlaced}>
+                                  <p>
+                                    {`  To Display the Volume Discount widget on your store go to: Theme Settings > Customize > Add Section (From the left sidebar) > Choose Bucket - Volume Discount
+
+*This will override the automatic placement`}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className={styles.divideDiv}>
+                                <div
+                                  className={`${styles.headingWrapper} ${styles.heading_img}`}
+                                >
+                                  <h4>Above title section</h4>
+                                  <button type="button" class={styles.btn_one}>
+                                    Show{" "}
+                                    <img
+                                      src={downArrow}
+                                      width="20"
+                                      height="20"
+                                    />
+                                  </button>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_section_text">
+                                    Text
+                                  </label>
+                                  <input
+                                    type="text"
+                                    id="title_section_text"
+                                    name="titleSectionText"
+                                    value={titleSection.titleSectionText}
+                                    onChange={handleTitleSection}
+                                    placeholder=""
+                                    className={styles.inputDiv}
+                                  />
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_section_size">
+                                    Size
+                                  </label>
+
+                                  <input
+                                    type="number"
+                                    id="title_section_size"
+                                    placeholder=""
+                                    name="titleSectionSize"
+                                    value={titleSection.titleSectionSize}
+                                    onChange={handleTitleSection}
+                                  />
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_section_color">
+                                    Color
+                                  </label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="title_section_color"
+                                      name="titleSectionColor"
+                                      value={titleSection.titleSectionColor}
+                                      onChange={handleTitleSection}
+                                      placeholder=""
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.divideDiv}>
+                                <div
+                                  className={`${styles.headingWrapper} ${styles.heading_img}`}
+                                >
+                                  <h4>Title</h4>
+                                  <button type="button" class={styles.btn_one}>
+                                    Show{" "}
+                                    <img
+                                      src={downArrow}
+                                      width="20"
+                                      height="20"
+                                    />
+                                  </button>
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_text">Text</label>
+                                  <input
+                                    type="text"
+                                    id="title_text"
+                                    name="titleText"
+                                    value={title.titleText}
+                                    onChange={handleTitle}
+                                    placeholder=""
+                                    className={styles.inputDiv}
+                                  />
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_size">Size</label>
+
+                                  <input
+                                    type="number"
+                                    id="title_size"
+                                    name="titleSize"
+                                    value={title.titleSize}
+                                    onChange={handleTitle}
+                                    placeholder=""
+                                  />
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_color">Color</label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="title_color"
+                                      name="titleColor"
+                                      value={title.titleColor}
+                                      onChange={handleTitle}
+                                      placeholder=""
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.divideDiv}>
+                                <div className={styles.heading_img}>
+                                  <h3>Tiers</h3>{" "}
+                                  <button
+                                    type="button"
+                                    className={styles.btn_one}
+                                  >
+                                    Show{" "}
+                                    <img
+                                      src={dropdown}
+                                      width={20}
+                                      height={20}
+                                    />
+                                  </button>
+                                </div>
+                                <div className={styles.trigerCheck}>
+                                  <div className={styles.input_labelCustomize}>
+                                    <div className={styles.formGroup}>
+                                      <input
+                                        type="checkbox"
+                                        id="save"
+                                        name="tierSave"
+                                        checked={tiers.tierSave}
+                                        onChange={handleTier}
+                                      />
+                                      <label htmlFor="save">
+                                        Display “Save” Badge
+                                      </label>
+                                    </div>
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <div className={styles.formGroup}>
+                                      <input
+                                        type="checkbox"
+                                        id="compared"
+                                        name="tierComparedPrice"
+                                        checked={tiers.tierComparedPrice}
+                                        onChange={handleTier}
+                                      />
+                                      <label for="compared">
+                                        Display Compared-At Price
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="tiers_color">Color</label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="tiers_color"
+                                      name="tierColor"
+                                      value={tiers.tierColor}
+                                      onChange={handleTier}
+                                    />
+                                  </div>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="badge_color">
+                                    “Save” Badge Color
+                                  </label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="badge_color"
+                                      name="badge_color"
+                                      value={tiers.badge_color}
+                                      onChange={handleTier}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.divideDiv}>
+                                <div
+                                  className={`${styles.headingWrapper} ${styles.heading_img}`}
+                                >
+                                  <h4>Call To Action Button</h4>
+                                  <button type="button" class={styles.btn_one}>
+                                    Show{" "}
+                                    <img
+                                      src={downArrow}
+                                      width="20"
+                                      height="20"
+                                    />
+                                  </button>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="call_action_text">Text</label>
+                                  <input
+                                    type="text"
+                                    id="call_action_text"
+                                    name="ctaText"
+                                    value={callAction.ctaText}
+                                    onChange={handleCallToAction}
+                                    className={styles.inputDiv}
+                                  />
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_section_size">
+                                    Size
+                                  </label>
+
+                                  <input
+                                    type="number"
+                                    id="title_section_size"
+                                    name="ctaSize"
+                                    value={callAction.ctaSize}
+                                    onChange={handleCallToAction}
+                                  />
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="title_section_color">
+                                    Color
+                                  </label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="title_section_color"
+                                      name="ctaColor"
+                                      value={callAction.ctaColor}
+                                      onChange={handleCallToAction}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.divideDiv}>
+                                <div className={styles.heading_img}>
+                                  <h3>Text Below CTA</h3>{" "}
+                                  <button
+                                    type="button"
+                                    className={styles.btn_one}
+                                  >
+                                    Show{" "}
+                                    <img
+                                      src={dropdown}
+                                      width={20}
+                                      height={20}
+                                    />
+                                  </button>
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="text_below_text">Text</label>
+                                  <input
+                                    type="text"
+                                    id="text_below_text"
+                                    name="tbText"
+                                    value={textBelow.tbText}
+                                    onChange={handleTextBelow}
+                                    className={styles.inputDiv}
+                                  />
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="text_below_size">Size</label>
+
+                                  <input
+                                    type="number"
+                                    id="text_below_size"
+                                    name="tbSize"
+                                    value={textBelow.tbSize}
+                                    onChange={handleTextBelow}
+                                    className={styles.inputDiv}
+                                  />
+                                </div>
+
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="text_below_color">
+                                    {" "}
+                                    Color
+                                  </label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="text_below_color"
+                                      name="tbColor"
+                                      value={textBelow.tbColor}
+                                      onChange={handleTextBelow}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.divideDiv}>
+                                <div className={styles.heading_img}>
+                                  <h3>Background</h3>{" "}
+                                  <button
+                                    type="button"
+                                    className={styles.btn_one}
+                                  >
+                                    Show{" "}
+                                    <img
+                                      src={dropdown}
+                                      width={20}
+                                      height={20}
+                                    />
+                                  </button>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <label htmlFor="background_color">
+                                    Color
+                                  </label>
+                                  <div className={styles.color_styles}>
+                                    <span
+                                      className={styles.color_pilate}
+                                    ></span>
+                                    <input
+                                      type="text"
+                                      id="background_color"
+                                      name="backgroundColor"
+                                      value={background.backgroundColor}
+                                      onChange={handleBackground}
+                                    />
+                                  </div>
+                                </div>
+                                <div className={styles.formGroup}>
+                                  <input
+                                    type="checkbox"
+                                    id="shadow"
+                                    name="backgroundShadow"
+                                    checked={background.backgroundShadow}
+                                    onChange={handleBackground}
+                                  />
+                                  <label htmlFor="shadow">Shadow</label>
+                                </div>
+                              </div>
+                            </>
+
+                            <>
+                              <div className={styles.Add_btn}>
+                                <button
+                                  onClick={() => setShow("Ready To Increase")}
+                                  className={styles.Backbtn}
+                                >
+                                  Back
+                                </button>
+                                <button
+                                  name="intent"
+                                  value="stepThird"
+                                  className={styles.NextBtn}
+                                >
+                                  Launch Bundle!
+                                </button>
+                              </div>
+                            </>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {showComponent <= 3 && (
+                    <div className={styles.live_preview}>
+                      <img
+                        src={preview_mockup}
+                        width={404}
+                        height={822}
+                        className={styles.mockup_tab}
+                      />
+                      <div className={styles.Preview_bundle}>
+                        <div className={styles.limited}>Limited Time Offer</div>
+                        <h4>Add Bundle And Save 10%!</h4>
+
+                        <div className={styles.both_product}>
+                          <div className={styles.left_productsample}>
+                            <img
+                              src={Productpreview}
+                              width={112}
+                              height={112}
+                              className={styles.mockup_tab}
+                            />
+                            <select name="" id="">
+                              <option value="newest">Gold 14K</option>
+                              <option value="old">Gold 14K</option>
+                            </select>
+
+                            <h6>Product Name</h6>
+                          </div>
+                          <div className={styles.AddProduct}>
+                            <span>+</span>
+                          </div>
+
+                          <div className={styles.left_productsample}>
+                            <img
+                              src={Productpreview}
+                              width={112}
+                              height={112}
+                              className={styles.mockup_tab}
+                            />
+                            <select name="" id="">
+                              <option value="newest">Gold 14K</option>
+                              <option value="old">Gold 14K</option>
+                            </select>
+
+                            <h6>Product Name</h6>
+                          </div>
+                        </div>
+
+                        <div className={styles.productTotal}>
+                          <span>Total</span>
+                          <div className={styles.Pricetab}>
+                            <span className={styles.delPriceOuter}>
+                              <span className={styles.delPrice}>230$</span>
+                            </span>
+                            <span className={styles.totalPrice}>130$</span>
+                            <span className={styles.SaveTab}>Save 10%</span>
+                          </div>
+
+                          <button className={styles.AddBtn}>
+                            👉 Add To Cart
+                          </button>
+                          <p className={styles.wrrantyTag}>
+                            Lifetime Warranty & Free Returns
+                          </p>
+                        </div>
+                      </div>
+                      <div className={styles.btnLivePreview}>
+                        <button>Live Preview</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Form>
+          </div>
+        )}
+
+        {activeTab === "Return" && (
+          <>
+            <div className={`${styles.table_content} ${styles.DesignCard}`}>
+              <div className={styles.requestReview}>
+                <h2>You Did It!</h2>
+                <p>
+                  Your bundle is up and running. Sit back and let the
+                  conversations roll in.
+                </p>
+                <button className={styles.NextBtn} onClick={handleDesign}>
+                  Return To Dashboard
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <Toaster />
+    </>
+  );
+}

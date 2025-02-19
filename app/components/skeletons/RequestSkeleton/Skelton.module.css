@@ -1,0 +1,73 @@
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+  
+  .skeleton_box {
+    width: 100px;
+    height: 20px;
+    border-radius: 4px;
+  }
+  
+  .skeleton_button {
+    width: 80px;
+    height: 30px;
+    border-radius: 6px;
+  }
+  
+  .skeleton_line {
+    width: 100%;
+    height: 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+  }
+  
+  .skeleton_label {
+    width: 60px;
+    height: 16px;
+    margin: 8px 0;
+  }
+  
+  .skeleton_input {
+    width: 100%;
+    height: 40px;
+    margin: 8px 0;
+    border-radius: 4px;
+  }
+  
+  .skeleton_image {
+    width: 100px;
+    height: 100px;
+    border-radius: 6px;
+  }
+  
+  .skeleton_radio {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .skeleton_star {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+  
+  .inputDays {
+    display: inline-block;
+    margin-left: 5px;
+    color: transparent; /* Skeletons do not show actual content */
+  }
+  
