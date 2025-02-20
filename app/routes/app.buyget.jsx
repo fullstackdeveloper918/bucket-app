@@ -11,7 +11,7 @@ import collectedIcon from "../../app/routes/assets/collected_icon.png";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
 import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
 import editIcon from "../../app/routes/assets/edit_icon.svg";
-import Loader from '../components/Loader/Loader'
+import Loader from "../components/Loader/Loader";
 import downArrow from "../routes/assets/drop_downImg.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import dropdown from "../routes/assets/drop_downImg.svg";
@@ -19,7 +19,13 @@ import copy_icon from "../../app/routes/assets/cpyIcon.png";
 import axios from "axios";
 import { Text } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-import { Form, json, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import {
+  Form,
+  json,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from "@remix-run/react";
 import AddProduct from "../components/BuyComponents/AddProduct";
 import { Toaster, toast as notify } from "sonner";
 import { getAllBundle } from "../api/buyxGety.server";
@@ -505,9 +511,7 @@ const svgs = [
 export default function BuyGetPage() {
   const { products, totalBundle } = useLoaderData();
   const actionResponse = useActionData();
-  const navigation  = useNavigation();
-
-
+  const navigation = useNavigation();
 
   console.log(actionResponse, "actionResponse");
   const [id, setId] = useState(null);
@@ -523,7 +527,7 @@ export default function BuyGetPage() {
   const [showComponent, setShowComponent] = useState(0);
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
-  const [loading, setLoading] =  useState(false);
+  const [loading, setLoading] = useState(false);
   const [productId, setProductId] = useState(null);
   const [discountId, setDiscountId] = useState("");
   const [activeTab, setActiveTab] = useState("Home");
@@ -716,6 +720,22 @@ export default function BuyGetPage() {
   const handleFirst = () => {
     if (values.bundle_name === "") {
       notify.success("Bundle Name is Required", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (buyProducts.length == 0) {
+      notify.success("Please select Buy Product", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (getProducts.length == 0) {
+      notify.success("Please select Get Product", {
         position: "top-center",
         style: {
           background: "red",
@@ -2271,7 +2291,11 @@ export default function BuyGetPage() {
                                     value="stepThird"
                                     className={styles.NextBtn}
                                   >
-                                   {navigation.state == "submitting" ? <Loader /> : "Launch Bundle"}
+                                    {navigation.state == "submitting" ? (
+                                      <Loader />
+                                    ) : (
+                                      "Launch Bundle"
+                                    )}
                                   </button>
                                 </div>
                               </>
