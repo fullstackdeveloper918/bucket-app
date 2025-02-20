@@ -11,6 +11,7 @@ import collectedIcon from "../../app/routes/assets/collected_icon.png";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
 import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
 import editIcon from "../../app/routes/assets/edit_icon.svg";
+import Loader from '../components/Loader/Loader'
 import downArrow from "../routes/assets/drop_downImg.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import dropdown from "../routes/assets/drop_downImg.svg";
@@ -18,12 +19,11 @@ import copy_icon from "../../app/routes/assets/cpyIcon.png";
 import axios from "axios";
 import { Text } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-import { Form, json, useActionData, useLoaderData } from "@remix-run/react";
+import { Form, json, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import AddProduct from "../components/BuyComponents/AddProduct";
 import { Toaster, toast as notify } from "sonner";
 import { getAllBundle } from "../api/buyxGety.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
-
 
 export async function loader({ request }) {
   try {
@@ -505,6 +505,9 @@ const svgs = [
 export default function BuyGetPage() {
   const { products, totalBundle } = useLoaderData();
   const actionResponse = useActionData();
+  const navigation  = useNavigation();
+
+
 
   console.log(actionResponse, "actionResponse");
   const [id, setId] = useState(null);
@@ -515,10 +518,12 @@ export default function BuyGetPage() {
     amount: "",
   });
   const [activeSelection, setActiveSelection] = useState("Buy");
+
   const [buyProducts, setBuyProducts] = useState([]);
   const [showComponent, setShowComponent] = useState(0);
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
+  const [loading, setLoading] =  useState(false);
   const [productId, setProductId] = useState(null);
   const [discountId, setDiscountId] = useState("");
   const [activeTab, setActiveTab] = useState("Home");
@@ -555,7 +560,6 @@ export default function BuyGetPage() {
     productSize: 5,
     productColor: "#000000",
   });
-
 
   const [bundleCost, setBundleCost] = useState({
     bundleCostSize: 5,
@@ -665,20 +669,38 @@ export default function BuyGetPage() {
   };
 
   const handleSave = () => {
-    setIsProduct(false);
+    if (buyProducts.length > 1) {
+      notify.error("Please select only one product", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (getProducts.length > 1) {
+      notify.error("Please select only one product", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else {
+      setIsProduct(false);
+    }
   };
 
   const handleDesign = () => {
-    setActiveTab('Home')
+    setActiveTab("Home");
     setShowEdit(false);
     setShowComponent(0);
     setId(null);
   };
 
-  const handleCreate = () =>{
-    setActiveTab('Products');
+  const handleCreate = () => {
+    setActiveTab("Products");
     setShowComponent(1);
-  }
+  };
 
   const handleProduct = (btn) => {
     if (btn === "Buy") {
@@ -835,7 +857,7 @@ export default function BuyGetPage() {
         amount: details.amount,
       }));
       setBuyProducts(JSON.parse(JSON.stringify(details.buysx)));
-      setGetProducts(JSON.parse(JSON.stringify(details.gety)))
+      setGetProducts(JSON.parse(JSON.stringify(details.gety)));
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
@@ -907,13 +929,16 @@ export default function BuyGetPage() {
   }, [actionResponse]);
 
   const handlePreviewDelete = (type, item) => {
-    if(type === "BUY") {
-      setBuyProducts((prev) => prev.filter((value) => value.productId !== item));
-    }else if(type === "GET") {
-      setGetProducts((prev) => prev.filter((value) => value.productId !== item));
-
+    if (type === "BUY") {
+      setBuyProducts((prev) =>
+        prev.filter((value) => value.productId !== item),
+      );
+    } else if (type === "GET") {
+      setGetProducts((prev) =>
+        prev.filter((value) => value.productId !== item),
+      );
     }
-  }
+  };
 
   return (
     <>
@@ -2241,11 +2266,12 @@ export default function BuyGetPage() {
                                     Back
                                   </button>
                                   <button
+                                    disabled={navigation.state == "submitting"}
                                     name="intent"
                                     value="stepThird"
                                     className={styles.NextBtn}
                                   >
-                                    Launch Bundle
+                                   {navigation.state == "submitting" ? <Loader /> : "Launch Bundle"}
                                   </button>
                                 </div>
                               </>

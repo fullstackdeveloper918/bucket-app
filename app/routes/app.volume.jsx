@@ -9,6 +9,7 @@ import DorpDownIcon from "../routes/assets/dropDown.svg";
 import Productpreview from "../routes/assets/product_sample.png";
 import dropdown from "../routes/assets/drop_downImg.svg";
 import downArrow from "../routes/assets/drop_downImg.svg";
+import Loader from '../components/Loader/Loader'
 import styles from "../styles/main.module.css";
 import offerIcon from "../../app/routes/assets/offerIcon.svg";
 import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
@@ -21,6 +22,7 @@ import {
   json,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
 } from "@remix-run/react";
 import { getAllBundle } from "../api/volume.server";
@@ -456,6 +458,8 @@ export default function VolumePage() {
   const { products, totalBundle } = useLoaderData();
   const actionResponse = useActionData();
   const submit = useSubmit();
+  const navigation  = useNavigation();
+  
 
   console.log(actionResponse, "actionResponse");
   const [showComponent, setShowComponent] = useState(0);
@@ -2013,13 +2017,13 @@ export default function VolumePage() {
                                   Back
                                 </button>
                                 <button
-                                  type="submit"
-                                  name="intent"
-                                  value="stepThird"
-                                  className={styles.NextBtn}
-                                >
-                                  Launch Bundle
-                                </button>
+                                    disabled={navigation.state == "submitting"}
+                                    name="intent"
+                                    value="stepThird"
+                                    className={styles.NextBtn}
+                                  >
+                                   {navigation.state == "submitting" ? <Loader /> : "Launch Bundle"}
+                                  </button>
                               </div>
                             </>
                           </div>
