@@ -959,11 +959,7 @@ export default function PlansPage() {
                               onChange={handleChange}
                               className={styles.inputDiv}
                             />
-                            {/* {actionResponse?.errors?.bundle_name && (
-                              <span className={styles.errorMessage}>
-                                {actionResponse?.errors.bundle_name}
-                              </span>
-                            )} */}
+                          
                           </div>
 
                           {productSections.map((section, index) => (

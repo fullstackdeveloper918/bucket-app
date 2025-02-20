@@ -93,157 +93,16 @@ export async function action({ request }) {
   const intent = formData.get("intent");
 
   if (request.method === "POST") {
-    const bundle_id = formData.get("bundle_id");
-    const bundle_title = formData.get("bundle_title");
-    const discount_method = formData.get("discount_method");
-    const tier = formData.get("tier");
-    const [tierData] = JSON.parse(tier);
-
-    try {
-      const existingBundle = await db.volumeDiscount.findUnique({
-        where: {
-          id: parseInt(bundle_id),
-        },
-      });
-      if (existingBundle) {
-        let discount_id, discount_info, data, config;
-        if (discount_method === "Percentage") {
-          data = JSON.stringify({
-            query:
-              "mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) { discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) { automaticDiscountNode { id automaticDiscount { ... on DiscountAutomaticBasic { title startsAt combinesWith { productDiscounts shippingDiscounts orderDiscounts } minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } } customerGets { value { ... on DiscountPercentage { percentage } } items { ... on AllDiscountItems { allItems } } } } } } userErrors { field code message } } }",
-            variables: {
-              automaticBasicDiscount: {
-                title: bundle_title,
-                startsAt: "2025-01-07T01:28:55-05:00",
-                minimumRequirement: {
-                  quantity: {
-                    greaterThanOrEqualToQuantity: tierData?.quantity,
-                  },
-                },
-                customerGets: {
-                  value: {
-                    percentage: JSON.parse(tierData?.discount) / 100,
-                  },
-                  items: {
-                    all: true,
-                  },
-                },
-                combinesWith: {
-                  productDiscounts: true,
-                  shippingDiscounts: false,
-                  orderDiscounts: false,
-                },
-              },
-            },
-          });
-        } else if (discount_method === "Fixed Amount") {
-          data = JSON.stringify({
-            query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
-              discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
-                automaticDiscountNode {
-                  id
-                  automaticDiscount {
-                    ... on DiscountAutomaticBasic {
-                      title
-                      startsAt
-                      combinesWith { productDiscounts shippingDiscounts orderDiscounts }
-                      minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } }
-                      customerGets {
-                        value { ... on DiscountAmount { amount { amount currencyCode } } }
-                        items { ... on AllDiscountItems { allItems } }
-                      }
-                    }
-                  }
-                }
-                userErrors { field code message }
-              }
-            }`,
-            variables: {
-              automaticBasicDiscount: {
-                title: bundle_title,
-                startsAt: "2025-01-07T01:28:55-05:00",
-                minimumRequirement: {
-                  quantity: {
-                    greaterThanOrEqualToQuantity: tierData?.quantity,
-                  },
-                },
-                customerGets: {
-                  value: {
-                    discountAmount: {
-                      amount: tierData?.discount,
-                      appliesOnEachItem: false,
-                    },
-                  },
-                  items: {
-                    all: true,
-                  },
-                },
-                combinesWith: {
-                  productDiscounts: true,
-                  shippingDiscounts: false,
-                  orderDiscounts: false,
-                },
-              },
-            },
-          });
-        }
-
-        config = {
-          method: "post",
-          maxBodyLength: Infinity,
-          url: `https://${shop}/admin/api/2025-01/graphql.json`,
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": session?.accessToken,
-          },
-          data: data,
-        };
-
-        try {
-          const response = await axios.request(config);
-          discount_id =
-            response?.data?.data?.discountAutomaticBasicCreate
-              ?.automaticDiscountNode?.id;
-          discount_info = response?.data?.data;
-
-          const updatedDiscount = await db.volumeDiscount.update({
-            where: { id: parseInt(bundle_id) },
-            data: {
-              discount_method,
-              discount_id,
-              discount_info,
-              tier,
-            },
-          });
-
-          return json({
-            message: "Data updated successfully",
-            data: updatedDiscount,
-            status: 200,
-            step: "second",
-          });
-        } catch (error) {
-          console.error("Error creating discount:", error);
-          return json({
-            message: "Error creating discount",
-            status: 500,
-            step: "second",
-          });
-        }
-      }
-    } catch (error) {
-      console.log(error, "errorhence");
-      return json({
-        message: "Failed to process the request",
-        error: error.message,
-        status: 500,
-        step: "second",
-      });
-    }
     if (intent === "stepThird") {
+      
       const bundle_id = formData.get("bundle_id");
+      const product = formData.get("product");
+      const bundle_name = formData.get("bundle_name");
+      const discount_method = formData.get("discount_method");
+      const tier = formData.get("tier");
       const position = formData.get("position");
       const section = formData.get("section");
+      const [tierData] = JSON.parse(tier);
       const above_title_section = {
         text: formData.get("titleSectionText"),
         size: formData.get("titleSectionSize"),
@@ -254,14 +113,11 @@ export async function action({ request }) {
         size: formData.get("titleSize"),
         color: formData.get("titleColor"),
       };
-
       const Tiers = {
         save: formData.get("tierSave"),
         comparedPrice: formData.get("tierComparedPrice"),
         color: formData.get("tierColor"),
         badgeColor: formData.get("badge_color"),
-        text: formData.get("tierText"),
-        size: formData.get("tierSize"),
       };
       const call_to_action_button = {
         text: formData.get("ctaText"),
@@ -279,21 +135,122 @@ export async function action({ request }) {
         color: formData.get("backgroundColor"),
         shadow: formData.get("backgroundShadow"),
       };
-      try {
-        if (!bundle_id) {
-          return json({ message: "Missing required fields" }, { status: 400 });
-        }
 
-        const existingBundle = await db.volumeDiscount.findUnique({
-          where: {
-            id: parseInt(bundle_id),
+      let data;
+      if (discount_method === "Percentage") {
+        console.log('percentage me')
+        data = JSON.stringify({
+          query:
+            "mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) { discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) { automaticDiscountNode { id automaticDiscount { ... on DiscountAutomaticBasic { title startsAt combinesWith { productDiscounts shippingDiscounts orderDiscounts } minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } } customerGets { value { ... on DiscountPercentage { percentage } } items { ... on AllDiscountItems { allItems } } } } } } userErrors { field code message } } }",
+          variables: {
+            automaticBasicDiscount: {
+              title: bundle_name,
+              startsAt: "2025-01-07T01:28:55-05:00",
+              minimumRequirement: {
+                quantity: {
+                  greaterThanOrEqualToQuantity: tierData?.quantity,
+                },
+              },
+              customerGets: {
+                value: {
+                  percentage: JSON.parse(tierData?.discount) / 100,
+                },
+                items: {
+                  all: true,
+                },
+              },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: false,
+                orderDiscounts: false,
+              },
+            },
           },
         });
+      } else if (discount_method === "Fixed Amount") {
+        data = JSON.stringify({
+          query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+            discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
+              automaticDiscountNode {
+                id
+                automaticDiscount {
+                  ... on DiscountAutomaticBasic {
+                    title
+                    startsAt
+                    combinesWith { productDiscounts shippingDiscounts orderDiscounts }
+                    minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } }
+                    customerGets {
+                      value { ... on DiscountAmount { amount { amount currencyCode } } }
+                      items { ... on AllDiscountItems { allItems } }
+                    }
+                  }
+                }
+              }
+              userErrors { field code message }
+            }
+          }`,
+          variables: {
+            automaticBasicDiscount: {
+              title: bundle_name,
+              startsAt: "2025-01-07T01:28:55-05:00",
+              minimumRequirement: {
+                quantity: {
+                  greaterThanOrEqualToQuantity: tierData?.quantity,
+                },
+              },
+              customerGets: {
+                value: {
+                  discountAmount: {
+                    amount: tierData?.discount,
+                    appliesOnEachItem: false,
+                  },
+                },
+                items: {
+                  all: true,
+                },
+              },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: false,
+                orderDiscounts: false,
+              },
+            },
+          },
+        });
+      }
 
-        if (existingBundle) {
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2025-01/graphql.json`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
+        data: data,
+      };
+
+      try {
+        const response = await axios.request(config);
+        console.log(response,'no response')
+        const discount_id =
+          response?.data?.data?.discountAutomaticBasicCreate
+            ?.automaticDiscountNode?.id;
+        const discount_info = response?.data?.data;
+
+
+        console.log(discount_id, 'discount_id')
+        console.log(discount_info, 'discount_info')
+
+        if (bundle_id) {
+          
           const updatedDiscount = await db.volumeDiscount.update({
             where: { id: parseInt(bundle_id) },
             data: {
+              bundle_name,
+              product_all: product === "All Products" ? 1 : 0,
+              discount_method,
+              tier,
               position,
               section,
               above_title_section,
@@ -302,20 +259,28 @@ export async function action({ request }) {
               call_to_action_button,
               text_below_cta,
               background,
+              discount_id,
+              discount_info,
               domainName: shop,
             },
           });
 
-          return json({
-            message: "Data updated successfully",
-            data: updatedDiscount,
-            status: 200,
-            step: "third",
-          });
+          return json(
+            { message: "Data Updated successfully",
+              data: updatedDiscount,
+              status: 200,
+              step: 4,
+              activeTab: "Return", },
+            
+          );
         } else {
+          console.log('create')
           const savedDiscount = await db.volumeDiscount.create({
             data: {
-              id: parseInt(bundle_id),
+              bundle_name,
+              product_all: product === "All Products" ? 1 : 0,
+              discount_method,
+              tier,
               position,
               section,
               above_title_section,
@@ -324,41 +289,37 @@ export async function action({ request }) {
               call_to_action_button,
               text_below_cta,
               background,
+              discount_id,
+              discount_info,
               domainName: shop,
             },
           });
-          return json({
-            message: "Data saved successfully",
-            data: savedDiscount,
-            status: 200,
-            step: "third",
-          });
+
+          return json(
+            { message: "Data saved successfully",
+              data: savedDiscount,
+              status: 200,
+              step: 4,
+              activeTab: "Return",
+             },
+          
+          );
         }
       } catch (error) {
-        console.log(error, "check errior");
-        return json({
-          message: "Failed to process the request",
-          error: error.message,
-          status: 500,
-        });
+        console.error("Error processing the request:", error);
+        return json(
+          { message: "Failed to process the request", error: error.message },
+          { status: 500 },
+        );
       }
-    } else if (name === "bundle") {
-      console.log("yes triggerd");
     }
   } else if (request.method === "DELETE") {
     try {
-      const domainName = shop;
+    
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
       console.log(productId, "productbvfdj");
       console.log(discount_id, "easypeesy");
-
-      if (!domainName || !productId) {
-        return json({
-          message: "Missing 'domainName' or 'product_id'",
-          status: 400,
-        });
-      }
 
       // Prepare GraphQL mutation
       const data = JSON.stringify({
@@ -428,7 +389,7 @@ export async function action({ request }) {
         message: "Bundle successfully deleted",
         status: 200,
         method: "delete",
-        step: 4,
+        step: 5,
       });
     } catch (error) {
       console.error("Error in delete process:", error);
@@ -437,7 +398,7 @@ export async function action({ request }) {
         error: error.message,
         status: 500,
         method: "delete",
-        step: 4,
+        step: 5,
       });
     }
   } else {
@@ -497,9 +458,11 @@ export default function VolumePage() {
   const submit = useSubmit();
 
   console.log(actionResponse, "actionResponse");
-  const [showComponent, setShowComponent] = useState(1);
-  const [showEdit, setShowEdit] = useState(false);
+  const [showComponent, setShowComponent] = useState(0);
+  const [editState, setEditState] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [productId, setProductId] = useState(null);
+  const [discountId, setDiscountId] = useState('')
   const [showPosition, setShowPosition] = useState(false);
   const [details, setDetails] = useState({});
   const [position, setPosition] = useState("Below Section");
@@ -516,7 +479,14 @@ export default function VolumePage() {
   const [all, setAll] = useState("first");
   const [activeApp, setActiveApp] = useState("Active");
   const [active, setActive] = useState(false);
-  const [tier, setTier] = useState([{ id: 1,  }]);
+  const [tier, setTier] = useState([
+    {
+      quantity: "2",
+      discount: "50",
+      title: "Buy 2 Products",
+      badge: "Most Popular",
+    },
+  ]);
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
     titleSectionSize: 5,
@@ -601,11 +571,8 @@ export default function VolumePage() {
     }));
   };
 
-  const addAnotherTier = () => {
-    setTier((prevSections) => [
-      ...prevSections,
-      { id: prevSections.length + 1 },
-    ]);
+  const addTier = () => {
+    setTiers([...tiers, { quantity: "", discount: "", title: "", badge: "" }]);
   };
 
   const handleChange = (e) => {
@@ -623,9 +590,12 @@ export default function VolumePage() {
   };
 
   const handleDesign = () => {
-    setAll("first");
-    setActiveTab("Products");
+    setActiveTab('Home')
+    setEditState(false);
+    setShowComponent(0);
+    setId(null);
   };
+
 
   const handleFirst = () => {
     if (values.bundle_name === "") {
@@ -655,64 +625,73 @@ export default function VolumePage() {
   };
 
   const handleSecond = () => {
-
-    console.log(tier.length,'check tire');
-
-    if(values.product === "All Products") {
-       
+    if (values.product === "All Products") {
+      const [singleTier] = tier;
+      if (singleTier.badge === "") {
+        notify.error("Please enter badge text", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      } else if (singleTier.quantity === "") {
+        notify.error("Please enter quantity", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      } else if (singleTier.title === "") {
+        notify.error("Please enter title", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      } else if (singleTier.discount === "") {
+        notify.error(`Please enter ${values.discount_method}`, {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      } else if (values.discount_method === "Percentage") {
+        if (singleTier.discount == 100 || singleTier.discount > 100) {
+          notify.error("Discount can not be 100 or more", {
+            position: "top-center",
+            style: {
+              background: "red",
+              color: "white",
+            },
+          });
+        } else if (!/^\d+(\.\d{1,2})?$/.test(singleTier.discount)) {
+          notify.error(`${values.discount_method} must be a number`, {
+            position: "top-center",
+            style: { background: "red", color: "white" },
+          });
+        } else if (!/^\d+(\.\d{1,2})?$/.test(singleTier.quantity)) {
+          notify.error("Quantity must be a number", {
+            position: "top-center",
+            style: { background: "red", color: "white" },
+          });
+        } else {
+          setShowComponent(3);
+        }
+      }else {
+        setShowComponent(3)
+      }
     }
-
-    // if (values.discount_method === "Percentage") {
-    //   if (values.amount == 100) {
-    //     notify.success("Discount can not be 100%", {
-    //       position: "top-center",
-    //       style: {
-    //         background: "red",
-    //         color: "white",
-    //       },
-    //     });
-    //   } else if (values.amount > 100) {
-    //     notify.success("Discount can not be more than 100%", {
-    //       position: "top-center",
-    //       style: {
-    //         background: "red",
-    //         color: "white",
-    //       },
-    //     });
-    //   } else {
-    //     setShowComponent(3);
-    //   }
-    // } else {
-    //   setShowComponent(3);
-    // }
   };
 
   const handleTierChange = (index, field, value) => {
-    const updatedTier = [...tier];
-    const errorMessages = [...errors];
-
-    if (field === "quantity" || field === "discount") {
-      if (!/^\d*$/.test(value)) {
-        errorMessages[index] = {
-          ...errorMessages[index],
-          [field]: "Only numbers are allowed.",
-        };
-      } else {
-        errorMessages[index] = { ...errorMessages[index], [field]: "" };
-      }
-    } else if (field === "title" || field === "badge") {
-      if (/[^a-zA-Z\s]/.test(value)) {
-        errorMessages[index] = {
-          ...errorMessages[index],
-          [field]: "Only letters are allowed.",
-        };
-      } else {
-        errorMessages[index] = { ...errorMessages[index], [field]: "" };
-      }
-    }
-
-    updatedTier[index][field] = value;
-    setTier(updatedTier);
+    const updatedTiers = tier.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item,
+    );
+    setTier(updatedTiers);
   };
 
   const handleCheckboxChange = (id) => {
@@ -721,14 +700,25 @@ export default function VolumePage() {
 
   const handleEdit = (item) => {
     setDetails(item);
-    setShowEdit(true);
+    setEditState(true);
     setActiveTab("Products");
     setShowComponent(1);
   };
 
+  const handleCreate = () =>{
+    setActiveTab('Products');
+    setShowComponent(1);
+  }
+
+  const handleDelete = (item) => {
+    setShowPopup(true)
+    setProductId(item.id)
+    setDiscountId(item.discount_id)
+  }
+
   useEffect(() => {
     if (actionResponse?.status === 200) {
-      if (actionResponse?.step === "Fourth") {
+      if (actionResponse?.step === 4) {
         notify.success(actionResponse?.message, {
           position: "top-center",
           style: {
@@ -738,6 +728,49 @@ export default function VolumePage() {
         });
         setActiveTab("Return");
       }
+      setValues({
+        bundle_name: "Example Bundle 1",
+        product: "All Products",
+        discount_method: "Percentage",
+      })
+      setTier([
+        {
+          quantity: "2",
+          discount: "50",
+          title: "Buy 2 Products",
+          badge: "Most Popular",
+        },
+      ])
+      setPosition("Below Section");
+      setSection("Buy Buttons");
+      seTitleSection({
+        titleSectionText: "Limited Time Offer",
+        titleSectionSize: 5,
+        titleSectionColor: "#000000",
+      });
+      seTitle({
+        titleText: "Add More & Save",
+        titleSize: 5,
+        titleColor: "#000000",
+      });
+
+      setCallAction({
+        ctaText: 'Add To Cart',
+        ctaSize: 5,
+        ctaColor: '#000000',
+      });
+      setTextBelow((prev) => ({
+        ...prev,
+        tbText: "Lifetime warranty & Free Returns",
+        tbSize: 5,
+        tbColor: '#555555',
+      }));
+      setBackGround((prev) => ({
+        ...prev,
+        backgroundColor: "#FFFFFF",
+        backgroundShadow:  true,
+      }));
+    
       setShowComponent(actionResponse?.step);
     } else if (actionResponse?.status === 500) {
       notify.success(actionResponse?.error, {
@@ -751,7 +784,7 @@ export default function VolumePage() {
   }, [actionResponse]);
 
   useEffect(() => {
-    if (actionResponse?.step === 4) {
+    if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
         notify.success(actionResponse?.message, {
           position: "top-center",
@@ -774,15 +807,17 @@ export default function VolumePage() {
   }, [actionResponse]);
 
   useEffect(() => {
-    if (showEdit) {
-      console.log(details, "checkdetails");
+    if (editState) {
+      console.log(details, "hence");
       setId(details.id);
       setValues((prev) => ({
         ...prev,
         bundle_name: details.bundle_name,
         product:
           details.product_all == 1 ? "All Products" : "Specific Products",
+          discount_method: details.discount_method
       }));
+      setTier(JSON.parse(details.tier))
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
@@ -816,7 +851,7 @@ export default function VolumePage() {
         backgroundShadow: details.background.shadow == "on" ? true : false,
       }));
     }
-  }, [showEdit]);
+  }, [editState]);
 
   return (
     <>
@@ -824,7 +859,7 @@ export default function VolumePage() {
         <TitleBar title="Volume Bundles"></TitleBar>
         <div className={styles.flexWrapper}>
           <div className={styles.headingFlex}>
-            <button className={styles.btn_Back} onClick={() => setAll("first")}>
+            <button className={styles.btn_Back}>
               <svg
                 width="14"
                 height="14"
@@ -923,7 +958,7 @@ export default function VolumePage() {
                   />{" "}
                 </button>
                 <button
-                  onClick={() => setActiveTab("Products")}
+                  onClick={handleCreate}
                   className={`${styles.btn_one} ${styles.active}`}
                 >
                   Create Volume Discount
@@ -936,51 +971,47 @@ export default function VolumePage() {
                 <React.Fragment key={card.id}>
                   <div className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
-                      <Form method="POST">
-                        <div
-                          className={styles.btnFlexWrapper}
-                          style={{ alignItems: "center" }}
-                        >
-                          <label className={styles.switch}>
-                            <input
-                              type="checkbox"
-                              name="intent"
-                              value="bundle"
-                              checked={card?.isActive === 1 ? false : true}
-                              onChange={() =>
-                                handleCheckboxChange(card.discount_id)
-                              }
-                            />
-                            <span className={styles.slider}></span>
-                          </label>
+                      {/* <Form method="POST"> */}
+                      <div
+                        className={styles.btnFlexWrapper}
+                        style={{ alignItems: "center" }}
+                      >
+                        <label className={styles.switch}>
                           <input
-                            type="hidden"
-                            name="product_id"
-                            value={card?.discount_id}
+                            type="checkbox"
+                            name="intent"
+                            value="bundle"
+                            checked={card?.isActive === 1 ? false : true}
+                            onChange={() =>
+                              handleCheckboxChange(card.discount_id)
+                            }
                           />
-                          <h2 className={styles.cardHeading}>
-                            {card?.bundle_name}
-                          </h2>
-                        </div>
-                      </Form>
+                          <span className={styles.slider}></span>
+                        </label>
+                       
+                        <h2 className={styles.cardHeading}>
+                          {card?.bundle_name}
+                        </h2>
+                      </div>
+                      {/* </Form> */}
                       <div className={styles.btnFlexWrapper}>
                         <Form method="DELETE">
                           <input
                             type="hidden"
                             name="product_id"
-                            value={card?.id}
+                            value={productId}
                           />
 
                           <input
                             type="hidden"
                             name="discount_id"
-                            value={card?.discount_id}
+                            value={discountId}
                           />
 
                           <button
                             className={styles.deletedBtn}
                             type="button"
-                            onClick={() => setShowPopup(true)}
+                            onClick={()=> handleDelete(card)}
                           >
                             <svg
                               width="20"
@@ -1057,7 +1088,7 @@ export default function VolumePage() {
                 }
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                  {showComponent >= 1 ? (
+                  {showComponent > 1 ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="22"
@@ -1106,10 +1137,12 @@ export default function VolumePage() {
                 Products
               </span>
               <span
-                className={`${showComponent >= 2 ? styles.active_tab : ""} ${activeTab === "Offer" ? styles.bordercolor : ""}`}
+                className={
+                  showComponent == 2 ? styles.active_tab : styles.bordercolor
+                }
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                  {showComponent >= 2 ? (
+                  {showComponent > 2 ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="22"
@@ -1132,10 +1165,12 @@ export default function VolumePage() {
                 Offer
               </span>
               <span
-                className={`${showComponent >= 3 ? styles.active_tab : ""} ${activeTab === "Design" ? styles.bordercolor : ""}`}
+                className={
+                  showComponent == 3 ? styles.active_tab : styles.bordercolor
+                }
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                  {showComponent >= 3 ? (
+                  {showComponent > 3 ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="22"
@@ -1306,7 +1341,7 @@ export default function VolumePage() {
                           </div>
 
                           {tier.map((item, index) => (
-                            <React.Fragment>
+                            <React.Fragment key={index}>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="">Tier #{index + 1}</label>
 
@@ -1324,16 +1359,12 @@ export default function VolumePage() {
                                   />
                                   <label htmlFor="html">Set Default</label>
                                 </div>
-
-                                <div className={styles.input_tier}>
+                                <div key={index} className={styles.input_tier}>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="quantity">Quantity</label>
                                     <input
-                                      type="number"
-                                      id="quantity"
+                                      type="text"
                                       name="quantity"
-                                      min="1"
-                                      placeholder="2"
                                       value={item.quantity}
                                       onChange={(e) =>
                                         handleTierChange(
@@ -1346,16 +1377,13 @@ export default function VolumePage() {
                                   </div>
 
                                   <div className={styles.input_labelCustomize}>
-                                    <label for="quantity">
+                                    <label htmlFor="quantity">
                                       Set {getLabelText(values.discount_method)}
                                     </label>
 
                                     <input
-                                      type="number"
-                                      id="discount"
+                                      type="text"
                                       name="discount"
-                                      min="1"
-                                      placeholder="50"
                                       value={item.discount}
                                       onChange={(e) =>
                                         handleTierChange(
@@ -1368,13 +1396,10 @@ export default function VolumePage() {
                                   </div>
 
                                   <div className={styles.input_labelCustomize}>
-                                    <label for="quantity">Title</label>
+                                    <label htmlFor="quantity">Title</label>
                                     <input
                                       type="text"
                                       name="title"
-                                      id="bundle Product"
-                                      checked
-                                      placeholder="Buy 2 Products"
                                       value={item.title}
                                       onChange={(e) =>
                                         handleTierChange(
@@ -1387,14 +1412,11 @@ export default function VolumePage() {
                                   </div>
 
                                   <div className={styles.input_labelCustomize}>
-                                    <label for="quantity">Badge Text</label>
+                                    <label htmlFor="quantity">Badge Text</label>
                                     <div>
                                       <input
                                         type="text"
                                         name="badge"
-                                        id="bundle Product"
-                                        checked
-                                        placeholder="Most Popular"
                                         value={item.badge}
                                         onChange={(e) =>
                                           handleTierChange(
@@ -1406,7 +1428,6 @@ export default function VolumePage() {
                                       />
                                     </div>
                                   </div>
-
                                   <div className={styles.image_name}>
                                     <button
                                       onClick={() => handleDelete(item.id)}
@@ -1424,18 +1445,6 @@ export default function VolumePage() {
                               </div>
                             </React.Fragment>
                           ))}
-{/* 
-                          <input type="hidden" name="bundle_id" value={id} />
-                          <input
-                            type="hidden"
-                            name="tier"
-                            value={JSON.stringify(tier)}
-                          />
-                          <input
-                            type="hidden"
-                            name="bundle_title"
-                            value={actionResponse?.data?.bundle_name}
-                          /> */}
 
                           {values.product !== "All Products" && (
                             <div className={styles.Addanotherdiv}>
@@ -1450,14 +1459,14 @@ export default function VolumePage() {
 
                           <div className={styles.Add_btn}>
                             <button
-                             type="button"
+                              type="button"
                               onClick={() => setShowComponent(1)}
                               className={styles.Backbtn}
                             >
                               Back
                             </button>
                             <button
-                            type="button"
+                              type="button"
                               className={styles.NextBtn}
                               onClick={handleSecond}
                             >
@@ -1485,6 +1494,32 @@ export default function VolumePage() {
                                 >
                                   <h4>Placement</h4>
                                 </div>
+
+                                <input
+                                  type="hidden"
+                                  name="bundle_id"
+                                  value={id}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="tier"
+                                  value={JSON.stringify(tier)}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="bundle_name"
+                                  value={values.bundle_name}
+                                />
+                                 <input
+                                  type="hidden"
+                                  name="product"
+                                  value={values.product}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="discount_method"
+                                  value={values.discount_method}
+                                />
                                 <div className={styles.input_labelCustomize}>
                                   <label htmlFor="">Position</label>
 
@@ -1634,7 +1669,6 @@ export default function VolumePage() {
                                     name="titleSectionText"
                                     value={titleSection.titleSectionText}
                                     onChange={handleTitleSection}
-                                    placeholder=""
                                     className={styles.inputDiv}
                                   />
                                 </div>
@@ -1647,7 +1681,6 @@ export default function VolumePage() {
                                   <input
                                     type="number"
                                     id="title_section_size"
-                                    placeholder=""
                                     name="titleSectionSize"
                                     value={titleSection.titleSectionSize}
                                     onChange={handleTitleSection}
@@ -1668,7 +1701,6 @@ export default function VolumePage() {
                                       name="titleSectionColor"
                                       value={titleSection.titleSectionColor}
                                       onChange={handleTitleSection}
-                                      placeholder=""
                                     />
                                   </div>
                                 </div>
@@ -1697,7 +1729,6 @@ export default function VolumePage() {
                                     name="titleText"
                                     value={title.titleText}
                                     onChange={handleTitle}
-                                    placeholder=""
                                     className={styles.inputDiv}
                                   />
                                 </div>
@@ -1710,7 +1741,6 @@ export default function VolumePage() {
                                     name="titleSize"
                                     value={title.titleSize}
                                     onChange={handleTitle}
-                                    placeholder=""
                                   />
                                 </div>
                                 <div className={styles.input_labelCustomize}>
@@ -1725,7 +1755,6 @@ export default function VolumePage() {
                                       name="titleColor"
                                       value={title.titleColor}
                                       onChange={handleTitle}
-                                      placeholder=""
                                     />
                                   </div>
                                 </div>
@@ -1984,11 +2013,12 @@ export default function VolumePage() {
                                   Back
                                 </button>
                                 <button
+                                  type="submit"
                                   name="intent"
                                   value="stepThird"
                                   className={styles.NextBtn}
                                 >
-                                  Launch Bundle!
+                                  Launch Bundle
                                 </button>
                               </div>
                             </>

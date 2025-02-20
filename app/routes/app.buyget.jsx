@@ -4,6 +4,7 @@ import db from "../db.server";
 import styles from "../styles/main.module.css";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
 import Productpreview from "../routes/assets/product_sample.png";
+import deletedIcon from "../routes/assets/deleted.svg";
 import offerIcon from "../../app/routes/assets/offerIcon.svg";
 import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
 import collectedIcon from "../../app/routes/assets/collected_icon.png";
@@ -22,6 +23,7 @@ import AddProduct from "../components/BuyComponents/AddProduct";
 import { Toaster, toast as notify } from "sonner";
 import { getAllBundle } from "../api/buyxGety.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
+
 
 export async function loader({ request }) {
   try {
@@ -96,8 +98,11 @@ export async function action({ request }) {
       const where_to_display = formData.get("where_to_display");
       const amount = formData.get("amount");
       const discount_method = formData.get("discount_method");
-      const [buyProducts] = JSON.parse(formData.get("buyProducts"));
-      const [getProducts] = JSON.parse(formData.get("getProducts"));
+      const buysx = JSON.parse(formData.get("buyProducts"));
+      const gety = JSON.parse(formData.get("getProducts"));
+
+      const [buyProducts] = buysx;
+      const [getProducts] = gety;
 
       const position = formData.get("position");
       const section = formData.get("section");
@@ -271,11 +276,7 @@ export async function action({ request }) {
 
       try {
         const response = await axios.request(config);
-        console.log(
-          response?.data?.data?.discountAutomaticBxgyCreate
-            ?.automaticDiscountNode?.id,
-          "reshhh",
-        );
+
         discount_id =
           response?.data?.data?.discountAutomaticBxgyCreate
             ?.automaticDiscountNode?.id;
@@ -286,6 +287,8 @@ export async function action({ request }) {
             where: { id: parseInt(bundle_id) },
             data: {
               bundle_name,
+              buysx,
+              gety,
               where_to_display,
               discount_method,
               amount: parseFloat(amount),
@@ -307,13 +310,15 @@ export async function action({ request }) {
             message: "Bundle Updated Successfully",
             data: updatedDiscount,
             status: 200,
-            step: "Fourth",
+            step: 4,
             activeTab: "Return",
           });
         } else {
           const savedDiscount = await db.bogoxy.create({
             data: {
               bundle_name,
+              buysx,
+              gety,
               where_to_display,
               discount_method,
               amount: parseFloat(amount),
@@ -335,7 +340,7 @@ export async function action({ request }) {
             message: "Bundle created successfully",
             data: savedDiscount,
             status: 200,
-            step: "Fourth",
+            step: 4,
             activeTab: "Return",
           });
         }
@@ -433,7 +438,7 @@ export async function action({ request }) {
         message: "Bundle successfully deleted",
         status: 200,
         method: "delete",
-        step: 4,
+        step: 5,
       });
     } catch (error) {
       console.error("Error in delete process:", error);
@@ -442,7 +447,7 @@ export async function action({ request }) {
         error: error.message,
         status: 500,
         method: "delete",
-        step: 4,
+        step: 5,
       });
     }
   } else {
@@ -505,17 +510,17 @@ export default function BuyGetPage() {
   const [id, setId] = useState(null);
   const [values, setValues] = useState({
     bundle_name: "Example Bundle 1",
-    buysx: [],
-    gety: [],
     where_to_display: "Bundle Product Pages",
     discount_method: "Percentage",
     amount: "",
   });
   const [activeSelection, setActiveSelection] = useState("Buy");
   const [buyProducts, setBuyProducts] = useState([]);
-  const [showComponent, setShowComponent] = useState(1);
+  const [showComponent, setShowComponent] = useState(0);
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
+  const [productId, setProductId] = useState(null);
+  const [discountId, setDiscountId] = useState("");
   const [activeTab, setActiveTab] = useState("Home");
   const [showPopup, setShowPopup] = useState(false);
   const [isProduct, setIsProduct] = useState(false);
@@ -551,6 +556,7 @@ export default function BuyGetPage() {
     productColor: "#000000",
   });
 
+
   const [bundleCost, setBundleCost] = useState({
     bundleCostSize: 5,
     bundleCostColor: "#000000",
@@ -574,7 +580,6 @@ export default function BuyGetPage() {
     backgroundColor: "#FFFFFF",
     backgroundShadow: true,
   });
-
 
   const addBuysXSection = () => {
     setBuysXSections((prevSections) => [
@@ -663,12 +668,17 @@ export default function BuyGetPage() {
     setIsProduct(false);
   };
 
-  const handleReturn = () => {
-    setActiveTab("Home");
+  const handleDesign = () => {
+    setActiveTab('Home')
+    setShowEdit(false);
     setShowComponent(0);
+    setId(null);
   };
 
- 
+  const handleCreate = () =>{
+    setActiveTab('Products');
+    setShowComponent(1);
+  }
 
   const handleProduct = (btn) => {
     if (btn === "Buy") {
@@ -679,7 +689,8 @@ export default function BuyGetPage() {
     setIsProduct(true);
   };
 
- 
+  console.log(isProduct, "isProduct");
+
   const handleFirst = () => {
     if (values.bundle_name === "") {
       notify.success("Bundle Name is Required", {
@@ -720,33 +731,32 @@ export default function BuyGetPage() {
     }
   };
 
- 
-
   const handleActive = (item) => {
     setActiveApp(item);
     setActive(false);
   };
-
-
 
   const handleCopy = (id) => {
     const newCard = { ...cards.find((card) => card.id === id), id: Date.now() };
     setCards([...cards, newCard]);
   };
 
-
   const handleEdit = (item) => {
     setDetails(item);
     setShowEdit(true);
-    setActiveTab('Products')
+    setActiveTab("Products");
     setShowComponent(1);
-  }
+  };
 
-
+  const handleDelete = (item) => {
+    setShowPopup(true);
+    setProductId(item.id);
+    setDiscountId(item.discount_id);
+  };
 
   useEffect(() => {
     if (actionResponse?.status === 200) {
-      if (actionResponse?.step === "Fourth") {
+      if (actionResponse?.step === 4) {
         notify.success(actionResponse?.message, {
           position: "top-center",
           style: {
@@ -756,6 +766,51 @@ export default function BuyGetPage() {
         });
         setActiveTab("Return");
       }
+      setValues({
+        bundle_name: "Example Bundle 1",
+        where_to_display: "Bundle Product Pages",
+        discount_method: "Percentage",
+        amount: "",
+      });
+      setBuyProducts([]);
+      setGetProducts([]);
+      setPosition("Below Section");
+      setSection("Buy Buttons");
+      seTitleSection({
+        titleSectionText: "Limited Time Offer",
+        titleSectionSize: 5,
+        titleSectionColor: "#000000",
+      });
+      seTitle({
+        titleText: "Add Product and save 10%!",
+        titleSize: 5,
+        titleColor: "#000000",
+      });
+      setProductTitle({
+        productSize: 5,
+        productColor: "#000000",
+      });
+      setBundleCost({
+        bundleCostSize: 5,
+        bundleCostColor: "#000000",
+        bundleCostComparedPrice: true,
+        bundleCostSave: true,
+      });
+
+      setCallAction({
+        ctaText: "Add To Cart",
+        ctaSize: 5,
+        ctaColor: "#000000",
+      });
+      setTextBelow({
+        tbText: "Lifetime warranty & Free Returns",
+        tbSize: 5,
+        tbColor: "#555555",
+      });
+      setBackGround({
+        backgroundColor: "#FFFFFF",
+        backgroundShadow: true,
+      });
       setShowComponent(actionResponse?.step);
     } else if (actionResponse?.status === 500) {
       notify.success(actionResponse?.error, {
@@ -768,68 +823,68 @@ export default function BuyGetPage() {
     }
   }, [actionResponse]);
 
-
   useEffect(() => {
-    if(showEdit) {
+    if (showEdit) {
       setId(details.id);
-      setValues(prev => ({
+      console.log(details, "mine");
+      setValues((prev) => ({
         ...prev,
         bundle_name: details.bundle_name,
         where_to_display: details.where_to_display,
         discount_method: details.discount_method,
-        amount: details.amount
+        amount: details.amount,
       }));
+      setBuyProducts(JSON.parse(JSON.stringify(details.buysx)));
+      setGetProducts(JSON.parse(JSON.stringify(details.gety)))
       setPosition(details.position);
       setSection(details.section);
-      seTitleSection(prev => ({
+      seTitleSection((prev) => ({
         ...prev,
         titleSectionText: details.title_section.text,
         titleSectionSize: details.title_section.size,
-        titleSectionColor: details.title_section.color
+        titleSectionColor: details.title_section.color,
       }));
-      seTitle(prev => ({
+      seTitle((prev) => ({
         ...prev,
         titleText: details.title.text,
         titleSize: details.title.size,
-        titleColor: details.title.color
+        titleColor: details.title.color,
       }));
-      setProductTitle(prev => ({
+      setProductTitle((prev) => ({
         ...prev,
         productSize: details.product.size,
-        productColor: details.product.color
+        productColor: details.product.color,
       }));
-      setBundleCost(prev => ({
+      setBundleCost((prev) => ({
         ...prev,
         bundleCostColor: details.bundle_cost.color,
         bundleCostSize: details.bundle_cost.size,
-        bundleCostComparedPrice: details.bundle_cost.comparedPrice == "on" ? true: false,
-        bundleCostSave: details.bundle_cost.save == "on" ? true: false
+        bundleCostComparedPrice:
+          details.bundle_cost.comparedPrice == "on" ? true : false,
+        bundleCostSave: details.bundle_cost.save == "on" ? true : false,
       }));
-      setCallAction(prev => ({
+      setCallAction((prev) => ({
         ...prev,
         ctaText: details.call_to_action_button.text,
         ctaSize: details.call_to_action_button.size,
-        ctaColor: details.call_to_action_button.color
+        ctaColor: details.call_to_action_button.color,
       }));
-      setTextBelow(prev => ({
+      setTextBelow((prev) => ({
         ...prev,
-        tbText:details.text_below_cta.text,
+        tbText: details.text_below_cta.text,
         tbSize: details.text_below_cta.size,
-        tbColor:details.text_below_cta.color
+        tbColor: details.text_below_cta.color,
       }));
-      setBackGround(prev => ({
+      setBackGround((prev) => ({
         ...prev,
         backgroundColor: details.backgroud.color,
-        backgroundShadow: details.backgroud.shadow == "on" ? true: false
-      }))
+        backgroundShadow: details.backgroud.shadow == "on" ? true : false,
+      }));
     }
-
-  },[showEdit])
-
-
+  }, [showEdit]);
 
   useEffect(() => {
-    if (actionResponse?.step === 4) {
+    if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
         notify.success(actionResponse?.message, {
           position: "top-center",
@@ -843,13 +898,22 @@ export default function BuyGetPage() {
         notify.success(actionResponse?.message, {
           position: "top-center",
           style: {
-            background: "green",
+            background: "red",
             color: "white",
           },
         });
       }
     }
   }, [actionResponse]);
+
+  const handlePreviewDelete = (type, item) => {
+    if(type === "BUY") {
+      setBuyProducts((prev) => prev.filter((value) => value.productId !== item));
+    }else if(type === "GET") {
+      setGetProducts((prev) => prev.filter((value) => value.productId !== item));
+
+    }
+  }
 
   return (
     <>
@@ -943,7 +1007,7 @@ export default function BuyGetPage() {
                   />
                 </button>
                 <button
-                  onClick={() => setActiveTab("Products")}
+                  onClick={handleCreate}
                   className={`${styles.btn_one} ${styles.active}`}
                 >
                   Create A Bundle{" "}
@@ -984,7 +1048,7 @@ export default function BuyGetPage() {
                           <button
                             className={styles.deletedBtn}
                             type="button"
-                            onClick={() => setShowPopup(true)}
+                            onClick={() => handleDelete(card)}
                           >
                             <svg
                               width="20"
@@ -1015,7 +1079,10 @@ export default function BuyGetPage() {
                         >
                           <img src={copy_icon} width={20} height={20} />
                         </button>
-                        <button className={styles.edit_Btn} onClick={()=>handleEdit(card)}>
+                        <button
+                          className={styles.edit_Btn}
+                          onClick={() => handleEdit(card)}
+                        >
                           <img src={editIcon} width={20} height={20} />
                         </button>
                       </div>
@@ -1190,15 +1257,75 @@ export default function BuyGetPage() {
                                       className={styles.input_labelCustomize}
                                       onClick={() => handleProduct("Buy")}
                                     >
-                                      <label
-                                        style={{
-                                          cursor: "pointer",
-                                          color: "blue",
-                                        }}
-                                        className={styles.inputUpload}
-                                      >
-                                        <span>+</span>Add Product
-                                      </label>
+                                      {buyProducts.length > 0 ? (
+                                        products
+                                          .filter((item) =>
+                                            buyProducts.some(
+                                              (buy) =>
+                                                buy.productId ===
+                                                item?.node?.id,
+                                            ),
+                                          )
+                                          .map((item, idx) => (
+                                            <React.Fragment key={idx}>
+                                              <div
+                                                className={
+                                                  styles.input_labelCustomize
+                                                }
+                                              >
+                                                <img
+                                                  src={
+                                                    item?.node?.images?.edges[0]
+                                                      ?.node?.src
+                                                  }
+                                                  alt={item?.node?.title}
+                                                  style={{
+                                                    maxWidth: "100%",
+                                                    maxHeight: "300px",
+                                                    objectFit: "contain",
+                                                  }}
+                                                />
+                                                <div
+                                                  className={styles.image_name}
+                                                >
+                                                  <h4>{item?.node?.title}</h4>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handlePreviewDelete(
+                                                        "BUY",
+                                                        buyProducts[index]
+                                                          .productId,
+                                                      );
+                                                    }}
+                                                    className={
+                                                      styles.deletedBtn
+                                                    }
+                                                  >
+                                                    <img
+                                                      src={deletedIcon}
+                                                      width={20}
+                                                      height={20}
+                                                      alt="Delete"
+                                                    />
+                                                    Delete
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            </React.Fragment>
+                                          ))
+                                      ) : (
+                                        <label
+                                          style={{
+                                            cursor: "pointer",
+                                            color: "blue",
+                                          }}
+                                          className={styles.inputUpload}
+                                        >
+                                          <span>+</span>Add Product
+                                        </label>
+                                      )}
                                     </div>
                                   </div>
                                 </React.Fragment>
@@ -1227,15 +1354,72 @@ export default function BuyGetPage() {
                                     className={styles.input_labelCustomize}
                                     onClick={() => handleProduct("Get")}
                                   >
-                                    <label
-                                      style={{
-                                        cursor: "pointer",
-                                        color: "blue",
-                                      }}
-                                      className={styles.inputUpload}
-                                    >
-                                      <span>+</span>Add Product
-                                    </label>
+                                    {getProducts.length > 0 ? (
+                                      products
+                                        .filter((item) =>
+                                          getProducts.some(
+                                            (buy) =>
+                                              buy.productId === item?.node?.id,
+                                          ),
+                                        )
+                                        .map((item, idx) => (
+                                          <React.Fragment key={idx}>
+                                            <div
+                                              className={
+                                                styles.input_labelCustomize
+                                              }
+                                            >
+                                              <img
+                                                src={
+                                                  item?.node?.images?.edges[0]
+                                                    ?.node?.src
+                                                }
+                                                alt={item?.node?.title}
+                                                style={{
+                                                  maxWidth: "100%",
+                                                  maxHeight: "300px",
+                                                  objectFit: "contain",
+                                                }}
+                                              />
+                                              <div
+                                                className={styles.image_name}
+                                              >
+                                                <h4>{item?.node?.title}</h4>
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handlePreviewDelete(
+                                                      "GET",
+                                                      buyProducts[index]
+                                                        .productId,
+                                                    );
+                                                  }}
+                                                  className={styles.deletedBtn}
+                                                >
+                                                  <img
+                                                    src={deletedIcon}
+                                                    width={20}
+                                                    height={20}
+                                                    alt="Delete"
+                                                  />
+                                                  Delete
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </React.Fragment>
+                                        ))
+                                    ) : (
+                                      <label
+                                        style={{
+                                          cursor: "pointer",
+                                          color: "blue",
+                                        }}
+                                        className={styles.inputUpload}
+                                      >
+                                        <span>+</span>Add Product
+                                      </label>
+                                    )}
                                   </div>
                                 </div>
                               ))}
@@ -2174,7 +2358,7 @@ export default function BuyGetPage() {
                   Your bundle is up and running. Sit back and let the
                   conversations roll in.
                 </p>
-                <button className={styles.NextBtn} onClick={handleReturn}>
+                <button className={styles.NextBtn} onClick={handleDesign}>
                   Return To Dashboard
                 </button>
               </div>

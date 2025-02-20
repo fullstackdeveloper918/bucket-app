@@ -3,7 +3,7 @@ import styles from "../styles/main.module.css";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
 import arrowActive from "../../app/routes/assets/arrowActive.png";
 import { Text } from "@shopify/polaris";
-import ImportIcon from "../../routes/assets/import.svg";
+//import ImportIcon from "../../routes/assets/import.svg";
 import searchImg from "../../app/routes/assets/searchImg@.svg";
 import AddProduct from "../components/BuyComponents/AddProduct";
 import collectedIcon from "../../app/routes/assets/collected_icon.png";

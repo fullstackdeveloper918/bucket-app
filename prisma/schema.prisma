@@ -128,7 +128,6 @@ model Bogoxy {
   gety                  Json?
   where_to_display      String?
   discount_method       String?
-  
   discount_info         Json?
   amount                Float?   @default(0)
   domainName            String?
