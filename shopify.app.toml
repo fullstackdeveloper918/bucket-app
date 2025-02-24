@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://shipment-bahamas-industries-war.trycloudflare.com"
+application_url = "https://surprised-h-harmony-anaheim.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products write_discounts read_discounts"
 
 [auth]
 redirect_urls = [
-  "https://shipment-bahamas-industries-war.trycloudflare.com/auth/callback",
-  "https://shipment-bahamas-industries-war.trycloudflare.com/auth/shopify/callback",
-  "https://shipment-bahamas-industries-war.trycloudflare.com/api/auth/callback"
+  "https://surprised-h-harmony-anaheim.trycloudflare.com/auth/callback",
+  "https://surprised-h-harmony-anaheim.trycloudflare.com/auth/shopify/callback",
+  "https://surprised-h-harmony-anaheim.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

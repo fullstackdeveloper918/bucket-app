@@ -8,15 +8,24 @@ import Productpreview from "../routes/assets/product_sample.png";
 import downArrow from "../routes/assets/drop_downImg.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import styles from "../styles/main.module.css";
+import deletedIcon from "../routes/assets/deleted.svg";
 import collectedIcon from "../../app/routes/assets/collected_icon.png";
 import dropdown from "../routes/assets/drop_downImg.svg";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
-import { Form, json, useActionData, useLoaderData } from "@remix-run/react";
+import {
+  Form,
+  json,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
 import { getAllBundle } from "../api/bundle.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
+import AddProduct from "../components/BundleModal/AddProduct";
 import axios from "axios";
+import Loader from "../components/Loader/Loader";
 
 export async function loader({ request }) {
   try {
@@ -86,8 +95,14 @@ export async function action({ request }) {
 
   if (intent === "stepThird") {
     const bundle_id = formData.get("bundle_id");
+    const name = formData.get("bundle_name");
+    const products = formData.get("selectProducts");
     const position = formData.get("position");
     const section = formData.get("section");
+    const displayLocation = formData.get("displayBundle");
+    const method = formData.get("discount");
+    const chooseAmount = formData.get("amount");
+
     const title_section = {
       text: formData.get("titleSectionText"),
       size: formData.get("titleSectionSize"),
@@ -127,20 +142,15 @@ export async function action({ request }) {
     };
 
     try {
-      if (!bundle_id) {
-        return json({ message: "Missing required fields" }, { status: 400 });
-      }
-
-      const existingBundle = await db.bundle.findUnique({
-        where: {
-          id: parseInt(bundle_id),
-        },
-      });
-
-      if (existingBundle) {
+      if (bundle_id) {
         const updatedDiscount = await db.bundle.update({
           where: { id: parseInt(bundle_id) },
           data: {
+            name,
+            displayLocation,
+            method,
+            chooseAmount: parseFloat(chooseAmount),
+            products,
             position,
             section,
             title_section,
@@ -158,12 +168,17 @@ export async function action({ request }) {
           message: "Bundle Updated Successfully",
           data: updatedDiscount,
           status: 200,
-          step: "third",
+          step: 4,
+          activeTab: "Return",
         });
       } else {
         const savedDiscount = await db.bundle.create({
           data: {
-            id: parseInt(bundle_id),
+            name,
+            displayLocation,
+            method,
+            chooseAmount: parseFloat(chooseAmount),
+            products,
             position,
             section,
             title_section,
@@ -177,10 +192,11 @@ export async function action({ request }) {
           },
         });
         return json({
-          message: "Bundle saved successfully",
+          message: "Bundle created successfully",
           data: savedDiscount,
           status: 200,
-          step: "third",
+          step: 4,
+          activeTab: "Return",
         });
       }
     } catch (error) {
@@ -264,7 +280,7 @@ export async function action({ request }) {
         message: "Bundle successfully deleted",
         status: 200,
         method: "delete",
-        step: 4,
+        step: 5,
       });
     } catch (error) {
       console.error("Error in delete process:", error);
@@ -273,7 +289,7 @@ export async function action({ request }) {
         error: error.message,
         status: 500,
         method: "delete",
-        step: 4,
+        step: 5,
       });
     }
   } else {
@@ -284,75 +300,77 @@ export async function action({ request }) {
 export default function PlansPage() {
   const { products, totalBundle } = useLoaderData();
   const actionResponse = useActionData();
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("Home");
-  const [position, setPosition] = useState("");
+  const [position, setPosition] = useState("Below Section");
   const [showPosition, setShowPosition] = useState(false);
   const [showComponent, setShowComponent] = useState(1);
   const [productSections, setProductSections] = useState([{ id: 1 }]);
+  const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [section, setSection] = useState("Buy Buttons");
+  const [isProduct, setIsProduct] = useState(false);
   const [id, setId] = useState(null);
 
   const [values, setValues] = useState({
     bundle_name: "Example Bundle 1",
     displayBundle: "Bundle Product Pages",
-    amount: null,
+    amount: "",
     discount: "Percentage",
   });
 
   console.log(actionResponse, "actionResponse");
 
-
   const handleClick = (item) => {
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
-      discount: item
-    }))
-  }
+      discount: item,
+    }));
+  };
 
   const [cards, setCards] = useState([
     { id: 1, title: "Example Bundle 1", reviews: 280 },
   ]);
 
   const [titleSection, seTitleSection] = useState({
-    titleSectionText: "",
-    titleSectionSize: "",
-    titleSectionColor: "",
+    titleSectionText: "Limited Time Offer",
+    titleSectionSize: "5",
+    titleSectionColor: "#000000",
   });
 
   const [title, seTitle] = useState({
-    titleText: "",
-    titleSize: "",
-    titleColor: "",
+    titleText: "Limited Time Offer",
+    titleSize: "5",
+    titleColor: "#000000",
   });
 
   const [productTitle, setProductTitle] = useState({
-    productSize: "",
-    productColor: "",
+    productSize: "5",
+    productColor: "#000000",
   });
 
   const [bundleCost, setBundleCost] = useState({
-    bundleCostSize: "",
-    bundleCostColor: "",
-    bundleCostComparedPrice: "",
-    bundleCostSave: "",
+    bundleCostSize: "5",
+    bundleCostColor: "#000000",
+    bundleCostComparedPrice: true,
+    bundleCostSave: true,
   });
 
   const [callAction, setCallAction] = useState({
-    ctaText: "",
-    ctaSize: "",
-    ctaColor: "",
+    ctaText: "Add to Cart",
+    ctaSize: "5",
+    ctaColor: "#000000",
   });
 
   const [textBelow, setTextBelow] = useState({
-    tbText: "",
-    tbSize: "",
-    tbColor: "",
+    tbText: "Lifetime warranty & Free Returns",
+    tbSize: "5",
+    tbColor: "#555555",
   });
 
   const [background, setBackGround] = useState({
-    backgroundColor: "",
-    backgroundShadow: false,
+    backgroundColor: "#FFFFFF",
+    backgroundShadow: true,
   });
 
   const handleTitleSection = (e) => {
@@ -380,10 +398,10 @@ export default function PlansPage() {
   };
 
   const handleBundleCost = (e) => {
-    const { name, value } = e.target;
+    const { name, type, checked, value } = e.target;
     setBundleCost((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -401,6 +419,14 @@ export default function PlansPage() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleClose = () => {
+    setIsProduct(false);
+  };
+
+  const handleSave = () => {
+    setIsProduct(false);
   };
 
   const handleBackground = (e) => {
@@ -445,15 +471,24 @@ export default function PlansPage() {
           color: "white",
         },
       });
+    } else if (selectProducts.length == 0) {
+      notify.error("Please select at leat one product", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
     } else {
       setShowComponent(2);
     }
   };
 
+  console.log(values.discount, "checkdiscount");
+
   const handleSecond = () => {
     if (values.discount === "Percentage") {
       if (values.amount == 100) {
-        console.log('Amount andar')
         notify.error("Discount can not be 100%", {
           position: "top-center",
           style: {
@@ -469,25 +504,115 @@ export default function PlansPage() {
             color: "white",
           },
         });
+      } else if (values.amount == "") {
+        console.log("Kithe");
+        notify.error("Please enter percentage", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
       } else {
         setShowComponent(3);
       }
-    } else {
-      setShowComponent(3);
+    } else if (values.discount === "Fixed Amount") {
+      console.log("Amount andar");
+      if (values.amount === "") {
+        notify.error("Please enter amount", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      } else {
+        setShowComponent(3);
+      }
     }
   };
 
+  useEffect(() => {
+    if (totalBundle.length > 0) {
+      setActiveTab("Home");
+    } else {
+      setActiveTab("Products");
+    }
+  }, []);
 
   useEffect(() => {
-   if(totalBundle.length > 0) {
-    setActiveTab('Home')
-   }else {
-    setActiveTab('Products')
-   }
-  },[])
+    if (actionResponse?.status === 200) {
+      if (actionResponse?.step === 4) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+        setActiveTab("Return");
+      }
+      setValues({
+        bundle_name: "Example Bundle 1",
+        displayBundle: "Bundle Product Pages",
+        discount: "Percentage",
+        amount: "",
+      });
+      setSelectedPrducts([]);
+      setPosition("Below Section");
+      setSection("Buy Buttons");
+      seTitleSection({
+        titleSectionText: "Limited Time Offer",
+        titleSectionSize: 5,
+        titleSectionColor: "#000000",
+      });
+      seTitle({
+        titleText: "Add Product and save 10%!",
+        titleSize: 5,
+        titleColor: "#000000",
+      });
+      setProductTitle({
+        productSize: 5,
+        productColor: "#000000",
+      });
+      setBundleCost({
+        bundleCostSize: 5,
+        bundleCostColor: "#000000",
+        bundleCostComparedPrice: true,
+        bundleCostSave: true,
+      });
+
+      setCallAction({
+        ctaText: "Add To Cart",
+        ctaSize: 5,
+        ctaColor: "#000000",
+      });
+      setTextBelow({
+        tbText: "Lifetime warranty & Free Returns",
+        tbSize: 5,
+        tbColor: "#555555",
+      });
+      setBackGround({
+        backgroundColor: "#FFFFFF",
+        backgroundShadow: true,
+      });
+      setShowComponent(actionResponse?.step);
+    } else if (actionResponse?.status === 500) {
+      notify.success(actionResponse?.error, {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    }
+  }, [actionResponse]);
+
+
+  console.log(activeTab, 'activeTab')
 
   useEffect(() => {
-    if (actionResponse?.step === 4) {
+    if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
         notify.success(actionResponse?.message, {
           position: "top-center",
@@ -501,7 +626,7 @@ export default function PlansPage() {
         notify.error(actionResponse?.message, {
           position: "top-center",
           style: {
-            background: "green",
+            background: "red",
             color: "white",
           },
         });
@@ -522,11 +647,7 @@ export default function PlansPage() {
             <h2>Product Bundles</h2>
           </div>
 
-          <div
-            className={styles.activeButton}
-            id="second"
-            onClick={() => setShowProducts(true)}
-          >
+          <div className={styles.activeButton} id="second">
             <div className={styles.butttonsTab}>
               <span className={styles.selected}>Active</span>
               <div className={styles.arrowActive}>
@@ -538,8 +659,8 @@ export default function PlansPage() {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
+                    fillRule="evenodd"
+                    clipRule="evenodd"
                     d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
                     fill="#0F172A"
                   />
@@ -604,8 +725,8 @@ export default function PlansPage() {
                         xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
-                          fill-rule="evenodd"
-                          clip-rule="evenodd"
+                          fillRule="evenodd"
+                          clipRule="evenodd"
                           d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
                           fill="#0F172A"
                         />
@@ -959,8 +1080,9 @@ export default function PlansPage() {
                               onChange={handleChange}
                               className={styles.inputDiv}
                             />
-                          
                           </div>
+
+                          {console.log(selectProducts, "selectPoducts")}
 
                           {productSections.map((section, index) => (
                             <div
@@ -970,44 +1092,65 @@ export default function PlansPage() {
                               <label htmlFor="">
                                 Select Product {index + 1}
                               </label>
-                              {/* <div className={styles.input_labelCustomize}>
-                                <label
-                                  htmlFor="file-upload"
-                                  style={{ cursor: "pointer", color: "blue" }}
-                                  className={styles.inputUpload}
-                                  onClick={() => setIsProduct(true)}
-                                >
-                                  <span>+</span>Add Product
-                                </label>
-                                {file && <p> {file.name}</p>}
-                                {imagePreview && (
-                                  <div className={styles.images_upload}>
-                                    <img
-                                      src={imagePreview}
-                                      alt="Preview"
+                              <div className={styles.input_labelCustomize}>
+                                {selectProducts.length > 0 ? (
+                                  products
+                                    .filter((item) =>
+                                      selectProducts.some(
+                                        (buy) =>
+                                          buy.productId === item?.node?.id,
+                                      ),
+                                    )
+                                    .map((item, index) => (
+                                      <>
+                                        <div
+                                          className={styles.images_upload}
+                                          key={index}
+                                        >
+                                          <img
+                                            src={
+                                              item?.node?.images?.edges[0]?.node
+                                                ?.src
+                                            }
+                                            alt="Preview"
+                                            style={{
+                                              maxWidth: "100%",
+                                              maxHeight: "300px",
+                                              objectFit: "contain",
+                                            }}
+                                          />
+                                          <div className={styles.image_name}>
+                                            <h4>14K Gold Necklace</h4>
+                                            <button
+                                              className={styles.deletedBtn}
+                                            >
+                                              <img
+                                                src={deletedIcon}
+                                                width={20}
+                                                height={20}
+                                              />
+                                              Delete
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </>
+                                    ))
+                                ) : (
+                                  <>
+                                    <label
+                                      htmlFor="file-upload"
                                       style={{
-                                        maxWidth: "100%",
-                                        maxHeight: "300px",
-                                        objectFit: "contain",
+                                        cursor: "pointer",
+                                        color: "blue",
                                       }}
-                                    />
-                                    <div className={styles.image_name}>
-                                      <h4>14K Gold Necklace</h4>
-                                      <button
-                                        onClick={handleDelete}
-                                        className={styles.deletedBtn}
-                                      >
-                                        <img
-                                          src={deletedIcon}
-                                          width={20}
-                                          height={20}
-                                        />
-                                        Delete
-                                      </button>
-                                    </div>
-                                  </div>
+                                      className={styles.inputUpload}
+                                      onClick={() => setIsProduct(true)}
+                                    >
+                                      <span>+</span>Add Product
+                                    </label>
+                                  </>
                                 )}
-                              </div> */}
+                              </div>
                             </div>
                           ))}
 
@@ -1116,10 +1259,10 @@ export default function PlansPage() {
                           >
                             <button
                               type="button"
-                              style={{cursor: 'pointer'}}
-                              onClick={() => handleClick("Fixed")}
+                              style={{ cursor: "pointer" }}
+                              onClick={() => handleClick("Fixed Amount")}
                               className={
-                                values.discount === "Fixed"
+                                values.discount === "Fixed Amount"
                                   ? styles.activebtn
                                   : ""
                               }
@@ -1129,7 +1272,7 @@ export default function PlansPage() {
 
                             <button
                               type="button"
-                              style={{cursor: 'pointer'}}
+                              style={{ cursor: "pointer" }}
                               onClick={() => handleClick("Percentage")}
                               className={
                                 values.discount === "Percentage"
@@ -1148,7 +1291,12 @@ export default function PlansPage() {
                         </div>
 
                         <div className={styles.input_labelCustomize}>
-                          <label htmlFor="amount">Choose {values.discount === "Percentage"  ? "Percentage" : "Amount"}</label>
+                          <label htmlFor="amount">
+                            Choose{" "}
+                            {values.discount === "Percentage"
+                              ? "Percentage"
+                              : "Amount"}
+                          </label>
                           <div className={styles.inputTiming}>
                             <input
                               type="number"
@@ -1176,11 +1324,7 @@ export default function PlansPage() {
                         />
 
                         <div className={styles.Add_btn}>
-                          <button
-                            type="button"
-                            // onClick={() => setShow("Ready To Increase")}
-                            className={styles.Backbtn}
-                          >
+                          <button type="button" className={styles.Backbtn}>
                             Back
                           </button>
                           <button
@@ -1194,8 +1338,36 @@ export default function PlansPage() {
                       </div>
                     )}
 
-                    {showComponent >= 3 && (
+                    {showComponent == 3 && (
                       <>
+                        <input type="hidden" name="bundle_id" value={id} />
+                        <input
+                          type="hidden"
+                          name="bundle_name"
+                          value={values.bundle_name}
+                        />
+                        <input
+                          type="hidden"
+                          name="displayBundle"
+                          value={values.displayBundle}
+                        />
+                        <input
+                          type="hidden"
+                          name="discount"
+                          value={values.discount}
+                        />
+                        <input
+                          type="hidden"
+                          name="amount"
+                          value={values.amount}
+                        />
+
+                        <input
+                          type="hidden"
+                          name="selectProducts"
+                          value={JSON.stringify(selectProducts)}
+                        />
+
                         <div className={styles.table_content}>
                           <div className={styles.requestReview}>
                             <div className={styles.timing_after}>
@@ -1249,34 +1421,18 @@ export default function PlansPage() {
                                               <li
                                                 data-value="option1"
                                                 onClick={() =>
-                                                  setPosition("option1")
+                                                  setPosition("Below Section")
                                                 }
                                               >
-                                                Option 1
+                                                Below Section
                                               </li>
                                               <li
                                                 data-value="option2"
                                                 onClick={() =>
-                                                  setPosition("option2")
+                                                  setPosition("Above Section")
                                                 }
                                               >
-                                                Option 2
-                                              </li>
-                                              <li
-                                                data-value="option3"
-                                                onClick={() =>
-                                                  setPosition("option3")
-                                                }
-                                              >
-                                                Option 3
-                                              </li>
-                                              <li
-                                                data-value="option4"
-                                                onClick={() =>
-                                                  setPosition("option4")
-                                                }
-                                              >
-                                                Option 4
+                                                Above Section
                                               </li>
                                             </ul>
                                           )}
@@ -1842,11 +1998,18 @@ export default function PlansPage() {
                                       Back
                                     </button>
                                     <button
+                                      disabled={
+                                        navigation.state == "submitting"
+                                      }
                                       name="intent"
                                       value="stepThird"
                                       className={styles.NextBtn}
                                     >
-                                      Launch Bundle
+                                      {navigation.state == "submitting" ? (
+                                        <Loader />
+                                      ) : (
+                                        "Launch Bundle"
+                                      )}
                                     </button>
                                   </div>
                                 </>
@@ -1936,7 +2099,10 @@ export default function PlansPage() {
               </div>
             </Form>
 
-            {activeTab === "Return" && (
+           
+          </div>
+        )}
+         {activeTab === "Return" && (
               <>
                 <div className={`${styles.table_content} ${styles.DesignCard}`}>
                   <div className={styles.requestReview}>
@@ -1952,10 +2118,18 @@ export default function PlansPage() {
                 </div>
               </>
             )}
-          </div>
-        )}
       </div>
+
       <Toaster />
+      {isProduct && (
+        <AddProduct
+          onClose={handleClose}
+          products={products}
+          handleSave={handleSave}
+          selectProduct={selectProducts}
+          setSelectedPrducts={setSelectedPrducts}
+        />
+      )}
     </>
   );
 }
