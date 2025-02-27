@@ -131,6 +131,7 @@ export async function action({ request }) {
       text: formData.get("ctaText"),
       size: formData.get("ctaSize"),
       color: formData.get("ctaColor"),
+      cart: formData.get("cart")
     };
 
     const text_below_cta = {
@@ -143,23 +144,6 @@ export async function action({ request }) {
       color: formData.get("backgroundColor"),
       shadow: formData.get("backgroundShadow"),
     };
-
-
-    console.log(bundle_id, 'bundle_id')
-    console.log(name, 'name')
-    console.log(products, 'products')
-    console.log(position, 'position')
-    console.log(section, 'section')
-    console.log(displayLocation, 'displayLocation')
-    console.log(method, 'method')
-    console.log(chooseAmount, 'chooseAmount')
-    console.log(title_section, 'title_section')
-    console.log(title, 'title')
-    console.log(product, 'product')
-    console.log(bundle_cost, 'bundle_cost')
-    console.log(call_to_action_button, 'call_to_action_button')
-    console.log(text_below_cta, 'text_below_cta')
-    console.log(backgroud, 'backgroud')
 
     try {
       if (bundle_id) {
@@ -327,9 +311,11 @@ export default function PlansPage() {
   const [productSections, setProductSections] = useState([{ id: 1 }]);
   const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [cart, setCart] = useState("Cart"); 
   const [isMonth, setIsMonth] = useState(false);
   const [month, setMonth] = useState("This Month");
   const [section, setSection] = useState("Buy Buttons");
+  const [showCart, setShowCart] = useState(false)
   const [showEdit, setShowEdit] = useState(false);
   const [isProduct, setIsProduct] = useState(false);
   const [id, setId] = useState(null);
@@ -629,6 +615,7 @@ export default function PlansPage() {
         ctaSize: 5,
         ctaColor: "#000000",
       });
+      setCart("Cart")
       setTextBelow({
         tbText: "Lifetime warranty & Free Returns",
         tbSize: 5,
@@ -696,6 +683,7 @@ export default function PlansPage() {
           ctaSize: details.call_to_action_button.size,
           ctaColor: details.call_to_action_button.color,
         }));
+        setCart(details.call_to_action_button.cart)
         setTextBelow((prev) => ({
           ...prev,
           tbText: details.text_below_cta.text,
@@ -911,7 +899,6 @@ export default function PlansPage() {
                             name="discount_id"
                             value={card?.discount_id}
                           />
-
                           <button
                             className={styles.deletedBtn}
                             type="button"
@@ -1888,6 +1875,67 @@ export default function PlansPage() {
                                   value={callAction.ctaSize}
                                   onChange={handleCallToAction}
                                 />
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="">Redirect To</label>
+
+                                <div
+                                  className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                  onClick={() => setShowCart(!showCart)}
+                                >
+                                  <div
+                                    className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                    id="second"
+                                  >
+                                    <div className={styles.selectBox}>
+                                      <span className={styles.selected}>
+                                        {cart}
+                                      </span>
+                                      <div className={styles.arrow}>
+                                        <img
+                                          src={DorpDownIcon}
+                                          width={20}
+                                          height={16}
+                                        />
+                                      </div>
+                                    </div>
+                                    {showCart && (
+                                      <ul
+                                        className={`${styles.selectDropdown} ${styles.newAppdeop} `}
+                                      >
+                                         <li
+                                          data-value="option1"
+                                          onClick={() =>
+                                            setCart("Cart")
+                                          }
+                                        >
+                                          Cart
+                                        </li>
+                                        <li
+                                          data-value="option1"
+                                          onClick={() =>
+                                            setCart("Checkout")
+                                          }
+                                        >
+                                          Checkout
+                                        </li>
+                                        <li
+                                          data-value="option2"
+                                          onClick={() =>
+                                            setCart("Don't redirect (only add to cart)")
+                                          }
+                                        >
+                                          Don't redirect (only add to cart)
+                                        </li>
+                                      </ul>
+                                    )}
+                                    <input
+                                      type="hidden"
+                                      name="cart"
+                                      value={cart}
+                                    />
+                                  </div>
+                                </div>
                               </div>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="title_section_color">

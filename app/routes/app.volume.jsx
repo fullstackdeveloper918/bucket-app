@@ -7,8 +7,6 @@ import preview_mockup from "../routes/assets/preview_mockup.svg";
 import deletedIcon from "../routes/assets/deleted.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import Productpreview from "../routes/assets/product_sample.png";
-import dropdown from "../routes/assets/drop_downImg.svg";
-import downArrow from "../routes/assets/drop_downImg.svg";
 import Loader from "../components/Loader/Loader";
 import styles from "../styles/main.module.css";
 import offerIcon from "../../app/routes/assets/offerIcon.svg";
@@ -130,6 +128,7 @@ export async function action({ request }) {
         text: formData.get("ctaText"),
         size: formData.get("ctaSize"),
         color: formData.get("ctaColor"),
+        cart: formData.get("cart"),
       };
 
       const text_below_cta = {
@@ -594,6 +593,8 @@ export default function VolumePage() {
   const [showPopup, setShowPopup] = useState(false);
   const [showPage, setShowPage] = useState(null);
   const [productId, setProductId] = useState(null);
+  const [cart, setCart] = useState("Cart");
+  const [showCart, setShowCart] = useState(false);
   const [isMonth, setIsMonth] = useState(false);
   const [month, setMonth] = useState("This Month");
   const [showButton, setShowButton] = useState({
@@ -948,6 +949,7 @@ export default function VolumePage() {
         ctaSize: 5,
         ctaColor: "#000000",
       });
+      setCart("Cart");
       setTextBelow((prev) => ({
         ...prev,
         tbText: "Lifetime warranty & Free Returns",
@@ -1035,6 +1037,7 @@ export default function VolumePage() {
         ctaSize: details.call_to_action_button.size,
         ctaColor: details.call_to_action_button.color,
       }));
+      setCart(details.call_to_action_button.cart);
       setTextBelow((prev) => ({
         ...prev,
         tbText: details.text_below_cta.text,
@@ -2371,6 +2374,70 @@ export default function VolumePage() {
                                         value={callAction.ctaSize}
                                         onChange={handleCallToAction}
                                       />
+                                    </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="">Redirect To</label>
+
+                                      <div
+                                        className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                        onClick={() => setShowCart(!showCart)}
+                                      >
+                                        <div
+                                          className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                          id="second"
+                                        >
+                                          <div className={styles.selectBox}>
+                                            <span className={styles.selected}>
+                                              {cart}
+                                            </span>
+                                            <div className={styles.arrow}>
+                                              <img
+                                                src={DorpDownIcon}
+                                                width={20}
+                                                height={16}
+                                              />
+                                            </div>
+                                          </div>
+                                          {showCart && (
+                                            <ul
+                                              className={`${styles.selectDropdown} ${styles.newAppdeop} `}
+                                            >
+                                              <li
+                                                data-value="option1"
+                                                onClick={() => setCart("Cart")}
+                                              >
+                                                Cart
+                                              </li>
+                                              <li
+                                                data-value="option1"
+                                                onClick={() =>
+                                                  setCart("Checkout")
+                                                }
+                                              >
+                                                Checkout
+                                              </li>
+                                              <li
+                                                data-value="option2"
+                                                onClick={() =>
+                                                  setCart(
+                                                    "Don't redirect (only add to cart)",
+                                                  )
+                                                }
+                                              >
+                                                Don't redirect (only add to
+                                                cart)
+                                              </li>
+                                            </ul>
+                                          )}
+                                          <input
+                                            type="hidden"
+                                            name="cart"
+                                            value={cart}
+                                          />
+                                        </div>
+                                      </div>
                                     </div>
                                     <div
                                       className={styles.input_labelCustomize}

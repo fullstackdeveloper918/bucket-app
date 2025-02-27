@@ -137,6 +137,7 @@ export async function action({ request }) {
         text: formData.get("ctaText"),
         size: formData.get("ctaSize"),
         color: formData.get("ctaColor"),
+        cart: formData.get("cart")
       };
 
       const text_below_cta = {
@@ -554,6 +555,8 @@ export default function BuyGetPage() {
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
   const [loading, setLoading] = useState(false);
+  const [cart, setCart] = useState("Cart"); 
+  const [showCart, setShowCart] = useState(false)
   const [activeTab, setActiveTab] = useState("Home");
   const [isProduct, setIsProduct] = useState(false);
   const [active, setActive] = useState(false);
@@ -895,6 +898,7 @@ export default function BuyGetPage() {
         ctaSize: 5,
         ctaColor: "#000000",
       });
+      setCart("Cart")
       setTextBelow({
         tbText: "Lifetime warranty & Free Returns",
         tbSize: 5,
@@ -962,6 +966,7 @@ export default function BuyGetPage() {
         ctaSize: details.call_to_action_button.size,
         ctaColor: details.call_to_action_button.color,
       }));
+      setCart(details.call_to_action_button.cart);
       setTextBelow((prev) => ({
         ...prev,
         tbText: details.text_below_cta.text,
@@ -1170,12 +1175,13 @@ export default function BuyGetPage() {
                 totalBundle.map((card, index) => (
                   <div key={card?.id} className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
+                      {console.log(card, 'henecjecjec')}
                       <div
                         className={styles.btnFlexWrapper}
                         style={{ alignItems: "center" }}
                       >
                         <label className={styles.switch}>
-                          <input type="checkbox" />
+                          <input type="checkbox" value={card?.isActive} checked={card?.isActive == 1 ? true : false} />
                           <span className={styles.slider}></span>
                         </label>
                         <h2 className={styles.cardHeading}>
@@ -2300,6 +2306,70 @@ export default function BuyGetPage() {
                                       onChange={handleCallToAction}
                                     />
                                   </div>
+                                  <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="">Redirect To</label>
+
+                                      <div
+                                        className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                        onClick={() => setShowCart(!showCart)}
+                                      >
+                                        <div
+                                          className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                          id="second"
+                                        >
+                                          <div className={styles.selectBox}>
+                                            <span className={styles.selected}>
+                                              {cart}
+                                            </span>
+                                            <div className={styles.arrow}>
+                                              <img
+                                                src={DorpDownIcon}
+                                                width={20}
+                                                height={16}
+                                              />
+                                            </div>
+                                          </div>
+                                          {showCart && (
+                                            <ul
+                                              className={`${styles.selectDropdown} ${styles.newAppdeop} `}
+                                            >
+                                              <li
+                                                data-value="option1"
+                                                onClick={() => setCart("Cart")}
+                                              >
+                                                Cart
+                                              </li>
+                                              <li
+                                                data-value="option1"
+                                                onClick={() =>
+                                                  setCart("Checkout")
+                                                }
+                                              >
+                                                Checkout
+                                              </li>
+                                              <li
+                                                data-value="option2"
+                                                onClick={() =>
+                                                  setCart(
+                                                    "Don't redirect (only add to cart)",
+                                                  )
+                                                }
+                                              >
+                                                Don't redirect (only add to
+                                                cart)
+                                              </li>
+                                            </ul>
+                                          )}
+                                          <input
+                                            type="hidden"
+                                            name="cart"
+                                            value={cart}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="title_section_color">
                                       Color

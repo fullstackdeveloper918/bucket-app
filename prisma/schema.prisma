@@ -46,8 +46,16 @@ model Review {
   productName String? // This field cannot be NULL
   position    String?
   section     String?
-  widget      Json?
-
+  text        String?
+  textSize    String?
+  textColor   String?
+  starsColor  String?
+  barsRatingColor String?
+  addReviewBtnText String?
+  buttonColor    String?
+  verifiedPurchase  String?
+  backgroundColor   String?
+  backgroundShadow  String?
 
 }
 

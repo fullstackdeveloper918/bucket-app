@@ -87,7 +87,7 @@ export const createVolumeDiscount = async (shop, selectedData, session) => {
     });
 };
 
-export const getAllBundle = async( shop) => {
+export const getAllBundle = async(shop) => {
   try {
     const domainName = shop ;
     if (!domainName) {

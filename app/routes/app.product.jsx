@@ -1,7 +1,12 @@
 import { Layout, Text, BlockStack, InlineStack } from "@shopify/polaris";
-import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import {
+  isRouteErrorResponse,
+  useActionData,
+  useNavigation,
+  useRouteError,
+} from "@remix-run/react";
 import { TitleBar } from "@shopify/app-bridge-react";
-import React, { lazy, Suspense, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { Form } from "@remix-run/react";
 import { promiseHash } from "remix-utils/promise";
 import Search from "../components/Search/Search";
@@ -11,6 +16,8 @@ import ImportIcon from "../routes/assets/import.svg";
 import stars from "../routes/assets/star_svg.svg";
 import pllaceholderImg from "../routes/assets/images_place.svg";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
+import AddGradient from "../routes/assets/AddGradient.png";
+import infoImage from "../routes/assets/infoImage.png";
 import check_svg from "../routes/assets/circle-check-solid.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 
@@ -23,18 +30,15 @@ import {
   getProductInfo,
   getSingleReviews,
   getTotalReviewCount,
-  launchBundle,
 } from "../api/product-reviews.server";
 import db from "../db.server";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
 import { authenticate } from "../shopify.server";
+import Loader from "../components/Loader/Loader";
 
 const ReviewsCard = lazy(() => import("../components/ReviewsCard/ReviewsCard"));
-const RequestReview = lazy(
-  () => import("../components/RequestReview/RequestReview"),
-);
 
 export async function loader(request) {
   const checkTotal = await db.review.findMany();
@@ -49,17 +53,65 @@ export async function loader(request) {
 }
 
 export async function action({ request }) {
-  if (request.method === "POST") {
-    const { session } = await authenticate.admin(request);
-    const { shop } = session;
-    const formData = await request.formData();
-    const position = formData.get("position");
-    const section = formData.get("section");
-    console.log(position, section, 'position and section');
-    return null;
-  }
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
+  const formData = await request.formData();
+  const intent = formData.get("intent");
 
-  if (request.method === "DELETE") {
+  if (request.method === "POST") {
+    if (intent === "widgetStep") {
+      const position = formData.get("position");
+      const section = formData.get("section");
+      const text = formData.get("text");
+      const textSize = formData.get("textSize");
+      const textColor = formData.get("textColor");
+      const starsColor = formData.get("starsColor");
+      const barsRatingColor = formData.get("barsRatingColor");
+      const addReviewBtnText = formData.get("addReviewBtnText");
+      const buttonColor = formData.get("buttonColor");
+      const verifiedPurchase = formData.get("verifiedPurchase");
+      const backgroundColor = formData.get("backgroundColor");
+      const backgroundShadow = formData.get("backgroundShadow");
+
+      try {
+        const savedWidget = await db.review.create({
+          data: {
+            position,
+            section,
+            text,
+            textSize,
+            textColor,
+            starsColor,
+            barsRatingColor,
+            addReviewBtnText,
+            buttonColor,
+            verifiedPurchase,
+            backgroundColor,
+            backgroundShadow,
+            shopDomain: shop,
+          },
+        });
+
+        return json({
+          message: "Data saved successfully",
+          data: savedWidget,
+          status: 200,
+          step: 3,
+        });
+      } catch (error) {
+        console.error("Error processing the request:", error);
+        return json(
+          {
+            message: "Failed to process the request",
+            error: error.message,
+            status: 500,
+            step: 3,
+          },
+          {},
+        );
+      }
+    }
+  } else if (request.method === "DELETE") {
     const formData = await request.formData();
     const reviewId = formData.get("reviewId");
     try {
@@ -78,12 +130,15 @@ export async function action({ request }) {
       console.error("Error deleting review:", error);
       return json({ message: "Failed to delete review" }, { status: 500 });
     }
+  } else {
+    return null;
   }
-  return null;
 }
 
 export default function AppsPage() {
   const { productReviews, totalCount, singleReviews } = useLoaderData();
+  const actionResponse = useActionData();
+  const navigation = useNavigation();
 
   const [activeTab, setActiveTab] = useState("Reviews");
   const [activeApp, setActiveApp] = useState("Active");
@@ -93,6 +148,8 @@ export default function AppsPage() {
   const [active, setActive] = useState(false);
   const [sort, setSort] = useState(false);
   const [edit, setEdit] = useState(false);
+
+  const [showImportPopup, setShowImportPopup] = useState(null);
 
   const [values, setValues] = useState({
     email_send_at: 10,
@@ -120,8 +177,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
     buttonColor: "#000000",
     verifiedPurchase: true,
     backgroundColor: "#FFFFFF",
-    backgroundShadow: true
-  })
+    backgroundShadow: true,
+  });
 
   const [showPosition, setShowPosition] = useState(false);
   const [position, setPosition] = useState("Below Section");
@@ -143,10 +200,32 @@ We’re all about making our customers’ lives better with [Product Name], and 
   const handleStateChanges = (e) => {
     const { name, type, checked, value } = e.target;
     setStates((prev) => ({
-      ...prev,   
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-  }
+  };
+
+  useEffect(() => {
+    if (actionResponse?.step === 3) {
+      if (actionResponse?.status === 200) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+      } else if (actionResponse?.status === 500) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+      }
+    }
+  }, [actionResponse]);
 
   return (
     <div className={styles.containerDiv}>
@@ -240,18 +319,21 @@ We’re all about making our customers’ lives better with [Product Name], and 
             <div className={styles.checked_btn}>
               <div className={styles.checkbtnwrapper}>
                 <button
+                  type="button"
                   onClick={() => setActiveTab("Reviews")}
                   className={`${activeTab === "Reviews" ? styles.active : ""} ${styles.btn_one}`}
                 >
                   ⭐️ Reviews
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab("Request Reviews")}
                   className={`${activeTab === "Request Reviews" ? styles.active : ""} ${styles.btn_one}`}
                 >
                   📩 Request Reviews
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab("Widget")}
                   className={`${activeTab === "Widget" ? styles.active : ""} ${styles.btn_one}`}
                 >
@@ -404,7 +486,6 @@ We’re all about making our customers’ lives better with [Product Name], and 
                                     src={edit ? activeEdit : edit_icon}
                                     width={14}
                                     height={14}
-                                    // className={styles.EditBtnwraper}
                                   />{" "}
                                   <span
                                     className={edit ? styles.gradientText : ""}
@@ -421,7 +502,6 @@ We’re all about making our customers’ lives better with [Product Name], and 
                               ) : (
                                 <button
                                   style={{ cursor: "pointer" }}
-                                  onClick={() => setShow(true)}
                                   className={styles.importBtn}
                                 >
                                   <img
@@ -486,7 +566,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                               ) : (
                                 <button
                                   style={{ cursor: "pointer" }}
-                                  onClick={() => setShow(true)}
+                                  onClick={() => setShowImportPopup(1)}
                                   className={styles.importBtn}
                                 >
                                   <img
@@ -594,16 +674,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
 
                       {dropDown && (
                         <ul className={styles.selectDropdown}>
-                          <li
-                            data-value="option1"
-                            onClick={() => handleEnable("Enable")}
-                          >
-                            Enable
-                          </li>
-                          <li
-                            data-value="option2"
-                            onClick={() => handleEnable("Disable")}
-                          >
+                          <li onClick={() => handleEnable("Enable")}>Enable</li>
+                          <li onClick={() => handleEnable("Disable")}>
                             Disable
                           </li>
                         </ul>
@@ -919,7 +991,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
 
       {activeTab === "Widget" && (
         <div className={`${styles.timing_after} ${styles.table_content}`}>
-          <Form>
+          <Form method="POST">
             <div className={styles.firstAppBtn}>
               <div
                 className={`${styles.requestReview} ${styles.firstAppRequest}`}
@@ -1009,9 +1081,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                         id="second"
                       >
                         <div className={styles.selectBox}>
-                          <span className={styles.selected}>
-                            {position ? position : "Below Section"}
-                          </span>
+                          <span className={styles.selected}>{position}</span>
                           <div className={styles.arrow}>
                             <img src={DorpDownIcon} width={20} height={16} />
                           </div>
@@ -1020,21 +1090,15 @@ We’re all about making our customers’ lives better with [Product Name], and 
                           <ul
                             className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                           >
-                            <li
-                              data-value="option1"
-                              onClick={() => setPosition("Below Section")}
-                            >
+                            <li onClick={() => setPosition("Below Section")}>
                               Below Section
                             </li>
-                            <li
-                              data-value="option2"
-                              onClick={() => setPosition("Above Section")}
-                            >
+                            <li onClick={() => setPosition("Above Section")}>
                               Above Section
                             </li>
                           </ul>
                         )}
-                        {/* <input type="hidden" name="position" value={position} /> */}
+                        <input type="hidden" name="position" value={position} />
                       </div>
                     </div>
                   </div>
@@ -1099,7 +1163,6 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 </div>
                 <div>
                   <div className={styles.left_content}>
-                    {/* <div className={styles.heading_img}></div> */}
                     <div className={styles.input_labelCustomize}>
                       <label htmlFor="">Text</label>
                       <input
@@ -1108,13 +1171,17 @@ We’re all about making our customers’ lives better with [Product Name], and 
                         placeholder="Enter Text..."
                         value={state.text}
                         onChange={handleStateChanges}
-
                       />
                     </div>
 
                     <div className={styles.input_labelCustomize}>
                       <label htmlFor="">Text Size</label>
-                      <input type="number" name="textSize" value={state.textSize} onChange={handleStateChanges} />
+                      <input
+                        type="number"
+                        name="textSize"
+                        value={state.textSize}
+                        onChange={handleStateChanges}
+                      />
                     </div>
 
                     <div className={styles.input_labelCustomize}>
@@ -1145,7 +1212,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     <div className={styles.input_labelCustomize}>
                       <label htmlFor="">Stars Color</label>
                       <div className={styles.color_styles}>
-                      <span
+                        <span
                           className={styles.color_pilate}
                           style={{
                             backgroundColor: state.starsColor,
@@ -1169,7 +1236,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     <div className={styles.input_labelCustomize}>
                       <label htmlFor="">Bars Rating Color</label>
                       <div className={styles.color_styles}>
-                      <span
+                        <span
                           className={styles.color_pilate}
                           style={{
                             backgroundColor: state.barsRatingColor,
@@ -1188,22 +1255,22 @@ We’re all about making our customers’ lives better with [Product Name], and 
                           name="barsRatingColor"
                           value={state.barsRatingColor}
                           onChange={handleStateChanges}
-                          
                         />
                       </div>
                     </div>
                     <div className={styles.input_labelCustomize}>
                       <label htmlFor="">Add Review Button Text</label>
-                      <input type="text"
-                       name="addReviewBtnText"
-                       value={state.addReviewBtnText}
-                       onChange={handleStateChanges}
-                       />
+                      <input
+                        type="text"
+                        name="addReviewBtnText"
+                        value={state.addReviewBtnText}
+                        onChange={handleStateChanges}
+                      />
                     </div>
                     <div className={styles.input_labelCustomize}>
                       <label htmlFor="">Button Color</label>
                       <div className={styles.color_styles}>
-                      <span
+                        <span
                           className={styles.color_pilate}
                           style={{
                             backgroundColor: state.buttonColor,
@@ -1249,16 +1316,15 @@ We’re all about making our customers’ lives better with [Product Name], and 
                             <span
                               className={styles.color_pilate}
                               style={{
-                                backgroundColor:
-                                  state.backgroundColor,
+                                backgroundColor: state.backgroundColor,
                               }}
                             >
                               <input
-                               type="color" 
-                               name="backgroundColor"
-                               value={state.backgroundColor}
-                               onChange={handleStateChanges}
-                               />
+                                type="color"
+                                name="backgroundColor"
+                                value={state.backgroundColor}
+                                onChange={handleStateChanges}
+                              />
                             </span>
                             <input
                               type="text"
@@ -1284,7 +1350,15 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </div>
                 </div>
                 <div className={styles.Add_btn}>
-                  <button className={styles.NextBtn} type="submit" name="intent" value="widgetStep">Save</button>
+                  <button
+                    className={styles.NextBtn}
+                    type="submit"
+                    name="intent"
+                    value="widgetStep"
+                    disabled={navigation.state === "submitting"}
+                  >
+                    {navigation.state === "submitting" ? <Loader /> : "Save"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -1422,32 +1496,218 @@ We’re all about making our customers’ lives better with [Product Name], and 
         </div>
       )}
       <Toaster position="bottom-right" />
+
+
+      <div className={styles.modal_overlay} style={{display: (showImportPopup == 1) || (showImportPopup == 2) ?'flex' : 'none'}}>
+        {showImportPopup == 1 && (
+          <div className={styles.modal_content}>
+            <h3>Import Reviews</h3>
+            <div className={styles.modalHeading}>
+              <img
+                src="https://img.freepik.com/premium-psd/locket-isolated-transparent-background_191095-29173.jpg?w=826"
+                width={60}
+                height={60}
+              />
+              <span>Necklace 14k</span>
+            </div>
+            <div className={styles.gridBox}>
+              <div className={styles.timing_after}>
+                <div className={styles.input_labelCustomize}>
+                  <label htmlFor="">Product URL</label>
+                  <input type="text" placeholder="Insert URL" />
+                </div>
+              </div>
+              <div className={styles.timing_after}>
+                <div>
+                  <label>Import From</label>
+                  <select className={styles.select_box}>
+                    <option value="1" selected>
+                      Aliexpress
+                    </option>
+                    <option value="2">Amazon</option>
+                    <option value="3">Temu</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.timing_after}>
+                <div>
+                  <label>Number of imports</label>
+                  <select className={styles.select_box}>
+                    <option value="1" selected>
+                      5
+                    </option>
+                    <option value="2">10</option>
+                    <option value="3">20</option>
+                    <option value="3">30</option>
+                    <option value="3">50</option>
+                    <option value="3">100</option>
+                    <option value="3">200</option>
+                    <option value="3">300</option>
+                    <option value="3">400</option>
+                    <option value="3">500</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.timing_after}>
+                <div>
+                  <label>Content Types</label>
+                  <select className={styles.select_box}>
+                    <option value="1" selected>
+                      All reviews
+                    </option>
+                    <option value="2">Photo Reviews only</option>
+                    <option value="3">Text Reviews only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.timing_after}>
+                <div>
+                  <label>Status</label>
+                  <select className={styles.select_box}>
+                    <option value="1" selected>
+                      Published
+                    </option>
+                    <option value="2">Unpublished</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.timing_after}>
+                <div>
+                  <label htmlFor="">Reviewer Country</label>
+                  <select className={styles.select_box}>
+                    <option value="1" selected>
+                      All
+                    </option>
+                    {/* <option value="2">Unpublished</option> */}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className={styles.timing_after}>
+              <div className={styles.formGroup}>
+                <input type="checkbox" id="html" />
+                <label for="html">
+                  {" "}
+                  I confirm that I either own the imported reviews or have
+                  permission to use them
+                </label>
+              </div>
+            </div>
+            <div className={`${styles.addBtn} ${styles.textEnd}`}>
+              <button  className={styles.Backbtn} 
+               onClick={() => setShowImportPopup(null)}>
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowImportPopup(2)}
+                className={styles.NextBtn}
+              >
+                Launch
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showImportPopup == 2 && <div className={styles.modal_content}>
+          <div className={styles.left_content}>
+            <div className={styles.ai_review}>
+              <img src={infoImage} alt="img template" width={30} height={30} />
+              <div>
+                <p>
+                  All review edits must follow Shopify's policy Article 7
+                  <strong style={{ textDecoration: "underline" }}>
+                    {" "}
+                    Shopify's Policy{" "}
+                  </strong>{" "}
+                  . Edits should not change the review's original meaning and
+                  must maintain transparency and the integrity of the source.
+                  Make sure you comply with the following instructions
+                </p>
+                <ul>
+                  <li>
+                    <span>Allowed:</span> Corrections of typos or grammatical
+                    mistakes
+                  </li>
+                  <li>
+                    <span>Allowed:</span> Adjustments to improve translated
+                    language
+                  </li>
+                  <li>
+                    <span>Allowed:</span> Updates to review information as
+                    requested by reviewers
+                  </li>
+                  <li>
+                    <span>NOT Allowed:</span> Modifying star rating
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className={styles.ai_review_check}>
+              <div className={styles.formGroup}>
+                <input type="checkbox" id="save" checked />
+                <label for="save">Pin review to the top of the page</label>
+              </div>
+            </div>
+            <div className={`${styles.timing_after} ${styles.maxWidth}`}>
+              <div className={styles.input_labelCustomize}>
+                <label htmlFor="">Reviewer Name</label>
+                <input
+                  type="text"
+                  name="customerReviews"
+                  placeholder="John Doe"
+                  value="John Doe"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="">Reviewer Name</label>
+            </div>
+            <div className={styles.timing_after} style={{ margin: "0" }}>
+              <div className={styles.modalTextarea}>
+                <textarea
+                  name=""
+                  id=""
+                  placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing..."
+                ></textarea>
+              </div>
+            </div>
+            <div>
+              <label htmlFor="">Reviewer Name</label>
+            </div>
+            <div>
+              {/* <label htmlFor="photo">
+              <input type="file" name="" id="" />
+            </label> */}
+              <div className={styles.addPhotoContainer}>
+                <input type="file" id="photoInput" accept="image/*" />
+                <div className={styles.addPhotoButton}>
+                  <span>
+                    <img src={AddGradient} alt="add" width={30} height={30} />
+                  </span>
+                  <p>Add Photo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={`${styles.addBtn} ${styles.textEnd}`}>
+             
+              <button className={styles.Backbtn}
+               onClick={() => setShowImportPopup(null)}
+              >Cancel</button>
+            <button
+              onClick={() => setShowImportPopup(null)}
+              className={styles.NextBtn}
+            >
+              Launch
+            </button>
+          </div>
+        </div>}
+      </div>
     </div>
   );
-}
-
-export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (isRouteErrorResponse(error)) {
-    return (
-      <div>
-        <h1>
-          {error.status} {error.statusText}
-        </h1>
-        <p>{error.data}</p>
-      </div>
-    );
-  } else if (error instanceof Error) {
-    return (
-      <div>
-        <h1>Error</h1>
-        <p>{error.message}</p>
-        <p>The stack trace is:</p>
-        <pre>{error.stack}</pre>
-      </div>
-    );
-  } else {
-    return <h1>Unknown Error</h1>;
-  }
 }
