@@ -33,17 +33,22 @@ model Session {
 
 model Review {
   id          String   @id @default(uuid()) // Unique identifier for the review
-  shopDomain  String
-  productId   String // Reference to the product being reviewed
-  userName    String
+  shopDomain  String?
+  productId   String? // Reference to the product being reviewed
+  userName    String?
   userEmail   String? // Optional: Reference to the user submitting the review (can be null for guest reviews)
-  rating      Float // The rating given by the user (e.g., 4.3)
+  rating      Float? // The rating given by the user (e.g., 4.3)
   comment     String? // Optional: The review comment
-  createdAt   DateTime @default(now()) // Timestamp when the review was created
-  updatedAt   DateTime @updatedAt // Timestamp when the review was last updated
-  isPublic    Boolean  @default(true) // Indicates if the review is publicly visible  
+  createdAt   DateTime? @default(now()) // Timestamp when the review was created
+  updatedAt   DateTime? @updatedAt // Timestamp when the review was last updated
+  isPublic    Boolean?  @default(true) // Indicates if the review is publicly visible  
   images      Images[] // A review can have many images (array of Images)
-  productName String // This field cannot be NULL
+  productName String? // This field cannot be NULL
+  position    String?
+  section     String?
+  widget      Json?
+
+
 }
 
 model Images {
@@ -167,4 +172,17 @@ model volumeDiscount {
   domainName                     String
   createdAt                      DateTime @default(now())
   updatedAt                      DateTime @updatedAt
+}
+
+
+model VisitorAction {
+  id         String   @id @default(uuid())
+  domain     String   // The domain where the visitor took action  
+  country    String?  // Visitor's country  
+  ipAddress  String?  // (Optional) IP for tracking  
+  videoURL   String?  // URL of the recorded video  
+  message    String?  // Any text message from the visitor
+  userName   String?
+  actionNumber Int?  
+  createdAt  DateTime @default(now())
 }

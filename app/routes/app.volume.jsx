@@ -9,7 +9,7 @@ import DorpDownIcon from "../routes/assets/dropDown.svg";
 import Productpreview from "../routes/assets/product_sample.png";
 import dropdown from "../routes/assets/drop_downImg.svg";
 import downArrow from "../routes/assets/drop_downImg.svg";
-import Loader from '../components/Loader/Loader'
+import Loader from "../components/Loader/Loader";
 import styles from "../styles/main.module.css";
 import offerIcon from "../../app/routes/assets/offerIcon.svg";
 import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
@@ -28,6 +28,7 @@ import {
 import { getAllBundle } from "../api/volume.server";
 import { Toaster, toast as notify } from "sonner";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
+import AddProduct from "../components/BundleModal/AddProduct";
 
 export async function loader({ request }) {
   try {
@@ -96,11 +97,15 @@ export async function action({ request }) {
 
   if (request.method === "POST") {
     if (intent === "stepThird") {
-      
       const bundle_id = formData.get("bundle_id");
       const product = formData.get("product");
       const bundle_name = formData.get("bundle_name");
       const discount_method = formData.get("discount_method");
+      const product_details = formData.get("product_details");
+
+      const [selectedProducts] = JSON.parse(product_details);
+
+      console.log(product_details, "product_details");
       const tier = formData.get("tier");
       const position = formData.get("position");
       const section = formData.get("section");
@@ -139,39 +144,151 @@ export async function action({ request }) {
       };
 
       let data;
-      if (discount_method === "Percentage") {
-        console.log('percentage me')
-        data = JSON.stringify({
-          query:
-            "mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) { discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) { automaticDiscountNode { id automaticDiscount { ... on DiscountAutomaticBasic { title startsAt combinesWith { productDiscounts shippingDiscounts orderDiscounts } minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } } customerGets { value { ... on DiscountPercentage { percentage } } items { ... on AllDiscountItems { allItems } } } } } } userErrors { field code message } } }",
-          variables: {
-            automaticBasicDiscount: {
-              title: bundle_name,
-              startsAt: "2025-01-07T01:28:55-05:00",
-              minimumRequirement: {
-                quantity: {
-                  greaterThanOrEqualToQuantity: tierData?.quantity,
+
+      if (product === "All Products") {
+        if (discount_method === "Percentage") {
+          data = JSON.stringify({
+            query:
+              "mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) { discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) { automaticDiscountNode { id automaticDiscount { ... on DiscountAutomaticBasic { title startsAt combinesWith { productDiscounts shippingDiscounts orderDiscounts } minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } } customerGets { value { ... on DiscountPercentage { percentage } } items { ... on AllDiscountItems { allItems } } } } } } userErrors { field code message } } }",
+            variables: {
+              automaticBasicDiscount: {
+                title: bundle_name,
+                startsAt: "2025-01-07T01:28:55-05:00",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: tierData?.quantity,
+                  },
                 },
-              },
-              customerGets: {
-                value: {
-                  percentage: JSON.parse(tierData?.discount) / 100,
+                customerGets: {
+                  value: {
+                    percentage: JSON.parse(tierData?.discount) / 100,
+                  },
+                  items: {
+                    all: true,
+                  },
                 },
-                items: {
-                  all: true,
+                combinesWith: {
+                  productDiscounts: true,
+                  shippingDiscounts: false,
+                  orderDiscounts: false,
                 },
-              },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: false,
-                orderDiscounts: false,
               },
             },
-          },
-        });
-      } else if (discount_method === "Fixed Amount") {
-        data = JSON.stringify({
-          query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+          });
+        } else if (discount_method === "Fixed Amount") {
+          data = JSON.stringify({
+            query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+              discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
+                automaticDiscountNode {
+                  id
+                  automaticDiscount {
+                    ... on DiscountAutomaticBasic {
+                      title
+                      startsAt
+                      combinesWith { productDiscounts shippingDiscounts orderDiscounts }
+                      minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } }
+                      customerGets {
+                        value { ... on DiscountAmount { amount { amount currencyCode } } }
+                        items { ... on AllDiscountItems { allItems } }
+                      }
+                    }
+                  }
+                }
+                userErrors { field code message }
+              }
+            }`,
+            variables: {
+              automaticBasicDiscount: {
+                title: bundle_name,
+                startsAt: "2025-01-07T01:28:55-05:00",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: tierData?.quantity,
+                  },
+                },
+                customerGets: {
+                  value: {
+                    discountAmount: {
+                      amount: tierData?.discount,
+                      appliesOnEachItem: false,
+                    },
+                  },
+                  items: {
+                    all: true,
+                  },
+                },
+                combinesWith: {
+                  productDiscounts: true,
+                  shippingDiscounts: false,
+                  orderDiscounts: false,
+                },
+              },
+            },
+          });
+        }
+      } else if (product === "Specific Products") {
+        if (discount_method === "Percentage") {
+          data = JSON.stringify({
+            query: `mutation CreateVolumeDiscount($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+  discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
+    automaticDiscountNode {
+      id
+      automaticDiscount {
+        ... on DiscountAutomaticBasic {
+          title
+          startsAt
+          endsAt
+          customerGets {
+            items {
+              ... on DiscountProducts {
+                products(first: 10) {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+            value {
+              ... on DiscountPercentage {
+                percentage
+              }
+            }
+          }
+        }
+      }
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}`,
+            variables: {
+              automaticBasicDiscount: {
+                title: bundle_name,
+                startsAt: "2025-01-01T00:00:00Z",
+                endsAt: "2025-12-31T23:59:59Z",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: tierData?.quantity,
+                  },
+                },
+                customerGets: {
+                  value: { percentage: JSON.parse(tierData?.discount) / 100 },
+                  items: {
+                    products: {
+                      productsToAdd: selectedProducts?.productId,
+                    },
+                  },
+                },
+              },
+            },
+          });
+        } else if (discount_method === "Fixed Amount") {
+          data = JSON.stringify({
+            query: `mutation CreateVolumeDiscount($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
             discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
               automaticDiscountNode {
                 id
@@ -179,46 +296,64 @@ export async function action({ request }) {
                   ... on DiscountAutomaticBasic {
                     title
                     startsAt
-                    combinesWith { productDiscounts shippingDiscounts orderDiscounts }
-                    minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } }
+                    endsAt
                     customerGets {
-                      value { ... on DiscountAmount { amount { amount currencyCode } } }
-                      items { ... on AllDiscountItems { allItems } }
+                      items {
+                        ... on DiscountProducts {
+                          products(first: 10) {
+                            edges {
+                              node {
+                                id
+                              }
+                            }
+                          }
+                        }
+                      }
+                      value {
+                        ... on DiscountFixedAmount {
+                          amount {
+                            amount
+                            currencyCode
+                          }
+                        }
+                      }
                     }
                   }
                 }
               }
-              userErrors { field code message }
+              userErrors {
+                field
+                message
+              }
             }
           }`,
-          variables: {
-            automaticBasicDiscount: {
-              title: bundle_name,
-              startsAt: "2025-01-07T01:28:55-05:00",
-              minimumRequirement: {
-                quantity: {
-                  greaterThanOrEqualToQuantity: tierData?.quantity,
-                },
-              },
-              customerGets: {
-                value: {
-                  discountAmount: {
-                    amount: tierData?.discount,
-                    appliesOnEachItem: false,
+            variables: {
+              automaticBasicDiscount: {
+                title: bundle_name,
+                startsA: "2025-01-01T00:00:00Z",
+                endsAt: "2025-12-31T23:59:59Z",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: tierData?.quantity,
                   },
                 },
-                items: {
-                  all: true,
+                customerGets: {
+                  value: {
+                    amount: {
+                      amount: tierData?.discount,
+                      currencyCode: "USD",
+                    },
+                  },
+                  items: {
+                    products: {
+                      productsToAdd: ["gid://shopify/Product/10025742303543"],
+                    },
+                  },
                 },
               },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: false,
-                orderDiscounts: false,
-              },
             },
-          },
-        });
+          });
+        }
       }
 
       let config = {
@@ -234,24 +369,20 @@ export async function action({ request }) {
 
       try {
         const response = await axios.request(config);
-        console.log(response,'no response')
+        console.log(response, "no response");
         const discount_id =
           response?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
         const discount_info = response?.data?.data;
 
-
-        console.log(discount_id, 'discount_id')
-        console.log(discount_info, 'discount_info')
-
         if (bundle_id) {
-          
           const updatedDiscount = await db.volumeDiscount.update({
             where: { id: parseInt(bundle_id) },
             data: {
               bundle_name,
               product_all: product === "All Products" ? 1 : 0,
               discount_method,
+              product_details,
               tier,
               position,
               section,
@@ -267,21 +398,21 @@ export async function action({ request }) {
             },
           });
 
-          return json(
-            { message: "Data Updated successfully",
-              data: updatedDiscount,
-              status: 200,
-              step: 4,
-              activeTab: "Return", },
-            
-          );
+          return json({
+            message: "Data Updated successfully",
+            data: updatedDiscount,
+            status: 200,
+            step: 4,
+            activeTab: "Return",
+          });
         } else {
-          console.log('create')
+          console.log("create");
           const savedDiscount = await db.volumeDiscount.create({
             data: {
               bundle_name,
               product_all: product === "All Products" ? 1 : 0,
               discount_method,
+              product_details,
               tier,
               position,
               section,
@@ -297,15 +428,13 @@ export async function action({ request }) {
             },
           });
 
-          return json(
-            { message: "Data saved successfully",
-              data: savedDiscount,
-              status: 200,
-              step: 4,
-              activeTab: "Return",
-             },
-          
-          );
+          return json({
+            message: "Data saved successfully",
+            data: savedDiscount,
+            status: 200,
+            step: 4,
+            activeTab: "Return",
+          });
         }
       } catch (error) {
         console.error("Error processing the request:", error);
@@ -317,7 +446,6 @@ export async function action({ request }) {
     }
   } else if (request.method === "DELETE") {
     try {
-    
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
       console.log(productId, "productbvfdj");
@@ -458,17 +586,38 @@ export default function VolumePage() {
   const { products, totalBundle } = useLoaderData();
   const actionResponse = useActionData();
   const submit = useSubmit();
-  const navigation  = useNavigation();
-  
+  const navigation = useNavigation();
 
   console.log(actionResponse, "actionResponse");
   const [showComponent, setShowComponent] = useState(0);
   const [editState, setEditState] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [showPage, setShowPage] = useState(null);
   const [productId, setProductId] = useState(null);
-  const [discountId, setDiscountId] = useState('')
+  const [isMonth, setIsMonth] = useState(false);
+  const [month, setMonth] = useState("This Month");
+  const [showButton, setShowButton] = useState({
+    titleSection: "Show",
+    title: "Show",
+    tiers: "Show",
+    textBelow: "Show",
+    callAction: "Show",
+    background: "Show",
+  });
+
+  const [showStatus, setShowStatus] = useState({
+    titleSection: false,
+    title: false,
+    tiers: false,
+    textBelow: false,
+    callAction: false,
+    background: false,
+  });
+  const [discountId, setDiscountId] = useState("");
   const [showPosition, setShowPosition] = useState(false);
   const [details, setDetails] = useState({});
+  const [isProduct, setIsProduct] = useState(false);
+  const [selectProducts, setSelectedPrducts] = useState([]);
   const [position, setPosition] = useState("Below Section");
   const [section, setSection] = useState("Buy Buttons");
   const [values, setValues] = useState({
@@ -479,8 +628,6 @@ export default function VolumePage() {
 
   const [activeTab, setActiveTab] = useState("Home");
   const [id, setId] = useState(null);
-
-  const [all, setAll] = useState("first");
   const [activeApp, setActiveApp] = useState("Active");
   const [active, setActive] = useState(false);
   const [tier, setTier] = useState([
@@ -527,11 +674,31 @@ export default function VolumePage() {
     backgroundShadow: true,
   });
 
+  const handleBtn = (item) => {
+    setShowStatus((prev) => ({
+      ...prev,
+      [item]: !prev[item],
+    }));
+    setShowButton((prev) => ({
+      ...prev,
+      [item]: prev[item] === "Show" ? "Hide" : "Show",
+    }));
+  };
+
+  console.log(showButton.titleSection, "hence");
+
   const handleTitleSection = (e) => {
     const { name, value } = e.target;
     seTitleSection((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleShowStatus = (item) => {
+    setShowStatus((prev) => ({
+      ...prev,
+      [item]: !prev[item],
     }));
   };
 
@@ -575,9 +742,17 @@ export default function VolumePage() {
     }));
   };
 
-  const addTier = () => {
-    setTiers([...tiers, { quantity: "", discount: "", title: "", badge: "" }]);
+  const handleClose = () => {
+    setIsProduct(false);
   };
+
+  const handleSave = () => {
+    setIsProduct(false);
+  };
+
+  // const addTier = () => {
+  //   setTiers([...tiers, { quantity: "", discount: "", title: "", badge: "" }]);
+  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -594,12 +769,11 @@ export default function VolumePage() {
   };
 
   const handleDesign = () => {
-    setActiveTab('Home')
+    setActiveTab("Home");
     setEditState(false);
     setShowComponent(0);
     setId(null);
   };
-
 
   const handleFirst = () => {
     if (values.bundle_name === "") {
@@ -612,6 +786,7 @@ export default function VolumePage() {
       });
     } else {
       setShowComponent(2);
+      setShowPage("second");
     }
   };
 
@@ -629,66 +804,68 @@ export default function VolumePage() {
   };
 
   const handleSecond = () => {
-    if (values.product === "All Products") {
-      const [singleTier] = tier;
-      if (singleTier.badge === "") {
-        notify.error("Please enter badge text", {
+    // if (values.product === "All Products") {
+    const [singleTier] = tier;
+    if (singleTier.badge === "") {
+      notify.error("Please enter badge text", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (singleTier.quantity === "") {
+      notify.error("Please enter quantity", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (singleTier.title === "") {
+      notify.error("Please enter title", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (singleTier.discount === "") {
+      notify.error(`Please enter ${values.discount_method}`, {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+    } else if (values.discount_method === "Percentage") {
+      if (singleTier.discount == 100 || singleTier.discount > 100) {
+        notify.error("Discount can not be 100 or more", {
           position: "top-center",
           style: {
             background: "red",
             color: "white",
           },
         });
-      } else if (singleTier.quantity === "") {
-        notify.error("Please enter quantity", {
+      } else if (!/^\d+(\.\d{1,2})?$/.test(singleTier.discount)) {
+        notify.error(`${values.discount_method} must be a number`, {
           position: "top-center",
-          style: {
-            background: "red",
-            color: "white",
-          },
+          style: { background: "red", color: "white" },
         });
-      } else if (singleTier.title === "") {
-        notify.error("Please enter title", {
+      } else if (!/^\d+(\.\d{1,2})?$/.test(singleTier.quantity)) {
+        notify.error("Quantity must be a number", {
           position: "top-center",
-          style: {
-            background: "red",
-            color: "white",
-          },
+          style: { background: "red", color: "white" },
         });
-      } else if (singleTier.discount === "") {
-        notify.error(`Please enter ${values.discount_method}`, {
-          position: "top-center",
-          style: {
-            background: "red",
-            color: "white",
-          },
-        });
-      } else if (values.discount_method === "Percentage") {
-        if (singleTier.discount == 100 || singleTier.discount > 100) {
-          notify.error("Discount can not be 100 or more", {
-            position: "top-center",
-            style: {
-              background: "red",
-              color: "white",
-            },
-          });
-        } else if (!/^\d+(\.\d{1,2})?$/.test(singleTier.discount)) {
-          notify.error(`${values.discount_method} must be a number`, {
-            position: "top-center",
-            style: { background: "red", color: "white" },
-          });
-        } else if (!/^\d+(\.\d{1,2})?$/.test(singleTier.quantity)) {
-          notify.error("Quantity must be a number", {
-            position: "top-center",
-            style: { background: "red", color: "white" },
-          });
-        } else {
-          setShowComponent(3);
-        }
-      }else {
-        setShowComponent(3)
+      } else {
+        setShowComponent(3);
+        setShowPage("third");
       }
+    } else {
+      setShowComponent(3);
+      setShowPage("third");
     }
+    // }
   };
 
   const handleTierChange = (index, field, value) => {
@@ -707,18 +884,20 @@ export default function VolumePage() {
     setEditState(true);
     setActiveTab("Products");
     setShowComponent(1);
+    setShowPage("first");
   };
 
-  const handleCreate = () =>{
-    setActiveTab('Products');
+  const handleCreate = () => {
+    setActiveTab("Products");
     setShowComponent(1);
-  }
+    setShowPage("first");
+  };
 
   const handleDelete = (item) => {
-    setShowPopup(true)
-    setProductId(item.id)
-    setDiscountId(item.discount_id)
-  }
+    setShowPopup(true);
+    setProductId(item.id);
+    setDiscountId(item.discount_id);
+  };
 
   useEffect(() => {
     if (actionResponse?.status === 200) {
@@ -730,13 +909,13 @@ export default function VolumePage() {
             color: "white",
           },
         });
-        setActiveTab("Return");
+        setShowPage("Return");
       }
       setValues({
         bundle_name: "Example Bundle 1",
         product: "All Products",
         discount_method: "Percentage",
-      })
+      });
       setTier([
         {
           quantity: "2",
@@ -744,7 +923,7 @@ export default function VolumePage() {
           title: "Buy 2 Products",
           badge: "Most Popular",
         },
-      ])
+      ]);
       setPosition("Below Section");
       setSection("Buy Buttons");
       seTitleSection({
@@ -757,24 +936,30 @@ export default function VolumePage() {
         titleSize: 5,
         titleColor: "#000000",
       });
+      setTiers({
+        tierColor: "#000000",
+        badge_color: "#000000",
+        tierComparedPrice: true,
+        tierSave: true,
+      });
 
       setCallAction({
-        ctaText: 'Add To Cart',
+        ctaText: "Add To Cart",
         ctaSize: 5,
-        ctaColor: '#000000',
+        ctaColor: "#000000",
       });
       setTextBelow((prev) => ({
         ...prev,
         tbText: "Lifetime warranty & Free Returns",
         tbSize: 5,
-        tbColor: '#555555',
+        tbColor: "#555555",
       }));
       setBackGround((prev) => ({
         ...prev,
         backgroundColor: "#FFFFFF",
-        backgroundShadow:  true,
+        backgroundShadow: true,
       }));
-    
+
       setShowComponent(actionResponse?.step);
     } else if (actionResponse?.status === 500) {
       notify.success(actionResponse?.error, {
@@ -819,9 +1004,9 @@ export default function VolumePage() {
         bundle_name: details.bundle_name,
         product:
           details.product_all == 1 ? "All Products" : "Specific Products",
-          discount_method: details.discount_method
+        discount_method: details.discount_method,
       }));
-      setTier(JSON.parse(details.tier))
+      setTier(JSON.parse(details.tier));
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
@@ -835,6 +1020,13 @@ export default function VolumePage() {
         titleText: details.title.text,
         titleSize: details.title.size,
         titleColor: details.title.color,
+      }));
+      setTiers((prev) => ({
+        ...prev,
+        tierColor: details.Tiers.color,
+        tierComparedPrice: details.Tiers.comparedPrice === "on" ? true : false,
+        tierSave: details.Tiers.save === "on" ? true : false,
+        badge_color: details.Tiers.badgeColor,
       }));
 
       setCallAction((prev) => ({
@@ -856,6 +1048,10 @@ export default function VolumePage() {
       }));
     }
   }, [editState]);
+
+  const handleMonth = (item) => {
+    setMonth(item);
+  };
 
   return (
     <>
@@ -952,15 +1148,70 @@ export default function VolumePage() {
             <div className={styles.bundleHeading}>
               <h2>All Bundles</h2>
               <div className={styles.btnFlexWrapper}>
-                <button className={styles.activeButton}>
-                  This Month{" "}
-                  <img
-                    src={drop_downImg}
-                    className={styles.inactiveImg}
-                    width={15}
-                    height={8}
-                  />{" "}
-                </button>
+                <div
+                  className={styles.activeButton}
+                  onClick={() => setIsMonth(!isMonth)}
+                >
+                  <div className={styles.butttonsTab}>
+                    {month}{" "}
+                    <img
+                      src={drop_downImg}
+                      className={styles.inactiveImg}
+                      width={15}
+                      height={8}
+                    />{" "}
+                  </div>
+                  {isMonth && (
+                    <>
+                      <ul
+                        className={` ${styles.selectDropdown} ${styles.InactiveButton} `}
+                      >
+                        <li
+                          data-value="option1"
+                          onClick={() => handleMonth("Today")}
+                        >
+                          Today
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Yesterday")}
+                        >
+                          Yesterday
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last 3 Days")}
+                        >
+                          Last 3 Days
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last 7 Days")}
+                        >
+                          Last 7 Days
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("This Month")}
+                        >
+                          This Month
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last Month")}
+                        >
+                          Last Month
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Custom")}
+                        >
+                          Custom
+                        </li>
+                      </ul>
+                    </>
+                  )}
+                </div>
                 <button
                   onClick={handleCreate}
                   className={`${styles.btn_one} ${styles.active}`}
@@ -975,7 +1226,6 @@ export default function VolumePage() {
                 <React.Fragment key={card.id}>
                   <div className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
-                      {/* <Form method="POST"> */}
                       <div
                         className={styles.btnFlexWrapper}
                         style={{ alignItems: "center" }}
@@ -992,12 +1242,12 @@ export default function VolumePage() {
                           />
                           <span className={styles.slider}></span>
                         </label>
-                       
+
                         <h2 className={styles.cardHeading}>
                           {card?.bundle_name}
                         </h2>
                       </div>
-                      {/* </Form> */}
+
                       <div className={styles.btnFlexWrapper}>
                         <Form method="DELETE">
                           <input
@@ -1015,7 +1265,7 @@ export default function VolumePage() {
                           <button
                             className={styles.deletedBtn}
                             type="button"
-                            onClick={()=> handleDelete(card)}
+                            onClick={() => handleDelete(card)}
                           >
                             <svg
                               width="20"
@@ -1039,10 +1289,7 @@ export default function VolumePage() {
                             />
                           )}
                         </Form>
-                        <button
-                          className={styles.copyIcon}
-                          // onClick={() => handleCopy(card.id)}
-                        >
+                        <button className={styles.copyIcon}>
                           <img src={copy_icon} width={20} height={20} />
                         </button>
                         <button
@@ -1087,9 +1334,7 @@ export default function VolumePage() {
           <div className={styles.main_bundle}>
             <div className={styles.bundleWraper}>
               <span
-                className={
-                  showComponent == 1 ? styles.active_tab : styles.bordercolor
-                }
+                className={`${showPage === "first" ? styles.bordercolor : ""} ${showComponent > 1 ? styles.active_tab : ""}`}
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
                   {showComponent > 1 ? (
@@ -1141,9 +1386,7 @@ export default function VolumePage() {
                 Products
               </span>
               <span
-                className={
-                  showComponent == 2 ? styles.active_tab : styles.bordercolor
-                }
+                className={`${showPage === "second" ? styles.bordercolor : ""} ${showComponent > 2 ? styles.active_tab : ""}`}
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
                   {showComponent > 2 ? (
@@ -1169,9 +1412,7 @@ export default function VolumePage() {
                 Offer
               </span>
               <span
-                className={
-                  showComponent == 3 ? styles.active_tab : styles.bordercolor
-                }
+                className={`${showPage === "third" ? styles.bordercolor : ""} ${showComponent > 3 ? styles.active_tab : ""}`}
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
                   {showComponent > 3 ? (
@@ -1202,7 +1443,7 @@ export default function VolumePage() {
               <div className={styles.table_content}>
                 <div className={styles.requestReview}>
                   <div className={styles.timing_after}>
-                    {showComponent == 1 && (
+                    {showPage == "first" && (
                       <>
                         <div className={styles.leftContent}>
                           <h3>
@@ -1257,9 +1498,11 @@ export default function VolumePage() {
                                 <div
                                   className={` ${styles.customSelect} ${styles.customTabsec} `}
                                   id="second"
-                                  onClick={() => setShowProducts(true)}
                                 >
-                                  <div className={styles.selectBox}>
+                                  <div
+                                    className={styles.selectBox}
+                                    onClick={() => setIsProduct(true)}
+                                  >
                                     <span className={styles.selected}>
                                       Choose products
                                     </span>
@@ -1289,7 +1532,7 @@ export default function VolumePage() {
                       </>
                     )}
 
-                    {showComponent == 2 && (
+                    {showPage == "second" && (
                       <>
                         <div className={styles.leftContent}>
                           <h3>
@@ -1299,7 +1542,9 @@ export default function VolumePage() {
                           </h3>
                           <div className={styles.input_labelCustomize}>
                             <label htmlFor="">Discount Method</label>
-                            <div className={styles.bundle_product}>
+                            <div
+                              className={` ${styles.bundle_product} ${values.discount_method === "Percentage" ? styles.activeTab : ""} `}
+                            >
                               <input
                                 type="radio"
                                 id="Percentage"
@@ -1313,7 +1558,9 @@ export default function VolumePage() {
                               <label htmlFor="Percentage">Percentage</label>
                             </div>
 
-                            <div className={styles.bundle_product}>
+                            <div
+                              className={`${styles.bundle_product} ${values.discount_method === "Fixed Amount" ? styles.activeTab : ""}`}
+                            >
                               <input
                                 type="radio"
                                 id="Fixed Amount"
@@ -1327,7 +1574,9 @@ export default function VolumePage() {
                               <label htmlFor="Fixed Amount">Fixed Amount</label>
                             </div>
 
-                            <div className={styles.bundle_product}>
+                            <div
+                              className={`${styles.bundle_product} ${values.discount_method === "Set Selling Price" ? styles.activeTab : ""}`}
+                            >
                               <input
                                 type="radio"
                                 id="Set Selling Price"
@@ -1437,11 +1686,25 @@ export default function VolumePage() {
                                       onClick={() => handleDelete(item.id)}
                                       className={styles.deletedBtn}
                                     >
-                                      <img
+                                      {/* <img
                                         src={deletedIcon}
                                         width={20}
                                         height={20}
-                                      />
+                                      /> */}
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="18"
+                                        height="20"
+                                        fill="none"
+                                        viewBox="0 0 18 20"
+                                      >
+                                        <path
+                                          fill="#F24747"
+                                          fillRule="evenodd"
+                                          d="M12.857 2.836v.216a47 47 0 0 1 3.694.488.714.714 0 0 1-.244 1.408l-.2-.034-.957 12.448A2.857 2.857 0 0 1 12.302 20h-7.46a2.857 2.857 0 0 1-2.85-2.638L1.036 4.914l-.199.034A.714.714 0 0 1 .592 3.54a46 46 0 0 1 3.694-.488v-.216c0-1.49 1.155-2.762 2.681-2.81a50 50 0 0 1 3.209 0c1.527.048 2.681 1.32 2.681 2.81M7.013 1.453a49 49 0 0 1 3.117 0c.719.023 1.299.627 1.299 1.383v.108a47 47 0 0 0-5.715 0v-.108c0-.756.58-1.36 1.299-1.383m-.338 5.662a.714.714 0 1 0-1.428.055l.33 8.572a.714.714 0 1 0 1.428-.055zm5.22.055a.714.714 0 0 0-1.428-.055l-.33 8.572a.714.714 0 1 0 1.428.055z"
+                                          clipRule="evenodd"
+                                        ></path>
+                                      </svg>
                                       Delete
                                     </button>
                                   </div>
@@ -1449,7 +1712,7 @@ export default function VolumePage() {
                               </div>
                             </React.Fragment>
                           ))}
-
+                          {/* 
                           {values.product !== "All Products" && (
                             <div className={styles.Addanotherdiv}>
                               <label
@@ -1459,7 +1722,7 @@ export default function VolumePage() {
                                 <span>+</span>Add Another Tier
                               </label>
                             </div>
-                          )}
+                          )} */}
 
                           <div className={styles.Add_btn}>
                             <button
@@ -1481,9 +1744,9 @@ export default function VolumePage() {
                       </>
                     )}
 
-                    {showComponent == 3 && (
+                    {showPage == "third" && (
                       <>
-                        <div className={styles.table_content}>
+                        <div>
                           <div className={styles.leftContent}>
                             <>
                               <h3>
@@ -1514,7 +1777,7 @@ export default function VolumePage() {
                                   name="bundle_name"
                                   value={values.bundle_name}
                                 />
-                                 <input
+                                <input
                                   type="hidden"
                                   name="product"
                                   value={values.product}
@@ -1523,6 +1786,11 @@ export default function VolumePage() {
                                   type="hidden"
                                   name="discount_method"
                                   value={values.discount_method}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="product_details"
+                                  value={JSON.stringify(selectProducts)}
                                 />
                                 <div className={styles.input_labelCustomize}>
                                   <label htmlFor="">Position</label>
@@ -1654,60 +1922,123 @@ export default function VolumePage() {
                                   className={`${styles.headingWrapper} ${styles.heading_img}`}
                                 >
                                   <h4>Above title section</h4>
-                                  <button type="button" class={styles.btn_one}>
-                                    Show{" "}
-                                    <img
-                                      src={downArrow}
-                                      width="20"
-                                      height="20"
-                                    />
-                                  </button>
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_section_text">
-                                    Text
-                                  </label>
-                                  <input
-                                    type="text"
-                                    id="title_section_text"
-                                    name="titleSectionText"
-                                    value={titleSection.titleSectionText}
-                                    onChange={handleTitleSection}
-                                    className={styles.inputDiv}
-                                  />
-                                </div>
 
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_section_size">
-                                    Size
-                                  </label>
+                                  <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() =>
+                                        handleShowStatus("titleSection")
+                                      }
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.titleSection}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
 
-                                  <input
-                                    type="number"
-                                    id="title_section_size"
-                                    name="titleSectionSize"
-                                    value={titleSection.titleSectionSize}
-                                    onChange={handleTitleSection}
-                                  />
-                                </div>
-
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_section_color">
-                                    Color
-                                  </label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="title_section_color"
-                                      name="titleSectionColor"
-                                      value={titleSection.titleSectionColor}
-                                      onChange={handleTitleSection}
-                                    />
+                                    {showStatus.titleSection && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            data-value="option1"
+                                            onClick={() =>
+                                              handleBtn("titleSection")
+                                            }
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() =>
+                                              handleBtn("titleSection")
+                                            }
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
                                 </div>
+                                {showButton.titleSection === "Show" && (
+                                  <>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_section_text">
+                                        Text
+                                      </label>
+                                      <input
+                                        type="text"
+                                        id="title_section_text"
+                                        name="titleSectionText"
+                                        value={titleSection.titleSectionText}
+                                        onChange={handleTitleSection}
+                                        className={styles.inputDiv}
+                                      />
+                                    </div>
+
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_section_size">
+                                        Size
+                                      </label>
+
+                                      <input
+                                        type="number"
+                                        id="title_section_size"
+                                        name="titleSectionSize"
+                                        value={titleSection.titleSectionSize}
+                                        onChange={handleTitleSection}
+                                      />
+                                    </div>
+
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_section_color">
+                                        Color
+                                      </label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              titleSection.titleSectionColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="titleSectionColor"
+                                            value={
+                                              titleSection.titleSectionColor
+                                            }
+                                            onChange={handleTitleSection}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="title_section_color"
+                                          name="titleSectionColor"
+                                          value={titleSection.titleSectionColor}
+                                        />
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               <div className={styles.divideDiv}>
@@ -1715,133 +2046,244 @@ export default function VolumePage() {
                                   className={`${styles.headingWrapper} ${styles.heading_img}`}
                                 >
                                   <h4>Title</h4>
-                                  <button type="button" class={styles.btn_one}>
-                                    Show{" "}
-                                    <img
-                                      src={downArrow}
-                                      width="20"
-                                      height="20"
-                                    />
-                                  </button>
-                                </div>
+                                  <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("title")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.title}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
 
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_text">Text</label>
-                                  <input
-                                    type="text"
-                                    id="title_text"
-                                    name="titleText"
-                                    value={title.titleText}
-                                    onChange={handleTitle}
-                                    className={styles.inputDiv}
-                                  />
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_size">Size</label>
-
-                                  <input
-                                    type="number"
-                                    id="title_size"
-                                    name="titleSize"
-                                    value={title.titleSize}
-                                    onChange={handleTitle}
-                                  />
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_color">Color</label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="title_color"
-                                      name="titleColor"
-                                      value={title.titleColor}
-                                      onChange={handleTitle}
-                                    />
+                                    {showStatus.title && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            data-value="option1"
+                                            onClick={() => handleBtn("title")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() => handleBtn("title")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
                                 </div>
+                                {showButton.title === "Show" && (
+                                  <>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_text">Text</label>
+                                      <input
+                                        type="text"
+                                        id="title_text"
+                                        name="titleText"
+                                        value={title.titleText}
+                                        onChange={handleTitle}
+                                        className={styles.inputDiv}
+                                      />
+                                    </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_size">Size</label>
+
+                                      <input
+                                        type="number"
+                                        id="title_size"
+                                        name="titleSize"
+                                        value={title.titleSize}
+                                        onChange={handleTitle}
+                                      />
+                                    </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_color">Color</label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor: title.titleColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="titleColor"
+                                            value={title.titleColor}
+                                            onChange={handleTitle}
+                                          />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          id="title_color"
+                                          name="titleColor"
+                                          value={title.titleColor}
+                                        />
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               <div className={styles.divideDiv}>
                                 <div className={styles.heading_img}>
                                   <h3>Tiers</h3>{" "}
-                                  <button
-                                    type="button"
-                                    className={styles.btn_one}
-                                  >
-                                    Show{" "}
-                                    <img
-                                      src={dropdown}
-                                      width={20}
-                                      height={20}
-                                    />
-                                  </button>
-                                </div>
-                                <div className={styles.trigerCheck}>
-                                  <div className={styles.input_labelCustomize}>
-                                    <div className={styles.formGroup}>
-                                      <input
-                                        type="checkbox"
-                                        id="save"
-                                        name="tierSave"
-                                        checked={tiers.tierSave}
-                                        onChange={handleTier}
-                                      />
-                                      <label htmlFor="save">
-                                        Display “Save” Badge
-                                      </label>
+                                  <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("tiers")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.tiers}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
                                     </div>
-                                  </div>
 
-                                  <div className={styles.input_labelCustomize}>
-                                    <div className={styles.formGroup}>
-                                      <input
-                                        type="checkbox"
-                                        id="compared"
-                                        name="tierComparedPrice"
-                                        checked={tiers.tierComparedPrice}
-                                        onChange={handleTier}
-                                      />
-                                      <label for="compared">
-                                        Display Compared-At Price
-                                      </label>
+                                    {showStatus.tiers && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            data-value="option1"
+                                            onClick={() => handleBtn("tiers")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() => handleBtn("tiers")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
+                                </div>
+                                {showButton.tiers === "Show" && (
+                                  <>
+                                    <div className={styles.trigerCheck}>
+                                      <div
+                                        className={styles.input_labelCustomize}
+                                      >
+                                        <div className={styles.formGroup}>
+                                          <input
+                                            type="checkbox"
+                                            id="save"
+                                            name="tierSave"
+                                            checked={tiers.tierSave}
+                                            onChange={handleTier}
+                                          />
+                                          <label htmlFor="save">
+                                            Display “Save” Badge
+                                          </label>
+                                        </div>
+                                      </div>
+
+                                      <div
+                                        className={styles.input_labelCustomize}
+                                      >
+                                        <div className={styles.formGroup}>
+                                          <input
+                                            type="checkbox"
+                                            id="compared"
+                                            name="tierComparedPrice"
+                                            checked={tiers.tierComparedPrice}
+                                            onChange={handleTier}
+                                          />
+                                          <label for="compared">
+                                            Display Compared-At Price
+                                          </label>
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="tiers_color">Color</label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="tiers_color"
-                                      name="tierColor"
-                                      value={tiers.tierColor}
-                                      onChange={handleTier}
-                                    />
-                                  </div>
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="badge_color">
-                                    “Save” Badge Color
-                                  </label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="badge_color"
-                                      name="badge_color"
-                                      value={tiers.badge_color}
-                                      onChange={handleTier}
-                                    />
-                                  </div>
-                                </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="tiers_color">Color</label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor: tiers.tierColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="tierColor"
+                                            value={tiers.tierColor}
+                                            onChange={handleTier}
+                                          />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          id="tiers_color"
+                                          name="tierColor"
+                                          value={tiers.tierColor}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="badge_color">
+                                        “Save” Badge Color
+                                      </label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor: tiers.badge_color,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="badge_color"
+                                            value={tiers.badge_color}
+                                            onChange={handleTier}
+                                          />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          id="badge_color"
+                                          name="badge_color"
+                                          value={tiers.badge_color}
+                                        />
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               <div className={styles.divideDiv}>
@@ -1849,162 +2291,335 @@ export default function VolumePage() {
                                   className={`${styles.headingWrapper} ${styles.heading_img}`}
                                 >
                                   <h4>Call To Action Button</h4>
-                                  <button type="button" class={styles.btn_one}>
-                                    Show{" "}
-                                    <img
-                                      src={downArrow}
-                                      width="20"
-                                      height="20"
-                                    />
-                                  </button>
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="call_action_text">Text</label>
-                                  <input
-                                    type="text"
-                                    id="call_action_text"
-                                    name="ctaText"
-                                    value={callAction.ctaText}
-                                    onChange={handleCallToAction}
-                                    className={styles.inputDiv}
-                                  />
-                                </div>
+                                  <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() =>
+                                        handleShowStatus("callAction")
+                                      }
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.callAction}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
 
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_section_size">
-                                    Size
-                                  </label>
-
-                                  <input
-                                    type="number"
-                                    id="title_section_size"
-                                    name="ctaSize"
-                                    value={callAction.ctaSize}
-                                    onChange={handleCallToAction}
-                                  />
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="title_section_color">
-                                    Color
-                                  </label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="title_section_color"
-                                      name="ctaColor"
-                                      value={callAction.ctaColor}
-                                      onChange={handleCallToAction}
-                                    />
+                                    {showStatus.callAction && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            data-value="option1"
+                                            onClick={() =>
+                                              handleBtn("callAction")
+                                            }
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() =>
+                                              handleBtn("callAction")
+                                            }
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
                                 </div>
+                                {showButton.callAction === "Show" && (
+                                  <>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="call_action_text">
+                                        Text
+                                      </label>
+                                      <input
+                                        type="text"
+                                        id="call_action_text"
+                                        name="ctaText"
+                                        value={callAction.ctaText}
+                                        onChange={handleCallToAction}
+                                        className={styles.inputDiv}
+                                      />
+                                    </div>
+
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_section_size">
+                                        Size
+                                      </label>
+
+                                      <input
+                                        type="number"
+                                        id="title_section_size"
+                                        name="ctaSize"
+                                        value={callAction.ctaSize}
+                                        onChange={handleCallToAction}
+                                      />
+                                    </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="title_section_color">
+                                        Color
+                                      </label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              callAction.ctaColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="ctaColor"
+                                            value={callAction.ctaColor}
+                                            onChange={handleCallToAction}
+                                          />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          id="title_section_color"
+                                          name="ctaColor"
+                                          value={callAction.ctaColor}
+                                        />
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               <div className={styles.divideDiv}>
                                 <div className={styles.heading_img}>
                                   <h3>Text Below CTA</h3>{" "}
-                                  <button
-                                    type="button"
-                                    className={styles.btn_one}
-                                  >
-                                    Show{" "}
-                                    <img
-                                      src={dropdown}
-                                      width={20}
-                                      height={20}
-                                    />
-                                  </button>
-                                </div>
+                                  <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() =>
+                                        handleShowStatus("textBelow")
+                                      }
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.textBelow}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
 
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="text_below_text">Text</label>
-                                  <input
-                                    type="text"
-                                    id="text_below_text"
-                                    name="tbText"
-                                    value={textBelow.tbText}
-                                    onChange={handleTextBelow}
-                                    className={styles.inputDiv}
-                                  />
-                                </div>
-
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="text_below_size">Size</label>
-
-                                  <input
-                                    type="number"
-                                    id="text_below_size"
-                                    name="tbSize"
-                                    value={textBelow.tbSize}
-                                    onChange={handleTextBelow}
-                                    className={styles.inputDiv}
-                                  />
-                                </div>
-
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="text_below_color">
-                                    {" "}
-                                    Color
-                                  </label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="text_below_color"
-                                      name="tbColor"
-                                      value={textBelow.tbColor}
-                                      onChange={handleTextBelow}
-                                    />
+                                    {showStatus.textBelow && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            data-value="option1"
+                                            onClick={() =>
+                                              handleBtn("textBelow")
+                                            }
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() =>
+                                              handleBtn("textBelow")
+                                            }
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
                                 </div>
+
+                                {showButton.textBelow === "Show" && (
+                                  <>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="text_below_text">
+                                        Text
+                                      </label>
+                                      <input
+                                        type="text"
+                                        id="text_below_text"
+                                        name="tbText"
+                                        value={textBelow.tbText}
+                                        onChange={handleTextBelow}
+                                        className={styles.inputDiv}
+                                      />
+                                    </div>
+
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="text_below_size">
+                                        Size
+                                      </label>
+
+                                      <input
+                                        type="number"
+                                        id="text_below_size"
+                                        name="tbSize"
+                                        value={textBelow.tbSize}
+                                        onChange={handleTextBelow}
+                                        className={styles.inputDiv}
+                                      />
+                                    </div>
+
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="text_below_color">
+                                        {" "}
+                                        Color
+                                      </label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor: textBelow.tbColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="tbColor"
+                                            value={textBelow.tbColor}
+                                            onChange={handleTextBelow}
+                                          />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          id="text_below_color"
+                                          name="tbColor"
+                                          value={textBelow.tbColor}
+                                        />
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               <div className={styles.divideDiv}>
                                 <div className={styles.heading_img}>
                                   <h3>Background</h3>{" "}
-                                  <button
-                                    type="button"
-                                    className={styles.btn_one}
-                                  >
-                                    Show{" "}
-                                    <img
-                                      src={dropdown}
-                                      width={20}
-                                      height={20}
-                                    />
-                                  </button>
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <label htmlFor="background_color">
-                                    Color
-                                  </label>
-                                  <div className={styles.color_styles}>
-                                    <span
-                                      className={styles.color_pilate}
-                                    ></span>
-                                    <input
-                                      type="text"
-                                      id="background_color"
-                                      name="backgroundColor"
-                                      value={background.backgroundColor}
-                                      onChange={handleBackground}
-                                    />
+                                  <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() =>
+                                        handleShowStatus("background")
+                                      }
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.background}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.background && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            data-value="option1"
+                                            onClick={() =>
+                                              handleBtn("background")
+                                            }
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            data-value="option2"
+                                            onClick={() =>
+                                              handleBtn("background")
+                                            }
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
                                 </div>
-                                <div className={styles.formGroup}>
-                                  <input
-                                    type="checkbox"
-                                    id="shadow"
-                                    name="backgroundShadow"
-                                    checked={background.backgroundShadow}
-                                    onChange={handleBackground}
-                                  />
-                                  <label htmlFor="shadow">Shadow</label>
-                                </div>
+
+                                {showButton.background === "Show" && (
+                                  <>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <label htmlFor="background_color">
+                                        Color
+                                      </label>
+                                      <div className={styles.color_styles}>
+                                        <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              background.backgroundColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="backgroundColor"
+                                            value={background.backgroundColor}
+                                            onChange={handleBackground}
+                                          />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          id="background_color"
+                                          name="backgroundColor"
+                                          value={background.backgroundColor}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                      <input
+                                        type="checkbox"
+                                        id="shadow"
+                                        name="backgroundShadow"
+                                        checked={background.backgroundShadow}
+                                        onChange={handleBackground}
+                                      />
+                                      <label htmlFor="shadow">Shadow</label>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             </>
 
@@ -2017,115 +2632,135 @@ export default function VolumePage() {
                                   Back
                                 </button>
                                 <button
-                                    disabled={navigation.state == "submitting"}
-                                    name="intent"
-                                    value="stepThird"
-                                    className={styles.NextBtn}
-                                  >
-                                   {navigation.state == "submitting" ? <Loader /> : "Launch Bundle"}
-                                  </button>
+                                  disabled={navigation.state == "submitting"}
+                                  name="intent"
+                                  value="stepThird"
+                                  className={styles.NextBtn}
+                                >
+                                  {navigation.state == "submitting" ? (
+                                    <Loader />
+                                  ) : (
+                                    "Launch Bundle"
+                                  )}
+                                </button>
                               </div>
                             </>
                           </div>
                         </div>
                       </>
                     )}
+
+                    {showComponent <= 3 && (
+                      <div className={styles.live_preview}>
+                        <img
+                          src={preview_mockup}
+                          width={404}
+                          height={822}
+                          className={styles.mockup_tab}
+                        />
+                        <div className={styles.Preview_bundle}>
+                          <div className={styles.limited}>
+                            Limited Time Offer
+                          </div>
+                          <h4>Add Bundle And Save 10%!</h4>
+
+                          <div className={styles.both_product}>
+                            <div className={styles.left_productsample}>
+                              <img
+                                src={Productpreview}
+                                width={112}
+                                height={112}
+                                className={styles.mockup_tab}
+                              />
+                              <select name="" id="">
+                                <option value="newest">Gold 14K</option>
+                                <option value="old">Gold 14K</option>
+                              </select>
+
+                              <h6>Product Name</h6>
+                            </div>
+                            <div className={styles.AddProduct}>
+                              <span>+</span>
+                            </div>
+
+                            <div className={styles.left_productsample}>
+                              <img
+                                src={Productpreview}
+                                width={112}
+                                height={112}
+                                className={styles.mockup_tab}
+                              />
+                              <select name="" id="">
+                                <option value="newest">Gold 14K</option>
+                                <option value="old">Gold 14K</option>
+                              </select>
+
+                              <h6>Product Name</h6>
+                            </div>
+                          </div>
+
+                          <div className={styles.productTotal}>
+                            <span>Total</span>
+                            <div className={styles.Pricetab}>
+                              <span className={styles.delPriceOuter}>
+                                <span className={styles.delPrice}>230$</span>
+                              </span>
+                              <span className={styles.totalPrice}>130$</span>
+                              <span className={styles.SaveTab}>Save 10%</span>
+                            </div>
+
+                            <button className={styles.AddBtn}>
+                              👉 Add To Cart
+                            </button>
+                            <p className={styles.wrrantyTag}>
+                              Lifetime Warranty & Free Returns
+                            </p>
+                          </div>
+                        </div>
+                        <div className={styles.btnLivePreview}>
+                          <button>Live Preview</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {showComponent <= 3 && (
-                    <div className={styles.live_preview}>
-                      <img
-                        src={preview_mockup}
-                        width={404}
-                        height={822}
-                        className={styles.mockup_tab}
-                      />
-                      <div className={styles.Preview_bundle}>
-                        <div className={styles.limited}>Limited Time Offer</div>
-                        <h4>Add Bundle And Save 10%!</h4>
-
-                        <div className={styles.both_product}>
-                          <div className={styles.left_productsample}>
-                            <img
-                              src={Productpreview}
-                              width={112}
-                              height={112}
-                              className={styles.mockup_tab}
-                            />
-                            <select name="" id="">
-                              <option value="newest">Gold 14K</option>
-                              <option value="old">Gold 14K</option>
-                            </select>
-
-                            <h6>Product Name</h6>
-                          </div>
-                          <div className={styles.AddProduct}>
-                            <span>+</span>
-                          </div>
-
-                          <div className={styles.left_productsample}>
-                            <img
-                              src={Productpreview}
-                              width={112}
-                              height={112}
-                              className={styles.mockup_tab}
-                            />
-                            <select name="" id="">
-                              <option value="newest">Gold 14K</option>
-                              <option value="old">Gold 14K</option>
-                            </select>
-
-                            <h6>Product Name</h6>
-                          </div>
-                        </div>
-
-                        <div className={styles.productTotal}>
-                          <span>Total</span>
-                          <div className={styles.Pricetab}>
-                            <span className={styles.delPriceOuter}>
-                              <span className={styles.delPrice}>230$</span>
-                            </span>
-                            <span className={styles.totalPrice}>130$</span>
-                            <span className={styles.SaveTab}>Save 10%</span>
-                          </div>
-
-                          <button className={styles.AddBtn}>
-                            👉 Add To Cart
-                          </button>
-                          <p className={styles.wrrantyTag}>
-                            Lifetime Warranty & Free Returns
+                  {showPage === "Return" && (
+                    <>
+                      <div
+                        className={`${styles.table_content} ${styles.DesignCard}`}
+                      >
+                        <div className={styles.requestReview}>
+                          <h2>You Did It!</h2>
+                          <p>
+                            Your bundle is up and running. Sit back and let the
+                            conversations roll in.
                           </p>
+                          <button
+                            className={styles.NextBtn}
+                            onClick={handleDesign}
+                          >
+                            Return To Dashboard
+                          </button>
                         </div>
                       </div>
-                      <div className={styles.btnLivePreview}>
-                        <button>Live Preview</button>
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
             </Form>
           </div>
         )}
-
-        {activeTab === "Return" && (
-          <>
-            <div className={`${styles.table_content} ${styles.DesignCard}`}>
-              <div className={styles.requestReview}>
-                <h2>You Did It!</h2>
-                <p>
-                  Your bundle is up and running. Sit back and let the
-                  conversations roll in.
-                </p>
-                <button className={styles.NextBtn} onClick={handleDesign}>
-                  Return To Dashboard
-                </button>
-              </div>
-            </div>
-          </>
-        )}
       </div>
 
       <Toaster />
+      {isProduct && (
+        <AddProduct
+          onClose={handleClose}
+          products={products}
+          handleSave={handleSave}
+          selectProduct={selectProducts}
+          setSelectedPrducts={setSelectedPrducts}
+        />
+      )}
     </>
   );
 }

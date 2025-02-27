@@ -5,12 +5,15 @@ import React, { useEffect } from "react";
 import { useState } from "react";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
 import Productpreview from "../routes/assets/product_sample.png";
+import offerIcon from "../../app/routes/assets/offerIcon.svg";
+import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
 import downArrow from "../routes/assets/drop_downImg.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import styles from "../styles/main.module.css";
 import deletedIcon from "../routes/assets/deleted.svg";
 import collectedIcon from "../../app/routes/assets/collected_icon.png";
 import dropdown from "../routes/assets/drop_downImg.svg";
+import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
 import {
   Form,
@@ -141,6 +144,23 @@ export async function action({ request }) {
       shadow: formData.get("backgroundShadow"),
     };
 
+
+    console.log(bundle_id, 'bundle_id')
+    console.log(name, 'name')
+    console.log(products, 'products')
+    console.log(position, 'position')
+    console.log(section, 'section')
+    console.log(displayLocation, 'displayLocation')
+    console.log(method, 'method')
+    console.log(chooseAmount, 'chooseAmount')
+    console.log(title_section, 'title_section')
+    console.log(title, 'title')
+    console.log(product, 'product')
+    console.log(bundle_cost, 'bundle_cost')
+    console.log(call_to_action_button, 'call_to_action_button')
+    console.log(text_below_cta, 'text_below_cta')
+    console.log(backgroud, 'backgroud')
+
     try {
       if (bundle_id) {
         const updatedDiscount = await db.bundle.update({
@@ -249,8 +269,6 @@ export async function action({ request }) {
       const response = await axios.request(config);
       const responseData = response.data;
 
-      console.log(responseData, "check resresponseData");
-
       if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
         console.error(
           "Shopify Errors:",
@@ -305,12 +323,17 @@ export default function PlansPage() {
   const [position, setPosition] = useState("Below Section");
   const [showPosition, setShowPosition] = useState(false);
   const [showComponent, setShowComponent] = useState(1);
+  const [showPage, setShowPage] = useState(null);
   const [productSections, setProductSections] = useState([{ id: 1 }]);
   const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [isMonth, setIsMonth] = useState(false);
+  const [month, setMonth] = useState("This Month");
   const [section, setSection] = useState("Buy Buttons");
+  const [showEdit, setShowEdit] = useState(false);
   const [isProduct, setIsProduct] = useState(false);
   const [id, setId] = useState(null);
+  const [details, setDetails] = useState({});
 
   const [values, setValues] = useState({
     bundle_name: "Example Bundle 1",
@@ -372,6 +395,14 @@ export default function PlansPage() {
     backgroundColor: "#FFFFFF",
     backgroundShadow: true,
   });
+
+  const handleEdit = (item) => {
+    setDetails(item);
+    setShowEdit(true);
+    setActiveTab("Products");
+    setShowComponent(1);
+    setShowPage("first");
+  };
 
   const handleTitleSection = (e) => {
     const { name, value } = e.target;
@@ -440,8 +471,11 @@ export default function PlansPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setValues((prevValues) => ({
-      ...prevValues,
+   console.log(e.target.value, 'checkvalues')
+
+
+    setValues((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
@@ -459,7 +493,9 @@ export default function PlansPage() {
   };
 
   const handleDesign = () => {
-    setActiveTab("Products");
+    setActiveTab("Home");
+    setShowEdit(false);
+    setShowComponent(0);
   };
 
   const handleFirst = () => {
@@ -481,10 +517,19 @@ export default function PlansPage() {
       });
     } else {
       setShowComponent(2);
+      setShowPage("second");
     }
   };
 
-  console.log(values.discount, "checkdiscount");
+  const handleMonth = (item) => {
+    setMonth(item);
+  };
+
+  const handleCreate = () => {
+    setActiveTab("Products");
+    setShowComponent(1);
+    setShowPage("first");
+  };
 
   const handleSecond = () => {
     if (values.discount === "Percentage") {
@@ -515,6 +560,7 @@ export default function PlansPage() {
         });
       } else {
         setShowComponent(3);
+        setShowPage("third");
       }
     } else if (values.discount === "Fixed Amount") {
       console.log("Amount andar");
@@ -528,17 +574,12 @@ export default function PlansPage() {
         });
       } else {
         setShowComponent(3);
+        setShowPage("third");
       }
     }
   };
 
-  useEffect(() => {
-    if (totalBundle.length > 0) {
-      setActiveTab("Home");
-    } else {
-      setActiveTab("Products");
-    }
-  }, []);
+ 
 
   useEffect(() => {
     if (actionResponse?.status === 200) {
@@ -550,8 +591,9 @@ export default function PlansPage() {
             color: "white",
           },
         });
-        setActiveTab("Return");
+        setShowPage("Return");
       }
+      setId(null);
       setValues({
         bundle_name: "Example Bundle 1",
         displayBundle: "Bundle Product Pages",
@@ -609,8 +651,66 @@ export default function PlansPage() {
   }, [actionResponse]);
 
 
-  console.log(activeTab, 'activeTab')
+  useEffect(() => {
+      if (showEdit) {
+        console.log(details, "hence");
+         setId(details.id);
+        setValues((prev) => ({
+          ...prev,
+          bundle_name: details.name,
+          displayBundle: details.displayLocation,
+          amount: details.chooseAmount,
+          discount: details.method,
+        }));
+        setSelectedPrducts(JSON.parse(details.products));
+        setPosition(details.position);
+        setSection(details.section);
+        seTitleSection((prev) => ({
+          ...prev,
+          titleSectionText: details.title_section.text,
+          titleSectionSize: details.title_section.size,
+          titleSectionColor: details.title_section.color,
+        }));
+        seTitle((prev) => ({
+          ...prev,
+          titleText: details.title.text,
+          titleSize: details.title.size,
+          titleColor: details.title.color,
+        }));
+        setProductTitle((prev) =>  ({
+          ...prev,
+          productColor: details.product.color,
+          productSize: details.product.size
+        }))
+        setBundleCost((prev => ({
+          ...prev,
+          bundleCostSize: details.bundle_cost.size,
+          bundleCostColor: details.bundle_cost.color,
+          bundleCostComparedPrice: details.bundle_cost.comparedPrice === "on" ? true : false,
+          bundleCostSave: details.bundle_cost.save === "on" ? true :  false,
+        })))
+  
+        setCallAction((prev) => ({
+          ...prev,
+          ctaText: details.call_to_action_button.text,
+          ctaSize: details.call_to_action_button.size,
+          ctaColor: details.call_to_action_button.color,
+        }));
+        setTextBelow((prev) => ({
+          ...prev,
+          tbText: details.text_below_cta.text,
+          tbSize: details.text_below_cta.size,
+          tbColor: details.text_below_cta.color,
+        }));
+        setBackGround((prev) => ({
+          ...prev,
+          backgroundColor: details.backgroud.color,
+          backgroundShadow: details.backgroud.shadow === 'on' ? true: false
+        }))
+      }
+    }, [showEdit]);
 
+ 
   useEffect(() => {
     if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
@@ -707,50 +807,75 @@ export default function PlansPage() {
           <>
             <div className={styles.bundleHeading}>
               <h2>All Bundles</h2>
-              <div
-                className={` ${styles.btnFlexWrapper} ${styles.bundleBtnGap} `}
-              >
+              <div className={` ${styles.btnFlexWrapper} `}>
                 <div
-                  className={` ${styles.activeButton} ${styles.InactiveButton} `}
-                  id="second"
+                  className={styles.activeButton}
+                  onClick={() => setIsMonth(!isMonth)}
                 >
                   <div className={styles.butttonsTab}>
-                    <span className={styles.selected}>This Month</span>
-                    <div className={styles.arrowActive}>
-                      <svg
-                        width="15"
-                        height="8"
-                        viewBox="0 0 22 12"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                          fill="#0F172A"
-                        />
-                      </svg>
-                    </div>
+                    {month}{" "}
+                    <img
+                      src={drop_downImg}
+                      className={styles.inactiveImg}
+                      width={15}
+                      height={8}
+                    />{" "}
                   </div>
-
-                  <ul
-                    className={styles.selectDropdown}
-                    style={{ display: "none" }}
-                  >
-                    <li data-value="option1">Today</li>
-                    <li data-value="option2">Yesterday</li>
-                    <li data-value="option1">Last 3 Days</li>
-                    <li data-value="option2">Last 7 Days</li>
-                    <li data-value="option1">This Month</li>
-                    <li data-value="option2">Last Month</li>
-                    <li data-value="option1">Custom</li>
-                  </ul>
+                  {isMonth && (
+                    <>
+                      <ul
+                        className={` ${styles.selectDropdown} ${styles.InactiveButton} `}
+                      >
+                        <li
+                          data-value="option1"
+                          onClick={() => handleMonth("Today")}
+                        >
+                          Today
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Yesterday")}
+                        >
+                          Yesterday
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last 3 Days")}
+                        >
+                          Last 3 Days
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last 7 Days")}
+                        >
+                          Last 7 Days
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("This Month")}
+                        >
+                          This Month
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last Month")}
+                        >
+                          Last Month
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Custom")}
+                        >
+                          Custom
+                        </li>
+                      </ul>
+                    </>
+                  )}
                 </div>
 
                 <button
                   className={`${styles.btn_one} ${styles.active}`}
-                  onClick={() => setActiveTab("Products")}
+                  onClick={handleCreate}
                 >
                   Create Bundle
                 </button>
@@ -800,8 +925,8 @@ export default function PlansPage() {
                               xmlns="http://www.w3.org/2000/svg"
                             >
                               <path
-                                fill-rule="evenodd"
-                                clip-rule="evenodd"
+                                fillRule="evenodd"
+                                clipRule="evenodd"
                                 d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
                                 fill="#F24747"
                               />
@@ -836,7 +961,7 @@ export default function PlansPage() {
                             />
                           </svg>
                         </button>
-                        <button className={styles.edit_Btn} title="Edit">
+                        <button className={styles.edit_Btn} title="Edit"  onClick={() => handleEdit(card)}>
                           <svg
                             width="22"
                             height="22"
@@ -853,7 +978,8 @@ export default function PlansPage() {
                               fill="#464646"
                             />
                           </svg>
-                        </button>
+                          </button>
+                       
                       </div>
                     </div>
                     <div className={styles.inline_stackwraper}>
@@ -895,15 +1021,14 @@ export default function PlansPage() {
           <div className={styles.main_bundle}>
             <div className={styles.bundleWraper}>
               <span
-                onClick={() => setActiveTab("Products")}
-                className={showComponent >= 1 ? styles.active_tab : ""}
+                className={`${showPage === "first" ? styles.bordercolor : ""} ${showComponent > 1 ? styles.active_tab : ""}`}
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                  {showComponent >= 1 ? (
+                  {showComponent > 1 ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="29"
-                      height="23"
+                      width="22"
+                      height="16"
                       fill="none"
                       viewBox="0 0 29 23"
                     >
@@ -948,15 +1073,14 @@ export default function PlansPage() {
                 Products
               </span>
               <span
-                onClick={() => setActiveTab("Offer")}
-                className={showComponent >= 2 ? styles.active_tab : ""}
+                className={`${showPage === "second" ? styles.bordercolor : ""} ${showComponent > 2 ? styles.active_tab : ""}`}
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                  {showComponent >= 2 ? (
+                  {showComponent > 2 ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="29"
-                      height="23"
+                      width="22"
+                      height="16"
                       fill="none"
                       viewBox="0 0 29 23"
                     >
@@ -969,47 +1093,20 @@ export default function PlansPage() {
                       ></path>
                     </svg>
                   ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      viewBox="0 0 26 26"
-                    >
-                      <path
-                        fill="url(#paint0_linear_904_10273)"
-                        fillRule="evenodd"
-                        d="M3.922 0A3.92 3.92 0 0 0 0 3.922v5.644c0 1.04.413 2.038 1.149 2.773l12.524 12.524c1.202 1.202 3.123 1.55 4.637.56a24.6 24.6 0 0 0 7.112-7.113c.992-1.514.643-3.435-.559-4.637L12.34 1.149A3.92 3.92 0 0 0 9.566 0zm1.47 6.863a1.47 1.47 0 1 0 0-2.941 1.47 1.47 0 0 0 0 2.94"
-                        clipRule="evenodd"
-                      ></path>
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_904_10273"
-                          x1="26"
-                          x2="0"
-                          y1="-0.238"
-                          y2="25.762"
-                          gradientUnits="userSpaceOnUse"
-                        >
-                          <stop stopColor="#005BEA"></stop>
-                          <stop offset="1" stopColor="#00C6FB"></stop>
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                    <img src={offerIcon} width={20} height={20} />
                   )}
                 </div>
                 Offer
               </span>
               <span
-                onClick={() => setActiveTab("Design")}
-                className={showComponent >= 3 ? styles.active_tab : ""}
+                className={`${showPage === "third" ? styles.bordercolor : ""} ${showComponent > 3 ? styles.active_tab : ""}`}
               >
                 <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                  {showComponent >= 3 ? (
+                  {showComponent > 3 ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="29"
-                      height="23"
+                      width="22"
+                      height="16"
                       fill="none"
                       viewBox="0 0 29 23"
                     >
@@ -1022,33 +1119,7 @@ export default function PlansPage() {
                       ></path>
                     </svg>
                   ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      fill="none"
-                      viewBox="0 0 26 26"
-                    >
-                      <path
-                        fill="url(#paint0_linear_904_10273)"
-                        fillRule="evenodd"
-                        d="M3.922 0A3.92 3.92 0 0 0 0 3.922v5.644c0 1.04.413 2.038 1.149 2.773l12.524 12.524c1.202 1.202 3.123 1.55 4.637.56a24.6 24.6 0 0 0 7.112-7.113c.992-1.514.643-3.435-.559-4.637L12.34 1.149A3.92 3.92 0 0 0 9.566 0zm1.47 6.863a1.47 1.47 0 1 0 0-2.941 1.47 1.47 0 0 0 0 2.94"
-                        clipRule="evenodd"
-                      ></path>
-                      <defs>
-                        <linearGradient
-                          id="paint0_linear_904_10273"
-                          x1="26"
-                          x2="0"
-                          y1="-0.238"
-                          y2="25.762"
-                          gradientUnits="userSpaceOnUse"
-                        >
-                          <stop stopColor="#005BEA"></stop>
-                          <stop offset="1" stopColor="#00C6FB"></stop>
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                    <img src={DesignIcon} width={20} height={20} />
                   )}
                 </div>
                 Design
@@ -1082,8 +1153,7 @@ export default function PlansPage() {
                             />
                           </div>
 
-                          {console.log(selectProducts, "selectPoducts")}
-
+                          <div className={styles.addProductdiv} >
                           {productSections.map((section, index) => (
                             <div
                               className={styles.input_labelCustomize}
@@ -1114,14 +1184,19 @@ export default function PlansPage() {
                                             }
                                             alt="Preview"
                                             style={{
-                                              maxWidth: "100%",
-                                              maxHeight: "300px",
-                                              objectFit: "contain",
+                                              width: "100px",
+                                              height: "100px",
+                                              maxHeight: "100px",
+                                              maxWidth: "100px",
+                                              objectFit: "cover",
+                                              borderRadius: "15px",
                                             }}
                                           />
                                           <div className={styles.image_name}>
                                             <h4>14K Gold Necklace</h4>
-                                            <button
+                                            <button 
+                                            type="button"
+                                            onClick={() => setSelectedPrducts([])}
                                               className={styles.deletedBtn}
                                             >
                                               <img
@@ -1153,6 +1228,7 @@ export default function PlansPage() {
                               </div>
                             </div>
                           ))}
+                          </div>
 
                           <div className={styles.Addanotherdiv}>
                             <label
@@ -1163,6 +1239,9 @@ export default function PlansPage() {
                               Product
                             </label>
                           </div>
+
+                          
+
 
                           <div className={styles.input_labelCustomize}>
                             <label htmlFor="">Where to display bundle</label>
@@ -1186,8 +1265,8 @@ export default function PlansPage() {
                             <div className={styles.bundle_product}>
                               <input
                                 type="radio"
-                                name="second"
-                                id="specific_Product"
+                                name="displayBundle"
+                                id="second"
                                 value="Specific Products Pages"
                                 checked={
                                   values.displayBundle ===
@@ -1253,7 +1332,7 @@ export default function PlansPage() {
                         </h3>
 
                         <div className={styles.input_labelCustomize}>
-                          <label htmlFor="">Discount Method</label>
+                          <label htmlFor="">Pick Method</label>
                           <div
                             className={`${styles.Add_btn} ${styles.SweetenBtn}`}
                           >
@@ -1338,7 +1417,7 @@ export default function PlansPage() {
                       </div>
                     )}
 
-                    {showComponent == 3 && (
+                    {showPage === "third" && (
                       <>
                         <input type="hidden" name="bundle_id" value={id} />
                         <input
@@ -1367,655 +1446,622 @@ export default function PlansPage() {
                           name="selectProducts"
                           value={JSON.stringify(selectProducts)}
                         />
+                        <div className={styles.leftContent}>
+                          <>
+                            <h3>
+                              You’re Almost There!
+                              <br></br>
+                              <span>Make It Stand Out</span>
+                            </h3>
 
-                        <div className={styles.table_content}>
-                          <div className={styles.requestReview}>
-                            <div className={styles.timing_after}>
-                              <div className={styles.leftContent}>
-                                <>
-                                  <h3>
-                                    You’re Almost There!
-                                    <br></br>
-                                    <span>Make It Stand Out</span>
-                                  </h3>
+                            <div className={styles.divideDiv}>
+                              <div
+                                className={`${styles.headingWrapper} ${styles.heading_img}`}
+                              >
+                                <h4>Placement</h4>
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="">Position</label>
 
-                                  <div className={styles.divideDiv}>
-                                    <div
-                                      className={`${styles.headingWrapper} ${styles.heading_img}`}
-                                    >
-                                      <h4>Placement</h4>
+                                <div
+                                  className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                  onClick={() => setShowPosition(!showPosition)}
+                                >
+                                  <div
+                                    className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                    id="second"
+                                  >
+                                    <div className={styles.selectBox}>
+                                      <span className={styles.selected}>
+                                        {position ? position : "Below Section"}
+                                      </span>
+                                      <div className={styles.arrow}>
+                                        <img
+                                          src={DorpDownIcon}
+                                          width={20}
+                                          height={16}
+                                        />
+                                      </div>
                                     </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="">Position</label>
-
-                                      <div
-                                        className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
-                                        onClick={() =>
-                                          setShowPosition(!showPosition)
-                                        }
+                                    {showPosition && (
+                                      <ul
+                                        className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                                       >
-                                        <div
-                                          className={` ${styles.customSelect} ${styles.customTabsec} `}
-                                          id="second"
+                                        <li
+                                          data-value="option1"
+                                          onClick={() =>
+                                            setPosition("Below Section")
+                                          }
                                         >
-                                          <div className={styles.selectBox}>
-                                            <span className={styles.selected}>
-                                              {position
-                                                ? position
-                                                : "Below Section"}
-                                            </span>
-                                            <div className={styles.arrow}>
-                                              <img
-                                                src={DorpDownIcon}
-                                                width={20}
-                                                height={16}
-                                              />
-                                            </div>
-                                          </div>
-                                          {showPosition && (
-                                            <ul
-                                              className={`${styles.selectDropdown} ${styles.newAppdeop} `}
-                                            >
-                                              <li
-                                                data-value="option1"
-                                                onClick={() =>
-                                                  setPosition("Below Section")
-                                                }
-                                              >
-                                                Below Section
-                                              </li>
-                                              <li
-                                                data-value="option2"
-                                                onClick={() =>
-                                                  setPosition("Above Section")
-                                                }
-                                              >
-                                                Above Section
-                                              </li>
-                                            </ul>
-                                          )}
-                                          <input
-                                            type="hidden"
-                                            name="position"
-                                            value={position}
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
+                                          Below Section
+                                        </li>
+                                        <li
+                                          data-value="option2"
+                                          onClick={() =>
+                                            setPosition("Above Section")
+                                          }
+                                        >
+                                          Above Section
+                                        </li>
+                                      </ul>
+                                    )}
+                                    <input
+                                      type="hidden"
+                                      name="position"
+                                      value={position}
+                                    />
                                   </div>
-
-                                  <div className={styles.input_labelCustomize}>
-                                    <label htmlFor="">Section</label>
-                                    <div
-                                      className={` ${styles.bundle_product} ${styles.bundleNewApp} ${section === "Buy Buttons" ? styles.activeTab : ""} `}
-                                    >
-                                      <input
-                                        type="radio"
-                                        name="section"
-                                        id="Buy Buttons"
-                                        value="Buy Buttons"
-                                        checked={section === "Buy Buttons"}
-                                        onChange={() =>
-                                          setSection("Buy Buttons")
-                                        }
-                                      />
-                                      <label htmlFor="Buy Buttons">
-                                        Buy Buttons
-                                      </label>
-                                    </div>
-
-                                    <div
-                                      className={`${styles.bundle_product} ${section === "Product Description" ? styles.activeTab : ""}`}
-                                    >
-                                      <input
-                                        type="radio"
-                                        name="section"
-                                        id="Product Description"
-                                        value="Product Description"
-                                        checked={
-                                          section === "Product Description"
-                                        }
-                                        onChange={() =>
-                                          setSection("Product Description")
-                                        }
-                                      />
-                                      <label htmlFor="Product Description">
-                                        Product Description
-                                      </label>
-                                    </div>
-
-                                    <div
-                                      className={`${styles.bundle_product} ${section === "End Of Product Page" ? styles.activeTab : ""}`}
-                                    >
-                                      <input
-                                        type="radio"
-                                        name="section"
-                                        id="End Of Product Page"
-                                        value="End Of Product Page"
-                                        checked={
-                                          section === "End Of Product Page"
-                                        }
-                                        onChange={() =>
-                                          setSection("End Of Product Page")
-                                        }
-                                      />
-                                      <label htmlFor="End Of Product Page">
-                                        End Of Product Page
-                                      </label>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.input_labelCustomize}>
-                                    <label htmlFor="">Manual Placement</label>
-                                    <div className={styles.manunalPlaced}>
-                                      <p>
-                                        {`  To Display the Volume Discount widget on your store go to: Theme Settings > Customize > Add Section (From the left sidebar) > Choose Bucket - Volume Discount
-
-*This will override the automatic placement`}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div
-                                      className={`${styles.headingWrapper} ${styles.heading_img}`}
-                                    >
-                                      <h4>Above title section</h4>
-                                      <button
-                                        type="button"
-                                        class={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={downArrow}
-                                          width="20"
-                                          height="20"
-                                        />
-                                      </button>
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_section_text">
-                                        Text
-                                      </label>
-                                      <input
-                                        type="text"
-                                        id="title_section_text"
-                                        name="titleSectionText"
-                                        value={titleSection.titleSectionText}
-                                        onChange={handleTitleSection}
-                                        placeholder=""
-                                        className={styles.inputDiv}
-                                      />
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_section_size">
-                                        Size
-                                      </label>
-
-                                      <input
-                                        type="number"
-                                        id="title_section_size"
-                                        placeholder=""
-                                        name="titleSectionSize"
-                                        value={titleSection.titleSectionSize}
-                                        onChange={handleTitleSection}
-                                      />
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_section_color">
-                                        Color
-                                      </label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="title_section_color"
-                                          name="titleSectionColor"
-                                          value={titleSection.titleSectionColor}
-                                          onChange={handleTitleSection}
-                                          placeholder=""
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div
-                                      className={`${styles.headingWrapper} ${styles.heading_img}`}
-                                    >
-                                      <h4>Title</h4>
-                                      <button
-                                        type="button"
-                                        className={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={downArrow}
-                                          width="20"
-                                          height="20"
-                                        />
-                                      </button>
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_text">Text</label>
-                                      <input
-                                        type="text"
-                                        id="title_text"
-                                        name="titleText"
-                                        value={title.titleText}
-                                        onChange={handleTitle}
-                                        placeholder=""
-                                        className={styles.inputDiv}
-                                      />
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_size">Size</label>
-
-                                      <input
-                                        type="number"
-                                        id="title_size"
-                                        name="titleSize"
-                                        value={title.titleSize}
-                                        onChange={handleTitle}
-                                        placeholder=""
-                                      />
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_color">Color</label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="title_color"
-                                          name="titleColor"
-                                          value={title.titleColor}
-                                          onChange={handleTitle}
-                                          placeholder=""
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div
-                                      className={`${styles.headingWrapper} ${styles.heading_img}`}
-                                    >
-                                      <h4>Product Title</h4>
-                                      <button
-                                        type="button"
-                                        className={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={downArrow}
-                                          width="20"
-                                          height="20"
-                                        />
-                                      </button>
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="productSize">Size</label>
-                                      <input
-                                        type="number"
-                                        id="productSize"
-                                        name="productSize"
-                                        value={productTitle.productSize}
-                                        onChange={handleProductTitle}
-                                      />
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="productColor">
-                                        Color
-                                      </label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="productColor"
-                                          name="productColor"
-                                          value={productTitle.productColor}
-                                          onChange={handleProductTitle}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div
-                                      className={`${styles.headingWrapper} ${styles.heading_img}`}
-                                    >
-                                      <h4>Bundle Cost</h4>
-                                      <button
-                                        type="button"
-                                        className={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={downArrow}
-                                          width="20"
-                                          height="20"
-                                        />
-                                      </button>
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="bundleCostSize">
-                                        Size
-                                      </label>
-
-                                      <input
-                                        type="number"
-                                        id="bundleCostSize"
-                                        name="bundleCostSize"
-                                        value={bundleCost.bundleCostSize}
-                                        onChange={handleBundleCost}
-                                      />
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="bundleCostColor">
-                                        Color
-                                      </label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="bundleCostColor"
-                                          name="bundleCostColor"
-                                          value={bundleCost.bundleCostColor}
-                                          onChange={handleBundleCost}
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className={styles.trigerCheck}>
-                                      <div
-                                        className={styles.input_labelCustomize}
-                                      >
-                                        <div className={styles.formGroup}>
-                                          <input
-                                            type="checkbox"
-                                            id="compared"
-                                            name="bundleCostComparedPrice"
-                                            checked={
-                                              bundleCost.bundleCostComparedPrice
-                                            }
-                                            onChange={handleBundleCost}
-                                          />
-                                          <label htmlFor="compared">
-                                            Display Compared-At Price
-                                          </label>
-                                        </div>
-                                      </div>
-                                      <div
-                                        className={styles.input_labelCustomize}
-                                      >
-                                        <div className={styles.formGroup}>
-                                          <input
-                                            type="checkbox"
-                                            id="save"
-                                            name="bundleCostSave"
-                                            checked={bundleCost.bundleCostSave}
-                                            onChange={handleBundleCost}
-                                          />
-                                          <label htmlFor="save">
-                                            Display “Save” Badge
-                                          </label>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div
-                                      className={`${styles.headingWrapper} ${styles.heading_img}`}
-                                    >
-                                      <h4>Call To Action Button</h4>
-                                      <button
-                                        type="button"
-                                        className={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={downArrow}
-                                          width="20"
-                                          height="20"
-                                        />
-                                      </button>
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="call_action_text">
-                                        Text
-                                      </label>
-                                      <input
-                                        type="text"
-                                        id="call_action_text"
-                                        name="ctaText"
-                                        value={callAction.ctaText}
-                                        onChange={handleCallToAction}
-                                        className={styles.inputDiv}
-                                      />
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_section_size">
-                                        Size
-                                      </label>
-
-                                      <input
-                                        type="number"
-                                        id="title_section_size"
-                                        name="ctaSize"
-                                        value={callAction.ctaSize}
-                                        onChange={handleCallToAction}
-                                      />
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="title_section_color">
-                                        Color
-                                      </label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="title_section_color"
-                                          name="ctaColor"
-                                          value={callAction.ctaColor}
-                                          onChange={handleCallToAction}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div className={styles.heading_img}>
-                                      <h3>Text Below CTA</h3>{" "}
-                                      <button
-                                        type="button"
-                                        className={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={dropdown}
-                                          width={20}
-                                          height={20}
-                                        />
-                                      </button>
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="text_below_text">
-                                        Text
-                                      </label>
-                                      <input
-                                        type="text"
-                                        id="text_below_text"
-                                        name="tbText"
-                                        value={textBelow.tbText}
-                                        onChange={handleTextBelow}
-                                        className={styles.inputDiv}
-                                      />
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="text_below_size">
-                                        Size
-                                      </label>
-
-                                      <input
-                                        type="number"
-                                        id="text_below_size"
-                                        name="tbSize"
-                                        value={textBelow.tbSize}
-                                        onChange={handleTextBelow}
-                                        className={styles.inputDiv}
-                                      />
-                                    </div>
-
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="text_below_color">
-                                        {" "}
-                                        Color
-                                      </label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="text_below_color"
-                                          name="tbColor"
-                                          value={textBelow.tbColor}
-                                          onChange={handleTextBelow}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className={styles.divideDiv}>
-                                    <div className={styles.heading_img}>
-                                      <h3>Background</h3>{" "}
-                                      <button
-                                        type="button"
-                                        className={styles.btn_one}
-                                      >
-                                        Show{" "}
-                                        <img
-                                          src={dropdown}
-                                          width={20}
-                                          height={20}
-                                        />
-                                      </button>
-                                    </div>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="background_color">
-                                        Color
-                                      </label>
-                                      <div className={styles.color_styles}>
-                                        <span
-                                          className={styles.color_pilate}
-                                        ></span>
-                                        <input
-                                          type="text"
-                                          id="background_color"
-                                          name="backgroundColor"
-                                          value={background.backgroundColor}
-                                          onChange={handleBackground}
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                      <input
-                                        type="checkbox"
-                                        id="shadow"
-                                        name="backgroundShadow"
-                                        checked={background.backgroundShadow}
-                                        onChange={handleBackground}
-                                      />
-                                      <label htmlFor="shadow">
-                                        Display “Save” tag
-                                      </label>
-                                    </div>
-                                  </div>
-                                </>
-
-                                <>
-                                  <div className={styles.Add_btn}>
-                                    <button
-                                      onClick={() =>
-                                        setShow("Ready To Increase")
-                                      }
-                                      className={styles.Backbtn}
-                                    >
-                                      Back
-                                    </button>
-                                    <button
-                                      disabled={
-                                        navigation.state == "submitting"
-                                      }
-                                      name="intent"
-                                      value="stepThird"
-                                      className={styles.NextBtn}
-                                    >
-                                      {navigation.state == "submitting" ? (
-                                        <Loader />
-                                      ) : (
-                                        "Launch Bundle"
-                                      )}
-                                    </button>
-                                  </div>
-                                </>
+                                </div>
                               </div>
                             </div>
-                          </div>
+
+                            <div className={styles.input_labelCustomize}>
+                              <label htmlFor="">Section</label>
+                              <div
+                                className={` ${styles.bundle_product} ${styles.bundleNewApp} ${section === "Buy Buttons" ? styles.activeTab : ""} `}
+                              >
+                                <input
+                                  type="radio"
+                                  name="section"
+                                  id="Buy Buttons"
+                                  value="Buy Buttons"
+                                  checked={section === "Buy Buttons"}
+                                  onChange={() => setSection("Buy Buttons")}
+                                />
+                                <label htmlFor="Buy Buttons">Buy Buttons</label>
+                              </div>
+
+                              <div
+                                className={`${styles.bundle_product} ${section === "Product Description" ? styles.activeTab : ""}`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="section"
+                                  id="Product Description"
+                                  value="Product Description"
+                                  checked={section === "Product Description"}
+                                  onChange={() =>
+                                    setSection("Product Description")
+                                  }
+                                />
+                                <label htmlFor="Product Description">
+                                  Product Description
+                                </label>
+                              </div>
+
+                              <div
+                                className={`${styles.bundle_product} ${section === "End Of Product Page" ? styles.activeTab : ""}`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="section"
+                                  id="End Of Product Page"
+                                  value="End Of Product Page"
+                                  checked={section === "End Of Product Page"}
+                                  onChange={() =>
+                                    setSection("End Of Product Page")
+                                  }
+                                />
+                                <label htmlFor="End Of Product Page">
+                                  End Of Product Page
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className={styles.input_labelCustomize}>
+                              <label htmlFor="">Manual Placement</label>
+                              <div className={styles.manunalPlaced}>
+                                <p>
+                                  {`  To Display the Volume Discount widget on your store go to: Theme Settings > Customize > Add Section (From the left sidebar) > Choose Bucket - Volume Discount
+
+*This will override the automatic placement`}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div
+                                className={`${styles.headingWrapper} ${styles.heading_img}`}
+                              >
+                                <h4>Above title section</h4>
+                                <button type="button" class={styles.btn_one}>
+                                  Show{" "}
+                                  <img src={downArrow} width="20" height="20" />
+                                </button>
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="title_section_text">Text</label>
+                                <input
+                                  type="text"
+                                  id="title_section_text"
+                                  name="titleSectionText"
+                                  value={titleSection.titleSectionText}
+                                  onChange={handleTitleSection}
+                                  placeholder=""
+                                  className={styles.inputDiv}
+                                />
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="title_section_size">Size</label>
+
+                                <input
+                                  type="number"
+                                  id="title_section_size"
+                                  placeholder=""
+                                  name="titleSectionSize"
+                                  value={titleSection.titleSectionSize}
+                                  onChange={handleTitleSection}
+                                />
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="titleSectionColor">Color</label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor:
+                                        titleSection.titleSectionColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="titleSectionColor"
+                                      name="titleSectionColor"
+                                      value={titleSection.titleSectionColor}
+                                      onChange={handleTitleSection}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="titleSectionColor"
+                                    name="titleSectionColor"
+                                    value={titleSection.titleSectionColor}
+                                    onChange={handleTitleSection}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div
+                                className={`${styles.headingWrapper} ${styles.heading_img}`}
+                              >
+                                <h4>Title</h4>
+                                <button
+                                  type="button"
+                                  className={styles.btn_one}
+                                >
+                                  Show{" "}
+                                  <img src={downArrow} width="20" height="20" />
+                                </button>
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="title_text">Text</label>
+                                <input
+                                  type="text"
+                                  id="title_text"
+                                  name="titleText"
+                                  value={title.titleText}
+                                  onChange={handleTitle}
+                                  placeholder=""
+                                  className={styles.inputDiv}
+                                />
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="title_size">Size</label>
+
+                                <input
+                                  type="number"
+                                  id="title_size"
+                                  name="titleSize"
+                                  value={title.titleSize}
+                                  onChange={handleTitle}
+                                  placeholder=""
+                                />
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="titleColor">Color</label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor: title.titleColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="titleColor"
+                                      name="titleColor"
+                                      value={title.titleColor}
+                                      onChange={handleTitle}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="titleColor"
+                                    name="titleColor"
+                                    value={title.titleColor}
+                                    onChange={handleTitle}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div
+                                className={`${styles.headingWrapper} ${styles.heading_img}`}
+                              >
+                                <h4>Product Title</h4>
+                                <button
+                                  type="button"
+                                  className={styles.btn_one}
+                                >
+                                  Show{" "}
+                                  <img src={downArrow} width="20" height="20" />
+                                </button>
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="productSize">Size</label>
+                                <input
+                                  type="number"
+                                  id="productSize"
+                                  name="productSize"
+                                  value={productTitle.productSize}
+                                  onChange={handleProductTitle}
+                                />
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="productColor">Color</label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor:
+                                        productTitle.productColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="productColor"
+                                      name="productColor"
+                                      value={productTitle.productColor}
+                                      onChange={handleProductTitle}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="productColor"
+                                    name="productColor"
+                                    value={productTitle.productColor}
+                                    onChange={handleProductTitle}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div
+                                className={`${styles.headingWrapper} ${styles.heading_img}`}
+                              >
+                                <h4>Bundle Cost</h4>
+                                <button
+                                  type="button"
+                                  className={styles.btn_one}
+                                >
+                                  Show{" "}
+                                  <img src={downArrow} width="20" height="20" />
+                                </button>
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="bundleCostSize">Size</label>
+
+                                <input
+                                  type="number"
+                                  id="bundleCostSize"
+                                  name="bundleCostSize"
+                                  value={bundleCost.bundleCostSize}
+                                  onChange={handleBundleCost}
+                                />
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="bundleCostColor">Color</label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor:
+                                        bundleCost.bundleCostColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="bundleCostColor"
+                                      name="bundleCostColor"
+                                      value={bundleCost.bundleCostColor}
+                                      onChange={handleBundleCost}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="bundleCostColor"
+                                    name="bundleCostColor"
+                                    value={bundleCost.bundleCostColor}
+                                    onChange={handleBundleCost}
+                                  />
+                                </div>
+                              </div>
+                              <div className={styles.trigerCheck}>
+                                <div className={styles.input_labelCustomize}>
+                                  <div className={styles.formGroup}>
+                                    <input
+                                      type="checkbox"
+                                      id="compared"
+                                      name="bundleCostComparedPrice"
+                                      checked={
+                                        bundleCost.bundleCostComparedPrice
+                                      }
+                                      onChange={handleBundleCost}
+                                    />
+                                    <label htmlFor="compared">
+                                      Display Compared-At Price
+                                    </label>
+                                  </div>
+                                </div>
+                                <div className={styles.input_labelCustomize}>
+                                  <div className={styles.formGroup}>
+                                    <input
+                                      type="checkbox"
+                                      id="save"
+                                      name="bundleCostSave"
+                                      checked={bundleCost.bundleCostSave}
+                                      onChange={handleBundleCost}
+                                    />
+                                    <label htmlFor="save">
+                                      Display “Save” Badge
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div
+                                className={`${styles.headingWrapper} ${styles.heading_img}`}
+                              >
+                                <h4>Call To Action Button</h4>
+                                <button
+                                  type="button"
+                                  className={styles.btn_one}
+                                >
+                                  Show{" "}
+                                  <img src={downArrow} width="20" height="20" />
+                                </button>
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="call_action_text">Text</label>
+                                <input
+                                  type="text"
+                                  id="call_action_text"
+                                  name="ctaText"
+                                  value={callAction.ctaText}
+                                  onChange={handleCallToAction}
+                                  className={styles.inputDiv}
+                                />
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="title_section_size">Size</label>
+
+                                <input
+                                  type="number"
+                                  id="title_section_size"
+                                  name="ctaSize"
+                                  value={callAction.ctaSize}
+                                  onChange={handleCallToAction}
+                                />
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="title_section_color">
+                                  Color
+                                </label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor: callAction.ctaColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="ctaColor"
+                                      name="ctaColor"
+                                      value={callAction.ctaColor}
+                                      onChange={handleCallToAction}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="ctaColor"
+                                    name="ctaColor"
+                                    value={callAction.ctaColor}
+                                    onChange={handleCallToAction}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div className={styles.heading_img}>
+                                <h3>Text Below CTA</h3>{" "}
+                                <button
+                                  type="button"
+                                  className={styles.btn_one}
+                                >
+                                  Show{" "}
+                                  <img src={dropdown} width={20} height={20} />
+                                </button>
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="text_below_text">Text</label>
+                                <input
+                                  type="text"
+                                  id="text_below_text"
+                                  name="tbText"
+                                  value={textBelow.tbText}
+                                  onChange={handleTextBelow}
+                                  className={styles.inputDiv}
+                                />
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="text_below_size">Size</label>
+
+                                <input
+                                  type="number"
+                                  id="text_below_size"
+                                  name="tbSize"
+                                  value={textBelow.tbSize}
+                                  onChange={handleTextBelow}
+                                  className={styles.inputDiv}
+                                />
+                              </div>
+
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="tbColor"> Color</label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor: textBelow.tbColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="tbColor"
+                                      name="tbColor"
+                                      value={textBelow.tbColor}
+                                      onChange={handleTextBelow}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="tbColor"
+                                    name="tbColor"
+                                    value={textBelow.tbColor}
+                                    onChange={handleTextBelow}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className={styles.divideDiv}>
+                              <div className={styles.heading_img}>
+                                <h3>Background</h3>{" "}
+                                <button
+                                  type="button"
+                                  className={styles.btn_one}
+                                >
+                                  Show{" "}
+                                  <img src={dropdown} width={20} height={20} />
+                                </button>
+                              </div>
+                              <div className={styles.input_labelCustomize}>
+                                <label htmlFor="backgroundColor">Color</label>
+                                <div className={styles.color_styles}>
+                                  <span
+                                    className={styles.color_pilate}
+                                    style={{
+                                      backgroundColor:
+                                        background.backgroundColor,
+                                    }}
+                                  >
+                                    <input
+                                      type="color"
+                                      id="backgroundColor"
+                                      name="backgroundColor"
+                                      value={background.backgroundColor}
+                                      onChange={handleBackground}
+                                    />
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    id="backgroundColor"
+                                    name="backgroundColor"
+                                    value={background.backgroundColor}
+                                    onChange={handleBackground}
+                                  />
+                                </div>
+                              </div>
+                              <div className={styles.formGroup}>
+                                <input
+                                  type="checkbox"
+                                  id="shadow"
+                                  name="backgroundShadow"
+                                  checked={background.backgroundShadow}
+                                  onChange={handleBackground}
+                                />
+                                <label htmlFor="shadow">
+                                  Display “Save” tag
+                                </label>
+                              </div>
+                            </div>
+                          </>
+
+                          <>
+                            <div className={styles.Add_btn}>
+                              <button
+                                onClick={() => setShow("Ready To Increase")}
+                                className={styles.Backbtn}
+                              >
+                                Back
+                              </button>
+                              <button
+                                disabled={navigation.state == "submitting"}
+                                name="intent"
+                                value="stepThird"
+                                className={styles.NextBtn}
+                              >
+                                {navigation.state == "submitting" ? (
+                                  <Loader />
+                                ) : (
+                                  "Launch Bundle"
+                                )}
+                              </button>
+                            </div>
+                          </>
                         </div>
                       </>
                     )}
@@ -2095,29 +2141,33 @@ export default function PlansPage() {
                       </>
                     )}
                   </div>
+
+                  {showPage === "Return" && (
+                    <>
+                      <div
+                        className={`${styles.table_content} ${styles.DesignCard}`}
+                      >
+                        <div className={styles.requestReview}>
+                          <h2>You Did It!</h2>
+                          <p>
+                            Your bundle is up and running. Sit back and let the
+                            conversations roll in.
+                          </p>
+                          <button
+                            className={styles.NextBtn}
+                            onClick={handleDesign}
+                          >
+                            Return To Dashboard
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </Form>
-
-           
           </div>
         )}
-         {activeTab === "Return" && (
-              <>
-                <div className={`${styles.table_content} ${styles.DesignCard}`}>
-                  <div className={styles.requestReview}>
-                    <h2>You Did It!</h2>
-                    <p>
-                      Your bundle is up and running. Sit back and let the
-                      conversations roll in.
-                    </p>
-                    <button className={styles.NextBtn} onClick={handleDesign}>
-                      Return To Dashboard
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
       </div>
 
       <Toaster />

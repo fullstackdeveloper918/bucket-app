@@ -6,32 +6,12 @@ import { useState } from "react";
 import { Form } from "@remix-run/react";
 
 function RequestReview() {
-  const [values, setValues] = useState({
-    email_send_at: 10,
-    subject: "Quick Question: How’s Your New [Product Name]?",
-    text: `Hey [Customer’s First Name]!
-We’re all about making our customers’ lives better with [Product Name], and we’d love to hear how it’s working for you! Just a quick, honest review could help so many others who are looking for the right fit, just like you were.`,
-    five_star: "Absolutely love it!",
-    four_star: "Really good!",
-    three_star: "It’s okay",
-    two_star: "Not quite what i expected",
-    one_star: "Disappointed",
-    button_color: "#ffffff",
-    button_text: "Submit The Review",
-    footer_unsubscribe_text: "If you’d like to stop receiving emails",
-    button_unsubscribe_text: "unsubscribe here",
-  });
+ 
 
     const [activeEnable, setActiveEnable] = useState("Enable");
     const [dropDown, setDropDown] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  
 
 
   const handleEnable = (item) => {

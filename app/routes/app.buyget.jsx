@@ -522,20 +522,42 @@ export default function BuyGetPage() {
     amount: "",
   });
   const [activeSelection, setActiveSelection] = useState("Buy");
-
   const [buyProducts, setBuyProducts] = useState([]);
+
   const [showComponent, setShowComponent] = useState(0);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [showPage, setShowPage] = useState(null);
+  const [productId, setProductId] = useState(null);
+  const [isMonth, setIsMonth] = useState(false);
+  const [month, setMonth] = useState("This Month");
+
+  const [showButton, setShowButton] = useState({
+    titleSection: "Show",
+    title: "Show",
+    tiers: "Show",
+    textBelow: "Show",
+    callAction: "Show",
+    background: "Show",
+  });
+
+  const [showStatus, setShowStatus] = useState({
+    titleSection: false,
+    title: false,
+    tiers: false,
+    textBelow: false,
+    callAction: false,
+    background: false,
+  });
+
+  const [discountId, setDiscountId] = useState("");
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
   const [loading, setLoading] = useState(false);
-  const [productId, setProductId] = useState(null);
-  const [discountId, setDiscountId] = useState("");
   const [activeTab, setActiveTab] = useState("Home");
-  const [showPopup, setShowPopup] = useState(false);
   const [isProduct, setIsProduct] = useState(false);
   const [active, setActive] = useState(false);
-  const [details, setDetails] = useState({});
-  const [showEdit, setShowEdit] = useState(false);
+
   const [cards, setCards] = useState([
     { id: 1, title: "Example Bundle 1", reviews: 280 },
   ]);
@@ -544,6 +566,7 @@ export default function BuyGetPage() {
   const [GetYSections, setGetYSections] = useState([{ id: 1 }]);
 
   const [showPosition, setShowPosition] = useState(false);
+  const [details, setDetails] = useState({});
   const [section, setSection] = useState("Buy Buttons");
 
   const [position, setPosition] = useState("Below Section");
@@ -588,6 +611,10 @@ export default function BuyGetPage() {
     backgroundColor: "#FFFFFF",
     backgroundShadow: true,
   });
+
+  const handleMonth = (item) => {
+    setMonth(item);
+  };
 
   const addBuysXSection = () => {
     setBuysXSections((prevSections) => [
@@ -704,6 +731,7 @@ export default function BuyGetPage() {
   const handleCreate = () => {
     setActiveTab("Products");
     setShowComponent(1);
+    setShowPage("first");
   };
 
   const handleProduct = (btn) => {
@@ -714,8 +742,6 @@ export default function BuyGetPage() {
     }
     setIsProduct(true);
   };
-
-  console.log(isProduct, "isProduct");
 
   const handleFirst = () => {
     if (values.bundle_name === "") {
@@ -744,6 +770,7 @@ export default function BuyGetPage() {
       });
     } else {
       setShowComponent(2);
+      setShowPage("second");
     }
   };
 
@@ -765,11 +792,34 @@ export default function BuyGetPage() {
             color: "white",
           },
         });
+      } else if (values.amount === "") {
+        notify.success("Please enter percentage", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
       } else {
         setShowComponent(3);
+        setShowPage("third");
+      }
+    } else if (values.discount_method === "Fixed Amount") {
+      if(values.amount === "") {
+        notify.success("Please enter Amount", {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      }else {
+        setShowComponent(3);
+        setShowPage("third");
       }
     } else {
       setShowComponent(3);
+      setShowPage("third");
     }
   };
 
@@ -788,6 +838,7 @@ export default function BuyGetPage() {
     setShowEdit(true);
     setActiveTab("Products");
     setShowComponent(1);
+    setShowPage("first");
   };
 
   const handleDelete = (item) => {
@@ -806,7 +857,7 @@ export default function BuyGetPage() {
             color: "white",
           },
         });
-        setActiveTab("Return");
+        setShowPage("Return");
       }
       setValues({
         bundle_name: "Example Bundle 1",
@@ -1042,15 +1093,70 @@ export default function BuyGetPage() {
             <div className={styles.bundleHeading}>
               <h2>All Bundles</h2>
               <div className={styles.btnFlexWrapper}>
-                <button className={styles.activeButton}>
-                  This Month{" "}
-                  <img
-                    src={drop_downImg}
-                    className={styles.inactiveImg}
-                    width={15}
-                    height={8}
-                  />
-                </button>
+                <div
+                  className={styles.activeButton}
+                  onClick={() => setIsMonth(!isMonth)}
+                >
+                  <div className={styles.butttonsTab}>
+                    {month}{" "}
+                    <img
+                      src={drop_downImg}
+                      className={styles.inactiveImg}
+                      width={15}
+                      height={8}
+                    />{" "}
+                  </div>
+                  {isMonth && (
+                    <>
+                      <ul
+                        className={` ${styles.selectDropdown} ${styles.InactiveButton} `}
+                      >
+                        <li
+                          data-value="option1"
+                          onClick={() => handleMonth("Today")}
+                        >
+                          Today
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Yesterday")}
+                        >
+                          Yesterday
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last 3 Days")}
+                        >
+                          Last 3 Days
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last 7 Days")}
+                        >
+                          Last 7 Days
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("This Month")}
+                        >
+                          This Month
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Last Month")}
+                        >
+                          Last Month
+                        </li>
+                        <li
+                          data-value="option2"
+                          onClick={() => handleMonth("Custom")}
+                        >
+                          Custom
+                        </li>
+                      </ul>
+                    </>
+                  )}
+                </div>
                 <button
                   onClick={handleCreate}
                   className={`${styles.btn_one} ${styles.active}`}
@@ -1158,12 +1264,10 @@ export default function BuyGetPage() {
             <div className={styles.main_bundle}>
               <div className={styles.bundleWraper}>
                 <span
-                  className={
-                    showComponent >= 1 ? styles.active_tab : styles.bordercolor
-                  }
+                  className={`${showPage === "first" ? styles.bordercolor : ""} ${showComponent > 1 ? styles.active_tab : ""}`}
                 >
                   <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                    {showComponent >= 1 ? (
+                    {showComponent > 1 ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
@@ -1212,10 +1316,10 @@ export default function BuyGetPage() {
                   Products
                 </span>
                 <span
-                  className={activeTab === "Offer" ? styles.active_tab : ""}
+                  className={`${showPage === "second" ? styles.bordercolor : ""} ${showComponent > 2 ? styles.active_tab : ""}`}
                 >
                   <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                    {showComponent >= 2 ? (
+                    {showComponent > 2 ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
@@ -1238,10 +1342,10 @@ export default function BuyGetPage() {
                   Offer
                 </span>
                 <span
-                  className={activeTab === "Design" ? styles.active_tab : ""}
+                  className={`${showPage === "third" ? styles.bordercolor : ""} ${showComponent > 3 ? styles.active_tab : ""}`}
                 >
                   <div className={`${styles.tabImage} ${styles.complet_pro}`}>
-                    {showComponent >= 3 ? (
+                    {showComponent > 3 ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="22"
@@ -1279,16 +1383,17 @@ export default function BuyGetPage() {
                             </h3>
                             <div className={styles.input_labelCustomize}>
                               <label htmlFor="">Name your bundle</label>
-                              <div className={styles.inputTiming}>
+                              
                                 <input
                                   type="text"
                                   name="bundle_name"
                                   value={values.bundle_name}
                                   onChange={handleChange}
+                                  className={styles.inputDiv}
                                 />
-                              </div>
+                              
                             </div>
-                            <div>
+                            <div className={styles.addProductdiv}>
                               {buysXSections.map((section, index) => (
                                 <React.Fragment key={index}>
                                   <div
@@ -1315,7 +1420,7 @@ export default function BuyGetPage() {
                                             <React.Fragment key={idx}>
                                               <div
                                                 className={
-                                                  styles.input_labelCustomize
+                                                  styles.images_upload
                                                 }
                                               >
                                                 <img
@@ -1325,9 +1430,12 @@ export default function BuyGetPage() {
                                                   }
                                                   alt={item?.node?.title}
                                                   style={{
-                                                    maxWidth: "100%",
-                                                    maxHeight: "300px",
-                                                    objectFit: "contain",
+                                                    width: "100px",
+                                                    height: "100px",
+                                                    maxHeight: "100px",
+                                                    maxWidth: "100px",
+                                                    objectFit: "cover",
+                                                    borderRadius: "15px",
                                                   }}
                                                 />
                                                 <div
@@ -1386,7 +1494,7 @@ export default function BuyGetPage() {
                               </label>
                             </div>
 
-                            <div>
+                            <div className={styles.addProductdiv} >
                               {GetYSections.map((section, index) => (
                                 <div
                                   key={section.id}
@@ -1411,7 +1519,7 @@ export default function BuyGetPage() {
                                           <React.Fragment key={idx}>
                                             <div
                                               className={
-                                                styles.input_labelCustomize
+                                                styles.images_upload
                                               }
                                             >
                                               <img
@@ -1421,9 +1529,12 @@ export default function BuyGetPage() {
                                                 }
                                                 alt={item?.node?.title}
                                                 style={{
-                                                  maxWidth: "100%",
-                                                  maxHeight: "300px",
-                                                  objectFit: "contain",
+                                                  width: "100px",
+                                                  height: "100px",
+                                                  maxHeight: "100px",
+                                                  maxWidth: "100px",
+                                                  objectFit: "cover",
+                                                  borderRadius: "15px",
                                                 }}
                                               />
                                               <div
@@ -1721,9 +1832,8 @@ export default function BuyGetPage() {
                                       >
                                         <div className={styles.selectBox}>
                                           <span className={styles.selected}>
-                                            {position
-                                              ? position
-                                              : "Below Section"}
+                                            {position}
+                                              
                                           </span>
                                           <div className={styles.arrow}>
                                             <img
@@ -1883,30 +1993,34 @@ export default function BuyGetPage() {
                                   </div>
 
                                   <div className={styles.input_labelCustomize}>
-                                    <label htmlFor="title_section_color">
+                                    <label htmlFor="titleSectionColor">
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <label htmlFor="titleColor">
-                                        <input
-                                          id="titleColor"
-                                          style={{ display: "none" }}
-                                          type="color"
-                                          name=""
-                                        />
-                                      </label>
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              titleSection.titleSectionColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="titleSectionColor"
+                                            value={
+                                              titleSection.titleSectionColor
+                                            }
+                                            onChange={handleTitleSection}
+                                          />
+                                        </span>
 
-                                      <input
-                                        type="text"
-                                        id="title_section_color"
-                                        name="titleSectionColor"
-                                        value={titleSection.titleSectionColor}
-                                        onChange={handleTitleSection}
-                                        placeholder=""
-                                      />
+                                        <input
+                                          type="text"
+                                          id="titleSectionColor"
+                                          name="titleSectionColor"
+                                          value={titleSection.titleSectionColor}
+                                          onChange={handleTitleSection}
+                                        />
                                     </div>
                                   </div>
                                 </div>
@@ -1954,19 +2068,32 @@ export default function BuyGetPage() {
                                     />
                                   </div>
                                   <div className={styles.input_labelCustomize}>
-                                    <label htmlFor="title_color">Color</label>
+                                    <label htmlFor="titleColor">Color</label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <input
-                                        type="text"
-                                        id="title_color"
-                                        name="titleColor"
-                                        value={title.titleColor}
-                                        onChange={handleTitle}
-                                        placeholder=""
-                                      />
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              title.titleColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="titleColor"
+                                            value={
+                                              title.titleColor
+                                            }
+                                            onChange={handleTitle}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="titleColor"
+                                          name="titleColor"
+                                          value={title.titleColor}
+                                          onChange={handleTitle}
+                                        />
                                     </div>
                                   </div>
                                 </div>
@@ -2003,16 +2130,30 @@ export default function BuyGetPage() {
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="productColor">Color</label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <input
-                                        type="text"
-                                        id="productColor"
-                                        name="productColor"
-                                        value={productTitle.productColor}
-                                        onChange={handleProductTitle}
-                                      />
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              productTitle.productColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="productColor"
+                                            value={
+                                              productTitle.productColor
+                                            }
+                                            onChange={handleProductTitle}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="productColor"
+                                          name="productColor"
+                                          value={productTitle.productColor}
+                                          onChange={handleProductTitle}
+                                        />
                                     </div>
                                   </div>
                                 </div>
@@ -2051,16 +2192,30 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <input
-                                        type="text"
-                                        id="bundleCostColor"
-                                        name="bundleCostColor"
-                                        value={bundleCost.bundleCostColor}
-                                        onChange={handleBundleCost}
-                                      />
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              bundleCost.bundleCostColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="bundleCostColor"
+                                            value={
+                                              bundleCost.bundleCostColor
+                                            }
+                                            onChange={handleBundleCost}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="bundleCostColor"
+                                          name="bundleCostColor"
+                                          value={bundleCost.bundleCostColor}
+                                          onChange={handleBundleCost}
+                                        />
                                     </div>
                                   </div>
                                   <div className={styles.trigerCheck}>
@@ -2150,16 +2305,30 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <input
-                                        type="text"
-                                        id="title_section_color"
-                                        name="ctaColor"
-                                        value={callAction.ctaColor}
-                                        onChange={handleCallToAction}
-                                      />
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              callAction.ctaColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="ctaColor"
+                                            value={
+                                              callAction.ctaColor
+                                            }
+                                            onChange={handleCallToAction}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="ctaColor"
+                                          name="ctaColor"
+                                          value={callAction.ctaColor}
+                                          onChange={handleCallToAction}
+                                        />
                                     </div>
                                   </div>
                                 </div>
@@ -2215,16 +2384,30 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <input
-                                        type="text"
-                                        id="text_below_color"
-                                        name="tbColor"
-                                        value={textBelow.tbColor}
-                                        onChange={handleTextBelow}
-                                      />
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              textBelow.tbColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="tbColor"
+                                            value={
+                                              textBelow.tbColor
+                                            }
+                                            onChange={handleTextBelow}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="tbColor"
+                                          name="tbColor"
+                                          value={textBelow.tbColor}
+                                          onChange={handleTextBelow}
+                                        />
                                     </div>
                                   </div>
                                 </div>
@@ -2249,16 +2432,30 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                      <span
-                                        className={styles.color_pilate}
-                                      ></span>
-                                      <input
-                                        type="text"
-                                        id="background_color"
-                                        name="backgroundColor"
-                                        value={background.backgroundColor}
-                                        onChange={handleBackground}
-                                      />
+                                    <span
+                                          className={styles.color_pilate}
+                                          style={{
+                                            backgroundColor:
+                                              background.backgroundColor,
+                                          }}
+                                        >
+                                          <input
+                                            type="color"
+                                            name="backgroundColor"
+                                            value={
+                                              background.backgroundColor
+                                            }
+                                            onChange={handleBackground}
+                                          />
+                                        </span>
+
+                                        <input
+                                          type="text"
+                                          id="backgroundColor"
+                                          name="backgroundColor"
+                                          value={background.backgroundColor}
+                                          onChange={handleBackground}
+                                        />
                                     </div>
                                   </div>
                                   <div className={styles.formGroup}>
@@ -2378,20 +2575,26 @@ export default function BuyGetPage() {
                       )}
                     </div>
 
-                    {isProduct && (
-                      <AddProduct
-                        onClose={handleClose}
-                        products={products}
-                        handleSave={handleSave}
-                        selectProduct={
-                          activeSelection === "Buy" ? buyProducts : getProducts
-                        }
-                        setSelectedPrducts={
-                          activeSelection === "Buy"
-                            ? setBuyProducts
-                            : setGetProducts
-                        }
-                      />
+                    {showPage === "Return" && (
+                      <>
+                        <div
+                          className={`${styles.table_content} ${styles.DesignCard}`}
+                        >
+                          <div className={styles.requestReview}>
+                            <h2>You Did It!</h2>
+                            <p>
+                              Your bundle is up and running. Sit back and let
+                              the conversations roll in.
+                            </p>
+                            <button
+                              className={styles.NextBtn}
+                              onClick={handleDesign}
+                            >
+                              Return To Dashboard
+                            </button>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -2399,24 +2602,19 @@ export default function BuyGetPage() {
             </div>
           </>
         )}
-        {activeTab == "Return" && (
-          <>
-            <div className={`${styles.table_content} ${styles.DesignCard}`}>
-              <div className={styles.requestReview}>
-                <h2>You Did It!</h2>
-                <p>
-                  Your bundle is up and running. Sit back and let the
-                  conversations roll in.
-                </p>
-                <button className={styles.NextBtn} onClick={handleDesign}>
-                  Return To Dashboard
-                </button>
-              </div>
-            </div>
-          </>
-        )}
       </div>
       <Toaster />
+      {isProduct && (
+        <AddProduct
+          onClose={handleClose}
+          products={products}
+          handleSave={handleSave}
+          selectProduct={activeSelection === "Buy" ? buyProducts : getProducts}
+          setSelectedPrducts={
+            activeSelection === "Buy" ? setBuyProducts : setGetProducts
+          }
+        />
+      )}
     </>
   );
 }
