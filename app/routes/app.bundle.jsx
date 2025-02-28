@@ -24,7 +24,7 @@ import {
 } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
-import { getAllBundle } from "../api/bundle.server";
+import { fetchSalesData, getAllBundle } from "../api/bundle.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 import AddProduct from "../components/BundleModal/AddProduct";
 import axios from "axios";
@@ -36,7 +36,7 @@ export async function loader({ request }) {
     const { shop } = session;
 
     // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse] = await Promise.all([
+    const [graphqlResponse, totalBundleResponse,salesResponse] = await Promise.all([
       admin.graphql(`
         {
           products(first: 50) {
@@ -73,13 +73,15 @@ export async function loader({ request }) {
         }
       `),
       getAllBundle(shop),
+      fetchSalesData(shop),
     ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
-    return json({ products, totalBundle });
+    const sales = await salesResponse.json();
+    return json({ products, totalBundle,sales });
   } catch (error) {
     console.error(error);
     return json({
@@ -204,7 +206,7 @@ export async function action({ request }) {
         });
       }
     } catch (error) {
-      console.log(error, "check errior");
+      
       return json({
         message: "Failed to process the request",
         error: error.message,
@@ -299,12 +301,62 @@ export async function action({ request }) {
   }
 }
 
+
+const svgs = [
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="26"
+    height="30"
+    fill="none"
+    viewBox="0 0 36 40"
+  >
+    <path
+      fill="#00AC4F"
+      fillRule="evenodd"
+      d="M9.485 9.166v1.387H5.808a3.47 3.47 0 0 0-3.451 3.107L.019 35.867a3.47 3.47 0 0 0 3.451 3.834h28.686a3.47 3.47 0 0 0 3.45-3.834L33.27 13.66a3.47 3.47 0 0 0-3.45-3.107H26.14V9.167a8.328 8.328 0 1 0-16.656 0m8.328-5.552a5.55 5.55 0 0 0-5.552 5.552v1.387h11.104V9.167a5.55 5.55 0 0 0-5.552-5.552M12.26 18.88a5.552 5.552 0 0 0 11.104 0v-1.388a1.388 1.388 0 1 1 2.776 0v1.388a8.328 8.328 0 1 1-16.656 0v-1.388a1.388 1.388 0 1 1 2.776 0z"
+      clipRule="evenodd"
+    ></path>
+  </svg>,
+
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="29"
+    height="28"
+    fill="none"
+    viewBox="0 0 39 38"
+  >
+    <path
+      fill="#00AC4F"
+      fillRule="evenodd"
+      d="M6.685 0A5.73 5.73 0 0 0 .953 5.732v8.25c0 1.52.604 2.977 1.679 4.052l18.305 18.305c1.756 1.756 4.564 2.266 6.777.817A36 36 0 0 0 38.11 26.76c1.449-2.213.94-5.021-.817-6.777L18.987 1.679A5.73 5.73 0 0 0 14.934 0zm2.149 10.03a2.15 2.15 0 1 0 0-4.298 2.15 2.15 0 0 0 0 4.298"
+      clipRule="evenodd"
+    ></path>
+  </svg>,
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="25"
+    height="25"
+    fill="none"
+    viewBox="0 0 35 35"
+  >
+    <path
+      fill="#00AC4F"
+      fillRule="evenodd"
+      d="M3.399 2.037c4.654-.79 9.435-1.2 14.312-1.2s9.658.41 14.312 1.2a3.24 3.24 0 0 1 2.688 3.2v1.821a5.23 5.23 0 0 1-1.532 3.699L22.4 21.536a2.62 2.62 0 0 0-.766 1.849v5.104a5.23 5.23 0 0 1-2.892 4.679l-3.062 1.53a1.308 1.308 0 0 1-1.892-1.169V23.385c0-.694-.276-1.359-.766-1.85L2.243 10.758A5.23 5.23 0 0 1 .711 7.058v-1.82a3.24 3.24 0 0 1 2.688-3.201"
+      clipRule="evenodd"
+    ></path>
+  </svg>,
+];
+
 export default function PlansPage() {
-  const { products, totalBundle } = useLoaderData();
+  const { products, totalBundle,sales } = useLoaderData();
+
   const actionResponse = useActionData();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("Home");
   const [position, setPosition] = useState("Below Section");
+  const [activeApp, setActiveApp] = useState("Active");
+  const [active, setActive] = useState(false);
   const [showPosition, setShowPosition] = useState(false);
   const [showComponent, setShowComponent] = useState(1);
   const [showPage, setShowPage] = useState(null);
@@ -327,8 +379,6 @@ export default function PlansPage() {
     amount: "",
     discount: "Percentage",
   });
-
-  console.log(actionResponse, "actionResponse");
 
   const handleClick = (item) => {
     setValues((prev) => ({
@@ -456,10 +506,6 @@ export default function PlansPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-   console.log(e.target.value, 'checkvalues')
-
-
     setValues((prev) => ({
       ...prev,
       [name]: value,
@@ -536,7 +582,7 @@ export default function PlansPage() {
           },
         });
       } else if (values.amount == "") {
-        console.log("Kithe");
+        
         notify.error("Please enter percentage", {
           position: "top-center",
           style: {
@@ -549,7 +595,6 @@ export default function PlansPage() {
         setShowPage("third");
       }
     } else if (values.discount === "Fixed Amount") {
-      console.log("Amount andar");
       if (values.amount === "") {
         notify.error("Please enter amount", {
           position: "top-center",
@@ -640,7 +685,6 @@ export default function PlansPage() {
 
   useEffect(() => {
       if (showEdit) {
-        console.log(details, "hence");
          setId(details.id);
         setValues((prev) => ({
           ...prev,
@@ -722,6 +766,49 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
+
+  const getFilteredBundles = () => {
+    if (!totalBundle) return [];
+  
+    const currentDate = new Date();
+   
+    return totalBundle.filter((card) => {
+      const bundleDate = new Date(card.createdAt); 
+  
+      switch (month) {
+        case "Today":
+          return bundleDate.toDateString() === currentDate.toDateString();
+        case "Yesterday":
+          return (
+            bundleDate.toDateString() ===
+            new Date(currentDate.setDate(currentDate.getDate() - 1)).toDateString()
+          );
+        case "Last 3 Days":
+          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 3));
+        case "Last 7 Days":
+          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 7));
+        case "This Month":
+          return (
+            bundleDate.getMonth() === currentDate.getMonth() &&
+            bundleDate.getFullYear() === currentDate.getFullYear()
+          );
+        case "Last Month":
+          const lastMonth = new Date();
+          lastMonth.setMonth(lastMonth.getMonth() - 1);
+          return (
+            bundleDate.getMonth() === lastMonth.getMonth() &&
+            bundleDate.getFullYear() === lastMonth.getFullYear()
+          );
+        default:
+          return true;
+      }
+    });
+  };
+
+
+  const filteredBundles = getFilteredBundles();
+
+
   return (
     <>
       <div className={styles.containerDiv}>
@@ -735,9 +822,13 @@ export default function PlansPage() {
             <h2>Product Bundles</h2>
           </div>
 
-          <div className={styles.activeButton} id="second">
+          <div
+            className={` ${styles.activeButton} ${activeApp === "Inactive" ? styles.InactiveButton : ""} `}
+            id="second"
+            onClick={() => setActive(!active)}
+          >
             <div className={styles.butttonsTab}>
-              <span className={styles.selected}>Active</span>
+              <span className={styles.selected}>{activeApp}</span>
               <div className={styles.arrowActive}>
                 <svg
                   width="15"
@@ -755,33 +846,53 @@ export default function PlansPage() {
                 </svg>
               </div>
             </div>
-
-            <ul className={styles.selectDropdown} style={{ display: "none" }}>
-              <li data-value="option1">Active</li>
-              <li data-value="option2">Inactive</li>
-            </ul>
+            {active && (
+              <ul className={styles.selectDropdown}>
+                <li data-value="option1" onClick={() => handleActive("Active")}>
+                  Active
+                </li>
+                <li
+                  data-value="option2"
+                  onClick={() => handleActive("Inactive")}
+                >
+                  Inactive
+                </li>
+              </ul>
+            )}
           </div>
         </div>
 
         {activeTab === "Home" && (
           <div className={styles.inline_stackwraper}>
-            {Array.from({ length: 3 }).map((item) => (
+            {Array.from({ length: 2 }).map((item, index) => (
               <React.Fragment>
                 <div className={styles.upper_box}>
                   <div className={styles.PolarisBox}>
                     <div className={styles.inlineStack}>
-                      <div className={styles.card_img}>
-                        <img src={collectedIcon} width={33} height={40} />
-                      </div>
+                      <div className={styles.card_img}>{svgs[index]}</div>
 
                       <div className={styles.ContentWraper}>
                         <Text variant="headingXs" as="h6">
-                          Reviews Collected
+                          {index == 0 ? "Revenue" : "Average"}
                         </Text>
 
-                        <Text as="h3" variant="heading2xl">
-                          280
-                        </Text>
+                      
+
+                        {index === 0 ? (
+                          <>
+                            <Text as="h3" variant="heading2xl">
+                              {sales[0]?._sum?.total || 0}{" "}
+                              {/* Fallback to 0 if value doesn't exist */}
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text as="h3" variant="heading2xl">
+                              {sales[0]?._avg?.total || 0}{" "}
+                              {/* Fallback to 0 if value doesn't exist */}
+                            </Text>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -870,10 +981,10 @@ export default function PlansPage() {
               </div>
             </div>
 
-            {totalBundle &&
-              totalBundle.map((card, index) => (
+            {filteredBundles ?
+              filteredBundles.map((card, index) => (
                 <React.Fragment key={card.id}>
-                  {console.log(card, "cardcheck")}
+                 
                   <div className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
                       <div
@@ -1000,7 +1111,7 @@ export default function PlansPage() {
                     </div>
                   </div>
                 </React.Fragment>
-              ))}
+              )): "No Bundle"}
           </>
         )}
 

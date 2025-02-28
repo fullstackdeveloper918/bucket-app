@@ -88,6 +88,9 @@ model Bundle {
   call_to_action_button Json?
   text_below_cta        Json?
   backgroud             Json?
+  createdAt             DateTime @default(now()) // Timestamp when the review was created
+  updatedAt             DateTime @updatedAt @default(now()) 
+// Timestamp when the review was last updated
 }
 
 model Sales {

@@ -195,6 +195,32 @@ export const getAllBundle = async( shop) => {
 }
 
 
+export async function fetchSalesData(shop) {
+  const bundleType = "bogoxy"
+  if (!shop ) {
+    return json({ error: "Missing parameters" }, { status: 400 });
+}
+
+const sales = await db.sales.groupBy({
+    by: ["domainName", "bundleType"],
+    where: {
+        domainName:shop,
+        bundleType:bundleType,
+    },
+    _sum: {
+        total: true, // Sum of total sales
+    },
+    _avg: {
+        total: true, // Average of total sales
+    },
+});
+
+
+
+return json(sales);
+}
+
+
 
 export let launchBundle = async (domainName, request) => {
   const title_section = {

@@ -2,7 +2,6 @@ import axios from "axios";
 import db from "../db.server";
 import { json } from "@remix-run/react";
 
-
 export const createVolumeDiscount = async (shop, selectedData, session) => {
   let data = JSON.stringify({
     query: `mutation CreateVolumeDiscount($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
@@ -87,74 +86,123 @@ export const createVolumeDiscount = async (shop, selectedData, session) => {
     });
 };
 
-export const getAllBundle = async(shop) => {
+export const getAllBundle = async (shop) => {
   try {
-    const domainName = shop ;
+    const domainName = shop;
     if (!domainName) {
-      return json(
-        { message: "Missing 'domainName' query parameter", status: 400 },
-        
-      );
+      return json({
+        message: "Missing 'domainName' query parameter",
+        status: 400,
+      });
     }
     const discounts = await db.volumeDiscount.findMany({
       where: {
-        domainName, 
+        domainName,
       },
     });
 
     if (discounts.length === 0) {
-      return json(
-        { message: `No discounts found for domain: ${domainName}` , status: 404 },
-       
-      );
+      return json({
+        message: `No discounts found for domain: ${domainName}`,
+        status: 404,
+      });
     }
 
-    return ({status: 200,  data: discounts});
+    return { status: 200, data: discounts };
   } catch (error) {
-    console.log(error,'checko')
+    console.log(error, "checko");
+    return json({
+      message: "Failed to fetch discounts",
+      error: error.message,
+      status: 500,
+    });
+  }
+};
+
+export let getAllDiscountId = async (shop) => {
+  try {
+
+    const discountList = await db.volumeDiscount.findMany({
+      where: {
+        domainName:shop,
+      },
+      select: {
+        discount_id: true,
+      },
+    });
+
+    return json({
+      status: 200,
+      data: discountList.map((discount) => discount.discount_id),
+    });
+  } catch (error) {
+    console.error(error);
     return json(
-      { message: "Failed to fetch discounts", error: error.message, status: 500 },
-   
+      { message: "Failed to retrieve discount IDs", error: error.message },
+      { status: 500 },
     );
   }
-}
+};
 
+export async function fetchSalesData(shop) {
+  const bundleType = "volume";
+  if (!shop) {
+    return json({ error: "Missing parameters" }, { status: 400 });
+  }
+
+  const sales = await db.sales.groupBy({
+    by: ["domainName", "bundleType"],
+    where: {
+      domainName: shop,
+      bundleType: bundleType,
+    },
+    _sum: {
+      total: true, // Sum of total sales
+    },
+    _avg: {
+      total: true, // Average of total sales
+    },
+  });
+
+  return json(sales);
+}
 
 export const deleteBundle = async (request) => {
   try {
     const url = new URL(request.url);
-    const domainName = url.searchParams.get("domainName"); 
-    const productId = url.searchParams.get("id"); 
-  
+    const domainName = url.searchParams.get("domainName");
+    const productId = url.searchParams.get("id");
+
     if (!domainName || !productId) {
       return json(
         { message: "Missing 'domainName' or 'product_id' query parameter" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    
     const result = await db.volumeDiscount.deleteMany({
       where: {
-        AND: [
-          { id: parseInt(productId) }, 
-          { domainName: domainName }, 
-        ],
+        AND: [{ id: parseInt(productId) }, { domainName: domainName }],
       },
     });
 
     if (result.count === 0) {
       return json(
-        { message: `No discounts found for domain: ${domainName} and product_id: ${productId}` },
-        { status: 404 }
+        {
+          message: `No discounts found for domain: ${domainName} and product_id: ${productId}`,
+        },
+        { status: 404 },
       );
     }
 
-    return json({ message: "Discount(s) successfully deleted" }, { status: 200 });
+    return json(
+      { message: "Discount(s) successfully deleted" },
+      { status: 200 },
+    );
   } catch (error) {
     return json(
       { message: "Failed to delete discount(s)", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
-}
+};

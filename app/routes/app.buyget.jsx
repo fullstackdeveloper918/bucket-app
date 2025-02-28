@@ -28,7 +28,7 @@ import {
 } from "@remix-run/react";
 import AddProduct from "../components/BuyComponents/AddProduct";
 import { Toaster, toast as notify } from "sonner";
-import { getAllBundle } from "../api/buyxGety.server";
+import { fetchSalesData, getAllBundle } from "../api/buyxGety.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 
 export async function loader({ request }) {
@@ -37,7 +37,7 @@ export async function loader({ request }) {
     const { shop } = session;
 
     // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse] = await Promise.all([
+    const [graphqlResponse, totalBundleResponse,salesResponse] = await Promise.all([
       admin.graphql(`
           {
             products(first: 50) {
@@ -74,13 +74,15 @@ export async function loader({ request }) {
           }
         `),
       getAllBundle(shop),
+      fetchSalesData(shop)
     ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
-    return json({ products, totalBundle });
+    const sales = await salesResponse.json();
+    return json({ products, totalBundle,sales });
   } catch (error) {
     console.error(error);
     return json({
@@ -510,9 +512,11 @@ const svgs = [
 ];
 
 export default function BuyGetPage() {
-  const { products, totalBundle } = useLoaderData();
+  const { products, totalBundle,sales } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
+
+  console.log(sales, 'hencesales')
 
   console.log(actionResponse, "actionResponse");
   const [id, setId] = useState(null);
@@ -1016,6 +1020,49 @@ export default function BuyGetPage() {
     }
   };
 
+
+  const getFilteredBundles = () => {
+    if (!totalBundle) return [];
+  
+    const currentDate = new Date();
+    console.log(currentDate, 'check currentDate')
+    return totalBundle.filter((card) => {
+      const bundleDate = new Date(card.createdAt); 
+      console.log(bundleDate, 'check bundleDate')
+  
+      switch (month) {
+        case "Today":
+          return bundleDate.toDateString() === currentDate.toDateString();
+        case "Yesterday":
+          return (
+            bundleDate.toDateString() ===
+            new Date(currentDate.setDate(currentDate.getDate() - 1)).toDateString()
+          );
+        case "Last 3 Days":
+          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 3));
+        case "Last 7 Days":
+          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 7));
+        case "This Month":
+          return (
+            bundleDate.getMonth() === currentDate.getMonth() &&
+            bundleDate.getFullYear() === currentDate.getFullYear()
+          );
+        case "Last Month":
+          const lastMonth = new Date();
+          lastMonth.setMonth(lastMonth.getMonth() - 1);
+          return (
+            bundleDate.getMonth() === lastMonth.getMonth() &&
+            bundleDate.getFullYear() === lastMonth.getFullYear()
+          );
+        default:
+          return true;
+      }
+    });
+  };
+
+
+  const filteredBundles = getFilteredBundles();
+
   return (
     <>
       <div className={styles.containerDiv}>
@@ -1069,7 +1116,7 @@ export default function BuyGetPage() {
 
         {activeTab === "Home" && (
           <div className={styles.inline_stackwraper}>
-            {Array.from({ length: 3 }).map((item, index) => (
+            {Array.from({ length: 2 }).map((item, index) => (
               <React.Fragment>
                 <div className={styles.upper_box}>
                   <div className={styles.PolarisBox}>
@@ -1078,12 +1125,26 @@ export default function BuyGetPage() {
 
                       <div className={styles.ContentWraper}>
                         <Text variant="headingXs" as="h6">
-                          Reviews Collected
+                          {index == 0 ? "Revenue" : "Average"}
                         </Text>
 
-                        <Text as="h3" variant="heading2xl">
-                          280
-                        </Text>
+                        {console.log(typeof index, "brther")}
+
+                        {index === 0 ? (
+                          <>
+                            <Text as="h3" variant="heading2xl">
+                              {sales[0]?._sum?.total || 0}{" "}
+                           
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text as="h3" variant="heading2xl">
+                              {sales[0]?._avg?.total || 0}{" "}
+                            
+                            </Text>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1171,8 +1232,8 @@ export default function BuyGetPage() {
               </div>
             </div>
             <div>
-              {totalBundle &&
-                totalBundle.map((card, index) => (
+              {filteredBundles &&
+                filteredBundles.map((card, index) => (
                   <div key={card?.id} className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
                       {console.log(card, 'henecjecjec')}

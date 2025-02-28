@@ -23,7 +23,7 @@ import {
   useNavigation,
   useSubmit,
 } from "@remix-run/react";
-import { getAllBundle } from "../api/volume.server";
+import { fetchSalesData, getAllBundle, getAllDiscountId } from "../api/volume.server";
 import { Toaster, toast as notify } from "sonner";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 import AddProduct from "../components/BundleModal/AddProduct";
@@ -33,9 +33,10 @@ export async function loader({ request }) {
     const { admin, session } = await authenticate.admin(request);
     const { shop } = session;
 
-    // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse] = await Promise.all([
-      admin.graphql(`
+    // Perform Promise.all and wait for all three responses
+    const [graphqlResponse, totalBundleResponse, salesResponse,allIds] =
+      await Promise.all([
+        admin.graphql(`
         {
           products(first: 50) {
             edges {
@@ -70,14 +71,22 @@ export async function loader({ request }) {
           }
         }
       `),
-      getAllBundle(shop),
-    ]);
+        getAllBundle(shop),
+        fetchSalesData(shop),
+        getAllDiscountId(shop)
+      ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
-    return json({ products, totalBundle });
+    const sales = await salesResponse.json();
+
+    const allDiscountId = await allIds.json() ;
+
+    console.log(allDiscountId, 'allDiscountId')
+
+    return json({ products, totalBundle, sales, allDiscountId });
   } catch (error) {
     console.error(error);
     return json(
@@ -86,6 +95,8 @@ export async function loader({ request }) {
     );
   }
 }
+
+
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -531,7 +542,29 @@ export async function action({ request }) {
       });
     }
   } else {
-    return undefined;
+    console.log("else case post");
+    const bundleType = "volume";
+    if (!domainName || !bundleType) {
+      return json({ error: "Missing parameters" }, { status: 400 });
+    }
+
+    const sales = await db.sales.groupBy({
+      by: ["bundleId"],
+      where: {
+        domainName: shop,
+        bundleType,
+      },
+      _sum: {
+        total: true,
+      },
+      _avg: {
+        total: true,
+      },
+    });
+
+    console.log(sales, "hencebundlesales");
+
+    return json({ sales });
   }
 }
 
@@ -582,10 +615,12 @@ const svgs = [
 ];
 
 export default function VolumePage() {
-  const { products, totalBundle } = useLoaderData();
+  const { products, totalBundle, sales,allDiscountId } = useLoaderData();
   const actionResponse = useActionData();
   const submit = useSubmit();
   const navigation = useNavigation();
+
+  console.log(allDiscountId, "allDiscountId");
 
   console.log(actionResponse, "actionResponse");
   const [showComponent, setShowComponent] = useState(0);
@@ -685,8 +720,6 @@ export default function VolumePage() {
       [item]: prev[item] === "Show" ? "Hide" : "Show",
     }));
   };
-
-  console.log(showButton.titleSection, "hence");
 
   const handleTitleSection = (e) => {
     const { name, value } = e.target;
@@ -1056,6 +1089,49 @@ export default function VolumePage() {
     setMonth(item);
   };
 
+
+  const getFilteredBundles = () => {
+    if (!totalBundle) return [];
+  
+    const currentDate = new Date();
+    console.log(currentDate, 'check currentDate')
+    return totalBundle.filter((card) => {
+      const bundleDate = new Date(card.createdAt); 
+      console.log(bundleDate, 'check bundleDate')
+  
+      switch (month) {
+        case "Today":
+          return bundleDate.toDateString() === currentDate.toDateString();
+        case "Yesterday":
+          return (
+            bundleDate.toDateString() ===
+            new Date(currentDate.setDate(currentDate.getDate() - 1)).toDateString()
+          );
+        case "Last 3 Days":
+          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 3));
+        case "Last 7 Days":
+          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 7));
+        case "This Month":
+          return (
+            bundleDate.getMonth() === currentDate.getMonth() &&
+            bundleDate.getFullYear() === currentDate.getFullYear()
+          );
+        case "Last Month":
+          const lastMonth = new Date();
+          lastMonth.setMonth(lastMonth.getMonth() - 1);
+          return (
+            bundleDate.getMonth() === lastMonth.getMonth() &&
+            bundleDate.getFullYear() === lastMonth.getFullYear()
+          );
+        default:
+          return true;
+      }
+    });
+  };
+
+
+  const filteredBundles = getFilteredBundles();
+
   return (
     <>
       <div className={styles.containerDiv}>
@@ -1122,7 +1198,7 @@ export default function VolumePage() {
 
         {activeTab === "Home" && (
           <div className={styles.inline_stackwraper}>
-            {Array.from({ length: 3 }).map((item, index) => (
+            {Array.from({ length: 2 }).map((item, index) => (
               <React.Fragment>
                 <div className={styles.upper_box}>
                   <div className={styles.PolarisBox}>
@@ -1131,12 +1207,26 @@ export default function VolumePage() {
 
                       <div className={styles.ContentWraper}>
                         <Text variant="headingXs" as="h6">
-                          Reviews Collected
+                          {index == 0 ? "Revenue" : "Average"}
                         </Text>
 
-                        <Text as="h3" variant="heading2xl">
-                          280
-                        </Text>
+                        {console.log(typeof index, "brther")}
+
+                        {index === 0 ? (
+                          <>
+                            <Text as="h3" variant="heading2xl">
+                              {sales[0]?._sum?.total || 0}{" "}
+                              {/* Fallback to 0 if value doesn't exist */}
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text as="h3" variant="heading2xl">
+                              {sales[0]?._avg?.total || 0}{" "}
+                              {/* Fallback to 0 if value doesn't exist */}
+                            </Text>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1224,8 +1314,8 @@ export default function VolumePage() {
               </div>
             </div>
 
-            {totalBundle &&
-              totalBundle.map((card) => (
+            {filteredBundles &&
+              filteredBundles.map((card) => (
                 <React.Fragment key={card.id}>
                   <div className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
