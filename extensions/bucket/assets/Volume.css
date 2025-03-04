@@ -1,0 +1,212 @@
+.subheading_bundle {
+  display: flex;
+  justify-content: center;
+  border: 0.46px solid #000000;
+  border-radius: 30px;
+  width: fit-content;
+  margin: 0px auto;
+  padding: 5px 20px;
+  }
+  .subheading_bundle p {
+    margin: 0px;
+    font-weight: 400;
+    font-size: 13.73px;
+    line-height: 18.31px;
+    letter-spacing: 0px;
+}
+  .heading_bundle {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .discount_main {
+    align-items: center;
+    /* padding: 6rem; */
+  }
+  .product-form__quantity {
+    display: none !important;
+}
+product-form.product-form {
+  display: none !important;
+}
+  .container {
+    background-color: #fff;
+    padding: 3rem;
+    width: 100%;
+    max-width: 513px;
+    text-align: center;
+    box-shadow: 0px 64.59px 172.23px 0px #0000001A;
+    border-radius: 59.29px;
+  }
+  
+  .header {
+      font-size:16px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+  }
+  .bundle-option {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px 0;
+    cursor: pointer;
+    position: relative;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .bundle-option.active {
+    border-color: #000;
+    background-color: #f8f8f8;
+  }
+  
+  .pricediscount {
+    font-weight: bold;
+    color: #d00;
+    margin-left: 10px;
+  }
+  
+  .dropdown-section {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    display: none !important;
+  }
+  .footer {
+    font-size: 15.68px;
+    line-height: 20.91px;
+    letter-spacing: 0px;
+    text-align: center;
+    color: #7A7A7A;
+    margin: 10px 0px;
+}
+  .dropdown-section.show {
+      opacity: 1;
+      max-height: 200px;
+      display: block;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+  }
+  
+  .add-to-cart {
+    background-color: #261E27;
+    color: #fff;
+    padding: 12px;
+    margin-top: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15.95px;
+    line-height: 27.34px;
+    letter-spacing: 0px;
+    font-weight: 400;
+  }
+  
+  .add-to-cart:hover {
+    background-color: #333;
+  }
+  
+  .footer {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #777;
+  }
+  .heading_bundle h2 {
+    margin: 0;
+    font-weight: 800;
+    font-size: 24.96px;
+    line-height: 35.28px;
+    letter-spacing: 0px;
+    text-align: center;
+  }
+  .container.bucket_cv .header .child_Discount {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.box_checked {
+  width: 17.298410415649414px;
+  height: 17px;
+  border-radius: 17px;
+  border: 1.24px solid #000000;
+}
+.box_checked {
+  width: 17.298410415649414px;
+  height: 17px;
+  border-radius: 17px;
+  border: 1.24px solid #000000;
+  position: relative;
+}
+
+.bundle-option .box_checked::after {
+  background: #000000;
+  content: '';
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  border-radius: 13px;
+  left: 50%;
+  display: inline;
+  margin: 0px auto;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: .5s all;
+}
+.bundle-option.active .box_checked::after {
+  opacity: 1;
+}
+.box_checked span {
+  display: none;
+}
+.container.bucket_cv .header {
+  padding: 0px;
+  justify-content: center;
+}
+  div.save_discount {
+      display: flex;
+      justify-content: flex-end;
+      font-size: 12px;
+      padding-right: 0px;
+      color: #fff;
+  }
+  div.save_discount span {
+      background: #000;
+      padding: 0 5px;
+      border-radius: 9px;
+  }
+
+  /* dropdown */
+  .dropdown__filter-selected::after, .dropdown__filter-selected2::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-20%);
+    background: url(https://cdn.shopify.com/s/files/1/0790/3966/0343/files/arrowSvg.svg?v=1738055981);
+    background-size: contain;
+    width: 15px;
+    height: 15px;
+    background-repeat: no-repeat;
+}
+.dropdown__select-option, .dropdown__select-option2 {
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.dropdown__select-option:hover, .dropdown__select-option2:hover {
+    background-color: #eee;
+}
+.pro_price h3 {
+    font-family: Nunito Sans;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 22px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+}
+  /* dropdown end*/

@@ -37,8 +37,9 @@ export async function loader({ request }) {
     const { shop } = session;
 
     // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse,salesResponse] = await Promise.all([
-      admin.graphql(`
+    const [graphqlResponse, totalBundleResponse, salesResponse] =
+      await Promise.all([
+        admin.graphql(`
           {
             products(first: 50) {
               edges {
@@ -73,16 +74,16 @@ export async function loader({ request }) {
             }
           }
         `),
-      getAllBundle(shop),
-      fetchSalesData(shop)
-    ]);
+        getAllBundle(shop),
+        fetchSalesData(shop),
+      ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
     const sales = await salesResponse.json();
-    return json({ products, totalBundle,sales });
+    return json({ products, totalBundle, sales });
   } catch (error) {
     console.error(error);
     return json({
@@ -139,7 +140,7 @@ export async function action({ request }) {
         text: formData.get("ctaText"),
         size: formData.get("ctaSize"),
         color: formData.get("ctaColor"),
-        cart: formData.get("cart")
+        cart: formData.get("cart"),
       };
 
       const text_below_cta = {
@@ -290,6 +291,22 @@ export async function action({ request }) {
           response?.data?.data?.discountAutomaticBxgyCreate
             ?.automaticDiscountNode?.id;
         discount_info = response?.data?.data;
+
+        console.log(bundle_name, 'checkmybundlename')
+
+     
+        const existingBundle = await db.bogoxy.findUnique({
+          where: { bundle_name: bundle_name},
+        });
+
+        console.log(existingBundle, 'existingBundle')
+
+        if (existingBundle) {
+          return json({
+            error: "Bundle name is already in use. Please choose a different name.",
+            status: 500,
+          });
+        }
 
         if (bundle_id) {
           const updatedDiscount = await db.bogoxy.update({
@@ -512,11 +529,10 @@ const svgs = [
 ];
 
 export default function BuyGetPage() {
-  const { products, totalBundle,sales } = useLoaderData();
+  const { products, totalBundle, sales } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
-  console.log(sales, 'hencesales')
 
   console.log(actionResponse, "actionResponse");
   const [id, setId] = useState(null);
@@ -559,8 +575,8 @@ export default function BuyGetPage() {
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
   const [loading, setLoading] = useState(false);
-  const [cart, setCart] = useState("Cart"); 
-  const [showCart, setShowCart] = useState(false)
+  const [cart, setCart] = useState("Cart");
+  const [showCart, setShowCart] = useState(false);
   const [activeTab, setActiveTab] = useState("Home");
   const [isProduct, setIsProduct] = useState(false);
   const [active, setActive] = useState(false);
@@ -812,7 +828,7 @@ export default function BuyGetPage() {
         setShowPage("third");
       }
     } else if (values.discount_method === "Fixed Amount") {
-      if(values.amount === "") {
+      if (values.amount === "") {
         notify.success("Please enter Amount", {
           position: "top-center",
           style: {
@@ -820,7 +836,7 @@ export default function BuyGetPage() {
             color: "white",
           },
         });
-      }else {
+      } else {
         setShowComponent(3);
         setShowPage("third");
       }
@@ -902,7 +918,7 @@ export default function BuyGetPage() {
         ctaSize: 5,
         ctaColor: "#000000",
       });
-      setCart("Cart")
+      setCart("Cart");
       setTextBelow({
         tbText: "Lifetime warranty & Free Returns",
         tbSize: 5,
@@ -1020,28 +1036,35 @@ export default function BuyGetPage() {
     }
   };
 
-
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
-  
+
     const currentDate = new Date();
-    console.log(currentDate, 'check currentDate')
+    console.log(currentDate, "check currentDate");
     return totalBundle.filter((card) => {
-      const bundleDate = new Date(card.createdAt); 
-      console.log(bundleDate, 'check bundleDate')
-  
+      const bundleDate = new Date(card.createdAt);
+      console.log(bundleDate, "check bundleDate");
+
       switch (month) {
         case "Today":
           return bundleDate.toDateString() === currentDate.toDateString();
         case "Yesterday":
           return (
             bundleDate.toDateString() ===
-            new Date(currentDate.setDate(currentDate.getDate() - 1)).toDateString()
+            new Date(
+              currentDate.setDate(currentDate.getDate() - 1),
+            ).toDateString()
           );
         case "Last 3 Days":
-          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 3));
+          return (
+            bundleDate >=
+            new Date(currentDate.setDate(currentDate.getDate() - 3))
+          );
         case "Last 7 Days":
-          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 7));
+          return (
+            bundleDate >=
+            new Date(currentDate.setDate(currentDate.getDate() - 7))
+          );
         case "This Month":
           return (
             bundleDate.getMonth() === currentDate.getMonth() &&
@@ -1059,7 +1082,6 @@ export default function BuyGetPage() {
       }
     });
   };
-
 
   const filteredBundles = getFilteredBundles();
 
@@ -1128,20 +1150,16 @@ export default function BuyGetPage() {
                           {index == 0 ? "Revenue" : "Average"}
                         </Text>
 
-                        {console.log(typeof index, "brther")}
-
                         {index === 0 ? (
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._sum?.total || 0}{" "}
-                           
                             </Text>
                           </>
                         ) : (
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._avg?.total || 0}{" "}
-                            
                             </Text>
                           </>
                         )}
@@ -1236,13 +1254,16 @@ export default function BuyGetPage() {
                 filteredBundles.map((card, index) => (
                   <div key={card?.id} className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
-                      {console.log(card, 'henecjecjec')}
                       <div
                         className={styles.btnFlexWrapper}
                         style={{ alignItems: "center" }}
                       >
                         <label className={styles.switch}>
-                          <input type="checkbox" value={card?.isActive} checked={card?.isActive == 1 ? true : false} />
+                          <input
+                            type="checkbox"
+                            value={card?.isActive}
+                            checked={card?.isActive == 1 ? true : false}
+                          />
                           <span className={styles.slider}></span>
                         </label>
                         <h2 className={styles.cardHeading}>
@@ -1450,15 +1471,14 @@ export default function BuyGetPage() {
                             </h3>
                             <div className={styles.input_labelCustomize}>
                               <label htmlFor="">Name your bundle</label>
-                              
-                                <input
-                                  type="text"
-                                  name="bundle_name"
-                                  value={values.bundle_name}
-                                  onChange={handleChange}
-                                  className={styles.inputDiv}
-                                />
-                              
+
+                              <input
+                                type="text"
+                                name="bundle_name"
+                                value={values.bundle_name}
+                                onChange={handleChange}
+                                className={styles.inputDiv}
+                              />
                             </div>
                             <div className={styles.addProductdiv}>
                               {buysXSections.map((section, index) => (
@@ -1486,9 +1506,7 @@ export default function BuyGetPage() {
                                           .map((item, idx) => (
                                             <React.Fragment key={idx}>
                                               <div
-                                                className={
-                                                  styles.images_upload
-                                                }
+                                                className={styles.images_upload}
                                               >
                                                 <img
                                                   src={
@@ -1561,7 +1579,7 @@ export default function BuyGetPage() {
                               </label>
                             </div>
 
-                            <div className={styles.addProductdiv} >
+                            <div className={styles.addProductdiv}>
                               {GetYSections.map((section, index) => (
                                 <div
                                   key={section.id}
@@ -1585,9 +1603,7 @@ export default function BuyGetPage() {
                                         .map((item, idx) => (
                                           <React.Fragment key={idx}>
                                             <div
-                                              className={
-                                                styles.images_upload
-                                              }
+                                              className={styles.images_upload}
                                             >
                                               <img
                                                 src={
@@ -1614,7 +1630,7 @@ export default function BuyGetPage() {
                                                     e.stopPropagation();
                                                     handlePreviewDelete(
                                                       "GET",
-                                                      buyProducts[index]
+                                                      getProducts[index]
                                                         .productId,
                                                     );
                                                   }}
@@ -1673,7 +1689,7 @@ export default function BuyGetPage() {
                               <div className={styles.bundle_product}>
                                 <input
                                   type="radio"
-                                  id="first"
+                                  id="Bundle Product Pages"
                                   name="where_to_display"
                                   value="Bundle Product Pages"
                                   checked={
@@ -1682,7 +1698,7 @@ export default function BuyGetPage() {
                                   }
                                   onChange={handleChange}
                                 />
-                                <label htmlFor="first">
+                                <label htmlFor="Bundle Product Pages">
                                   Bundle Product Pages
                                 </label>
                               </div>
@@ -1690,7 +1706,7 @@ export default function BuyGetPage() {
                                 <input
                                   type="radio"
                                   name="where_to_display"
-                                  id="second"
+                                  id="Specific product page"
                                   value="Specific product page"
                                   checked={
                                     values.where_to_display ===
@@ -1698,7 +1714,7 @@ export default function BuyGetPage() {
                                   }
                                   onChange={handleChange}
                                 />
-                                <label htmlFor="second">
+                                <label htmlFor="Specific product page">
                                   Specific product page
                                 </label>
                               </div>
@@ -1900,7 +1916,6 @@ export default function BuyGetPage() {
                                         <div className={styles.selectBox}>
                                           <span className={styles.selected}>
                                             {position}
-                                              
                                           </span>
                                           <div className={styles.arrow}>
                                             <img
@@ -2064,30 +2079,28 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              titleSection.titleSectionColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="titleSectionColor"
-                                            value={
-                                              titleSection.titleSectionColor
-                                            }
-                                            onChange={handleTitleSection}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            titleSection.titleSectionColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="titleSectionColor"
+                                          type="color"
                                           name="titleSectionColor"
                                           value={titleSection.titleSectionColor}
                                           onChange={handleTitleSection}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="titleSectionColor"
+                                        name="titleSectionColor"
+                                        value={titleSection.titleSectionColor}
+                                        onChange={handleTitleSection}
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -2137,30 +2150,27 @@ export default function BuyGetPage() {
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="titleColor">Color</label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              title.titleColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="titleColor"
-                                            value={
-                                              title.titleColor
-                                            }
-                                            onChange={handleTitle}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor: title.titleColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="titleColor"
+                                          type="color"
                                           name="titleColor"
                                           value={title.titleColor}
                                           onChange={handleTitle}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="titleColor"
+                                        name="titleColor"
+                                        value={title.titleColor}
+                                        onChange={handleTitle}
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -2197,30 +2207,28 @@ export default function BuyGetPage() {
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="productColor">Color</label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              productTitle.productColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="productColor"
-                                            value={
-                                              productTitle.productColor
-                                            }
-                                            onChange={handleProductTitle}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            productTitle.productColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="productColor"
+                                          type="color"
                                           name="productColor"
                                           value={productTitle.productColor}
                                           onChange={handleProductTitle}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="productColor"
+                                        name="productColor"
+                                        value={productTitle.productColor}
+                                        onChange={handleProductTitle}
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -2259,30 +2267,28 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              bundleCost.bundleCostColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="bundleCostColor"
-                                            value={
-                                              bundleCost.bundleCostColor
-                                            }
-                                            onChange={handleBundleCost}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            bundleCost.bundleCostColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="bundleCostColor"
+                                          type="color"
                                           name="bundleCostColor"
                                           value={bundleCost.bundleCostColor}
                                           onChange={handleBundleCost}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="bundleCostColor"
+                                        name="bundleCostColor"
+                                        value={bundleCost.bundleCostColor}
+                                        onChange={handleBundleCost}
+                                      />
                                     </div>
                                   </div>
                                   <div className={styles.trigerCheck}>
@@ -2367,99 +2373,93 @@ export default function BuyGetPage() {
                                       onChange={handleCallToAction}
                                     />
                                   </div>
-                                  <div
-                                      className={styles.input_labelCustomize}
-                                    >
-                                      <label htmlFor="">Redirect To</label>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="">Redirect To</label>
 
+                                    <div
+                                      className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                      onClick={() => setShowCart(!showCart)}
+                                    >
                                       <div
-                                        className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
-                                        onClick={() => setShowCart(!showCart)}
+                                        className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                        id="second"
                                       >
-                                        <div
-                                          className={` ${styles.customSelect} ${styles.customTabsec} `}
-                                          id="second"
-                                        >
-                                          <div className={styles.selectBox}>
-                                            <span className={styles.selected}>
-                                              {cart}
-                                            </span>
-                                            <div className={styles.arrow}>
-                                              <img
-                                                src={DorpDownIcon}
-                                                width={20}
-                                                height={16}
-                                              />
-                                            </div>
+                                        <div className={styles.selectBox}>
+                                          <span className={styles.selected}>
+                                            {cart}
+                                          </span>
+                                          <div className={styles.arrow}>
+                                            <img
+                                              src={DorpDownIcon}
+                                              width={20}
+                                              height={16}
+                                            />
                                           </div>
-                                          {showCart && (
-                                            <ul
-                                              className={`${styles.selectDropdown} ${styles.newAppdeop} `}
-                                            >
-                                              <li
-                                                data-value="option1"
-                                                onClick={() => setCart("Cart")}
-                                              >
-                                                Cart
-                                              </li>
-                                              <li
-                                                data-value="option1"
-                                                onClick={() =>
-                                                  setCart("Checkout")
-                                                }
-                                              >
-                                                Checkout
-                                              </li>
-                                              <li
-                                                data-value="option2"
-                                                onClick={() =>
-                                                  setCart(
-                                                    "Don't redirect (only add to cart)",
-                                                  )
-                                                }
-                                              >
-                                                Don't redirect (only add to
-                                                cart)
-                                              </li>
-                                            </ul>
-                                          )}
-                                          <input
-                                            type="hidden"
-                                            name="cart"
-                                            value={cart}
-                                          />
                                         </div>
+                                        {showCart && (
+                                          <ul
+                                            className={`${styles.selectDropdown} ${styles.newAppdeop} `}
+                                          >
+                                            <li
+                                              data-value="option1"
+                                              onClick={() => setCart("Cart")}
+                                            >
+                                              Cart
+                                            </li>
+                                            <li
+                                              data-value="option1"
+                                              onClick={() =>
+                                                setCart("Checkout")
+                                              }
+                                            >
+                                              Checkout
+                                            </li>
+                                            <li
+                                              data-value="option2"
+                                              onClick={() =>
+                                                setCart(
+                                                  "Don't redirect (only add to cart)",
+                                                )
+                                              }
+                                            >
+                                              Don't redirect (only add to cart)
+                                            </li>
+                                          </ul>
+                                        )}
+                                        <input
+                                          type="hidden"
+                                          name="cart"
+                                          value={cart}
+                                        />
                                       </div>
                                     </div>
+                                  </div>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="title_section_color">
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              callAction.ctaColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="ctaColor"
-                                            value={
-                                              callAction.ctaColor
-                                            }
-                                            onChange={handleCallToAction}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor: callAction.ctaColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="ctaColor"
+                                          type="color"
                                           name="ctaColor"
                                           value={callAction.ctaColor}
                                           onChange={handleCallToAction}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="ctaColor"
+                                        name="ctaColor"
+                                        value={callAction.ctaColor}
+                                        onChange={handleCallToAction}
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -2515,30 +2515,27 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              textBelow.tbColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="tbColor"
-                                            value={
-                                              textBelow.tbColor
-                                            }
-                                            onChange={handleTextBelow}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor: textBelow.tbColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="tbColor"
+                                          type="color"
                                           name="tbColor"
                                           value={textBelow.tbColor}
                                           onChange={handleTextBelow}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="tbColor"
+                                        name="tbColor"
+                                        value={textBelow.tbColor}
+                                        onChange={handleTextBelow}
+                                      />
                                     </div>
                                   </div>
                                 </div>
@@ -2563,30 +2560,28 @@ export default function BuyGetPage() {
                                       Color
                                     </label>
                                     <div className={styles.color_styles}>
-                                    <span
-                                          className={styles.color_pilate}
-                                          style={{
-                                            backgroundColor:
-                                              background.backgroundColor,
-                                          }}
-                                        >
-                                          <input
-                                            type="color"
-                                            name="backgroundColor"
-                                            value={
-                                              background.backgroundColor
-                                            }
-                                            onChange={handleBackground}
-                                          />
-                                        </span>
-
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            background.backgroundColor,
+                                        }}
+                                      >
                                         <input
-                                          type="text"
-                                          id="backgroundColor"
+                                          type="color"
                                           name="backgroundColor"
                                           value={background.backgroundColor}
                                           onChange={handleBackground}
                                         />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="backgroundColor"
+                                        name="backgroundColor"
+                                        value={background.backgroundColor}
+                                        onChange={handleBackground}
+                                      />
                                     </div>
                                   </div>
                                   <div className={styles.formGroup}>
@@ -2632,78 +2627,240 @@ export default function BuyGetPage() {
                         </>
                       )}
 
-                      {showComponent <= 3 && (
-                        <div className={styles.live_preview}>
-                          <img
-                            src={preview_mockup}
-                            width={404}
-                            height={822}
-                            className={styles.mockup_tab}
-                          />
-                          <div className={styles.Preview_bundle}>
-                            <div className={styles.limited}>
-                              Limited Time Offer
+                      {showComponent <= 3 &&
+                        (buyProducts.length > 0 ? (
+                          products
+                            .filter((item) =>
+                              buyProducts.some(
+                                (buy) => buy.productId === item?.node?.id,
+                              ),
+                            )
+                            .map((item) => (
+                              <>
+                                <div className={styles.live_preview}>
+                                  <img
+                                    src={preview_mockup}
+                                    width={404}
+                                    height={822}
+                                    className={styles.mockup_tab}
+                                  />
+                                  <div
+                                    className={styles.Preview_bundle}
+                                    style={{
+                                      backgroundColor:
+                                        background.backgroundColor,
+                                      boxShadow: background.backgroundShadow
+                                        ? "0px 40.5px 108.01px 0px #0000001a"
+                                        : "none",
+                                    }}
+                                  >
+                                    <div
+                                      className={styles.limited}
+                                      style={{
+                                        fontSize: `${titleSection.titleSectionSize}px`,
+                                        color: titleSection.titleSectionColor,
+                                      }}
+                                    >
+                                      {titleSection.titleSectionText}
+                                    </div>
+                                    <h4
+                                      style={{
+                                        fontSize: `${title.titleSize}px`,
+                                        color: title.titleColor,
+                                      }}
+                                    >
+                                      {title.titleText}
+                                    </h4>
+
+                                    <div className={styles.both_product}>
+                                      <div
+                                        className={styles.left_productsample}
+                                      >
+                                        <img
+                                          src={
+                                            item?.node?.images?.edges[0]?.node
+                                              ?.src
+                                          }
+                                          width={112}
+                                          height={112}
+                                          className={styles.mockup_tab}
+                                        />
+
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            Gold 14K
+                                          </option>
+                                          <option value="old">Gold 14K</option>
+                                        </select>
+
+                                        <h6>{item?.node?.title}</h6>
+                                      </div>
+                                      <div className={styles.AddProduct}>
+                                        <span>+</span>
+                                      </div>
+
+                                      <div
+                                        className={styles.left_productsample}
+                                      >
+                                        <img
+                                          src={Productpreview}
+                                          width={112}
+                                          height={112}
+                                          className={styles.mockup_tab}
+                                        />
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            Gold 14K
+                                          </option>
+                                          <option value="old">Gold 14K</option>
+                                        </select>
+
+                                        <h6>Product Name</h6>
+                                      </div>
+                                    </div>
+
+                                    <div className={styles.productTotal}>
+                                      <span>Total</span>
+                                      <div className={styles.Pricetab}>
+                                        <span className={styles.delPriceOuter}>
+                                          <span
+                                            className={styles.delPrice}
+                                            style={{
+                                              display:
+                                                bundleCost.bundleCostComparedPrice
+                                                  ? "block"
+                                                  : "none",
+                                            }}
+                                          >
+                                            230$
+                                          </span>
+                                        </span>
+                                        <span
+                                          className={styles.totalPrice}
+                                          style={{
+                                            fontSize: `${bundleCost.bundleCostSize}px`,
+                                            color: bundleCost.bundleCostColor,
+                                          }}
+                                        >
+                                          130$
+                                        </span>
+                                        <span
+                                          className={styles.SaveTab}
+                                          style={{
+                                            display: bundleCost.bundleCostSave
+                                              ? "block"
+                                              : "none",
+                                          }}
+                                        >
+                                          Save 10%
+                                        </span>
+                                      </div>
+                                      <button
+                                        className={styles.AddBtn}
+                                        style={{
+                                          fontSize: `${callAction.ctaSize}px`,
+                                          color: callAction.ctaColor,
+                                        }}
+                                      >
+                                        {callAction.ctaText}
+                                      </button>
+                                      <p
+                                        className={styles.wrrantyTag}
+                                        style={{
+                                          fontSize: `${textBelow.tbSize}px`,
+                                          color: textBelow.tbColor,
+                                        }}
+                                      >
+                                        {textBelow.tbText}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className={styles.btnLivePreview}>
+                                    <button>Live Preview</button>
+                                  </div>
+                                </div>
+                              </>
+                            ))
+                        ) : (
+                          <>
+                            <div className={styles.live_preview}>
+                              <img
+                                src={preview_mockup}
+                                width={404}
+                                height={822}
+                                className={styles.mockup_tab}
+                              />
+                              <div className={styles.Preview_bundle}>
+                                <div className={styles.limited}>
+                                  Limited Time Offer
+                                </div>
+                                <h4>Add Bundle And Save 10%!</h4>
+
+                                <div className={styles.both_product}>
+                                  <div className={styles.left_productsample}>
+                                    <img
+                                      src={Productpreview}
+                                      width={112}
+                                      height={112}
+                                      className={styles.mockup_tab}
+                                    />
+                                    <select name="" id="">
+                                      <option value="newest">Gold 14K</option>
+                                      <option value="old">Gold 14K</option>
+                                    </select>
+
+                                    <h6>Product Name</h6>
+                                  </div>
+                                  <div className={styles.AddProduct}>
+                                    <span>+</span>
+                                  </div>
+
+                                  <div className={styles.left_productsample}>
+                                    <img
+                                      src={Productpreview}
+                                      width={112}
+                                      height={112}
+                                      className={styles.mockup_tab}
+                                    />
+                                    <select name="" id="">
+                                      <option value="newest">Gold 14K</option>
+                                      <option value="old">Gold 14K</option>
+                                    </select>
+
+                                    <h6>Product Name</h6>
+                                  </div>
+                                </div>
+
+                                <div className={styles.productTotal}>
+                                  <span>Total</span>
+                                  <div className={styles.Pricetab}>
+                                    <span className={styles.delPriceOuter}>
+                                      <span className={styles.delPrice}>
+                                        230$
+                                      </span>
+                                    </span>
+                                    <span className={styles.totalPrice}>
+                                      130$
+                                    </span>
+                                    <span className={styles.SaveTab}>
+                                      Save 10%
+                                    </span>
+                                  </div>
+
+                                  <button className={styles.AddBtn}>
+                                    👉 Add To Cart
+                                  </button>
+                                  <p className={styles.wrrantyTag}>
+                                    Lifetime Warranty & Free Returns
+                                  </p>
+                                </div>
+                              </div>
+                              <div className={styles.btnLivePreview}>
+                                <button>Live Preview</button>
+                              </div>
                             </div>
-                            <h4>Add Bundle And Save 10%!</h4>
-
-                            <div className={styles.both_product}>
-                              <div className={styles.left_productsample}>
-                                <img
-                                  src={Productpreview}
-                                  width={112}
-                                  height={112}
-                                  className={styles.mockup_tab}
-                                />
-                                <select name="" id="">
-                                  <option value="newest">Gold 14K</option>
-                                  <option value="old">Gold 14K</option>
-                                </select>
-
-                                <h6>Product Name</h6>
-                              </div>
-                              <div className={styles.AddProduct}>
-                                <span>+</span>
-                              </div>
-
-                              <div className={styles.left_productsample}>
-                                <img
-                                  src={Productpreview}
-                                  width={112}
-                                  height={112}
-                                  className={styles.mockup_tab}
-                                />
-                                <select name="" id="">
-                                  <option value="newest">Gold 14K</option>
-                                  <option value="old">Gold 14K</option>
-                                </select>
-
-                                <h6>Product Name</h6>
-                              </div>
-                            </div>
-
-                            <div className={styles.productTotal}>
-                              <span>Total</span>
-                              <div className={styles.Pricetab}>
-                                <span className={styles.delPriceOuter}>
-                                  <span className={styles.delPrice}>230$</span>
-                                </span>
-                                <span className={styles.totalPrice}>130$</span>
-                                <span className={styles.SaveTab}>Save 10%</span>
-                              </div>
-
-                              <button className={styles.AddBtn}>
-                                👉 Add To Cart
-                              </button>
-                              <p className={styles.wrrantyTag}>
-                                Lifetime Warranty & Free Returns
-                              </p>
-                            </div>
-                          </div>
-                          <div className={styles.btnLivePreview}>
-                            <button>Live Preview</button>
-                          </div>
-                        </div>
-                      )}
+                          </>
+                        ))}
                     </div>
 
                     {showPage === "Return" && (

@@ -1,38 +1,47 @@
-
 import React from "react";
-import styles from '../../styles/main.module.css'
-import searchImg from '../../routes/assets/searchImg@.svg'
+import styles from "../../styles/main.module.css";
+import searchImg from "../../routes/assets/searchImg@.svg";
 import Search from "../Search/Search";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
 
-const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, handleSave}) => {
+const AddProduct = ({
+  onClose,
+  products,
+  selectProduct,
+  setSelectedPrducts,
+  handleSave,
+}) => {
+  const [searchQuery, setSearchQuery] = useState("");
 
+  console.log(selectProduct, "selectproduct");
 
-  console.log(selectProduct,'selectproduct')
-
+  const filteredProducts = products?.filter((item) => {
+    console.log(item);
+    return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
     const productId = product.node.id;
-  
+
     setSelectedPrducts((prev) => {
-      const isAlreadySelected = prev.some((item) => item.productId === productId);
-  
+      const isAlreadySelected = prev.some(
+        (item) => item.productId === productId,
+      );
+
       if (isSelected) {
         if (isAlreadySelected) {
-       
           return prev.filter((item) => item.productId !== productId);
         }
-        
+
         return [...prev, { productId }];
       } else {
-        console.log('Unchecking:', productId);
+        console.log("Unchecking:", productId);
         return prev.filter((item) => item.productId !== productId);
       }
     });
   };
-  
 
   // const handleChildCheckBox = (e, productId, variantId) => {
   //   const isSelected = e.target.checked;
@@ -60,6 +69,9 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
   //   });
   // };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
 
   return (
     <div className={`${styles.modal_overlay} ${styles.productModal}`}>
@@ -68,14 +80,19 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
         <div className={styles.search_select}>
           <div className={styles.search_images}>
             <img src={searchImg} width={20} height={20} />
-            <Search />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </div>
         </div>
         <ul className={styles.addProductlist}>
-          {products?.map((item, index) => {
-            const productId = (item.node.id);
-            const variantIds = item.node.variants.edges.map((variant) =>
-              (variant.node.id)
+          {filteredProducts?.map((item, index) => {
+            const productId = item.node.id;
+            const variantIds = item.node.variants.edges.map(
+              (variant) => variant.node.id,
             );
 
             return (
@@ -83,16 +100,20 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
                 <li>
                   <div className={styles.addPrducttab}>
                     <div className={styles.formGroup}>
-
-                    
                       <input
                         type="checkbox"
                         id={item.node.id}
                         name="Parent"
                         value={productId}
-                        checked={selectProduct.some((check) => check.productId === item.node.id)}
+                        checked={selectProduct.some(
+                          (check) => check.productId === item.node.id,
+                        )}
                         onChange={(e) =>
-                          handleParentCheckBox(e, item, item.node.variants.edges)
+                          handleParentCheckBox(
+                            e,
+                            item,
+                            item.node.variants.edges,
+                          )
                         }
                       />
                       <label htmlFor={item.node.id}></label>
@@ -107,8 +128,6 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
                       </div>
                     </div>
                   </div>
-
-                  
                 </li>
               </React.Fragment>
             );
@@ -116,10 +135,10 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
         </ul>
 
         <div className={`${styles.addBtn} ${styles.textEnd}`}>
-          <button type="button" onClick={onClose}  className={styles.Backbtn}>
+          <button type="button" onClick={onClose} className={styles.Backbtn}>
             Cancel
           </button>
-          <button type="button" onClick={handleSave}  className={styles.NextBtn} >
+          <button type="button" onClick={handleSave} className={styles.NextBtn}>
             Save
           </button>
         </div>

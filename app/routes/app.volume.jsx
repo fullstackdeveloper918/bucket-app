@@ -23,7 +23,11 @@ import {
   useNavigation,
   useSubmit,
 } from "@remix-run/react";
-import { fetchSalesData, getAllBundle, getAllDiscountId } from "../api/volume.server";
+import {
+  fetchSalesData,
+  getAllBundle,
+  getAllDiscountId,
+} from "../api/volume.server";
 import { Toaster, toast as notify } from "sonner";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 import AddProduct from "../components/BundleModal/AddProduct";
@@ -34,7 +38,7 @@ export async function loader({ request }) {
     const { shop } = session;
 
     // Perform Promise.all and wait for all three responses
-    const [graphqlResponse, totalBundleResponse, salesResponse,allIds] =
+    const [graphqlResponse, totalBundleResponse, salesResponse, allIds] =
       await Promise.all([
         admin.graphql(`
         {
@@ -73,7 +77,7 @@ export async function loader({ request }) {
       `),
         getAllBundle(shop),
         fetchSalesData(shop),
-        getAllDiscountId(shop)
+        getAllDiscountId(shop),
       ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
@@ -82,9 +86,7 @@ export async function loader({ request }) {
     const totalBundle = totalBundleResponse?.data || [];
     const sales = await salesResponse.json();
 
-    const allDiscountId = await allIds.json() ;
-
-    console.log(allDiscountId, 'allDiscountId')
+    const allDiscountId = await allIds.json();
 
     return json({ products, totalBundle, sales, allDiscountId });
   } catch (error) {
@@ -95,8 +97,6 @@ export async function loader({ request }) {
     );
   }
 }
-
-
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -111,10 +111,7 @@ export async function action({ request }) {
       const bundle_name = formData.get("bundle_name");
       const discount_method = formData.get("discount_method");
       const product_details = formData.get("product_details");
-
       const [selectedProducts] = JSON.parse(product_details);
-
-      console.log(product_details, "product_details");
       const tier = formData.get("tier");
       const position = formData.get("position");
       const section = formData.get("section");
@@ -379,7 +376,6 @@ export async function action({ request }) {
 
       try {
         const response = await axios.request(config);
-        console.log(response, "no response");
         const discount_id =
           response?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
@@ -416,7 +412,6 @@ export async function action({ request }) {
             activeTab: "Return",
           });
         } else {
-          console.log("create");
           const savedDiscount = await db.volumeDiscount.create({
             data: {
               bundle_name,
@@ -453,15 +448,116 @@ export async function action({ request }) {
           { status: 500 },
         );
       }
+    } else if (intent === "deactivate") {
+      const checkboxId = formData.get("checkbox_id");
+      const checkStatus = formData.get("check_status");
+      const checkId = formData.get("checkId");
+
+      console.log(formData, "form");
+      console.log(checkboxId, "seeid");
+
+      let mutationQuery;
+      if (checkStatus == 1) {
+        mutationQuery = {
+          query: `
+      mutation discountAutomaticDeactivate($id: ID!) {
+        discountAutomaticDeactivate(id: $id) {
+          automaticDiscountNode {
+            automaticDiscount {
+              ... on DiscountAutomaticBxgy {
+                status
+                startsAt
+                endsAt
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+          variables: {
+            id: checkboxId,
+          },
+        };
+      } else if (checkStatus == 0) {
+        mutationQuery = {
+          query: `
+      mutation discountAutomaticActivate($id: ID!) {
+        discountAutomaticActivate(id: $id) {
+          automaticDiscountNode {
+            automaticDiscount {
+              ... on DiscountAutomaticBxgy {
+                status
+                startsAt
+                endsAt
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }`,
+          variables: {
+            id: checkboxId,
+          },
+        };
+      }
+
+      const config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2025-01/graphql.json`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
+        data: JSON.stringify(mutationQuery),
+      };
+
+      try {
+        // Make the Shopify API request
+        const response = await axios(config);
+
+        // Check if the response has user errors
+        const errors =
+          response.data.data.discountAutomaticDeactivate?.userErrors ||
+          response.data.data.discountAutomaticActivate?.userErrors;
+        if (errors && errors.length > 0) {
+          throw new Error(errors.map((err) => err.message).join(", "));
+        }
+
+        // If no errors, update the database based on the `checkStatus`
+        const updatedDiscount = await db.volumeDiscount.update({
+          where: { id: parseInt(checkId) },
+          data: {
+            isActive: checkStatus == 1 ? 0 : 1, // Deactivate if 1, activate if 0
+            domainName: shop,
+          },
+        });
+        return json({
+          message: `Discount is ${checkStatus == 1 ? "Deactived" : "Activated"} successfully`,
+          data: updatedDiscount,
+          status: 200,
+          step: 6,
+        });
+      } catch (err) {
+        console.error("Error during Shopify mutation or database update:", err);
+        return json({
+          message: "Error occurred while updating data",
+          error: err.message,
+          status: 500,
+          step: 6,
+        });
+      }
     }
   } else if (request.method === "DELETE") {
     try {
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
-      console.log(productId, "productbvfdj");
-      console.log(discount_id, "easypeesy");
-
-      // Prepare GraphQL mutation
       const data = JSON.stringify({
         query: `
           mutation discountAutomaticDelete($id: ID!) {
@@ -498,18 +594,12 @@ export async function action({ request }) {
 
       // Handle user errors from Shopify
       if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-        console.error(
-          "Shopify Errors:",
-          responseData.data.discountAutomaticDelete.userErrors,
-        );
         return json({
           message: "Failed to delete discount on Shopify",
           errors: responseData.data.discountAutomaticDelete.userErrors,
           status: 400,
         });
       }
-
-      console.log("Shopify Response:", JSON.stringify(responseData));
 
       // Delete from your local database
       const result = await db.volumeDiscount.deleteMany({
@@ -562,8 +652,6 @@ export async function action({ request }) {
       },
     });
 
-    console.log(sales, "hencebundlesales");
-
     return json({ sales });
   }
 }
@@ -615,18 +703,20 @@ const svgs = [
 ];
 
 export default function VolumePage() {
-  const { products, totalBundle, sales,allDiscountId } = useLoaderData();
+  const { products, totalBundle, sales, allDiscountId } = useLoaderData();
   const actionResponse = useActionData();
   const submit = useSubmit();
   const navigation = useNavigation();
 
-  console.log(allDiscountId, "allDiscountId");
-
-  console.log(actionResponse, "actionResponse");
+  console.log(totalBundle, "totalBundle");
   const [showComponent, setShowComponent] = useState(0);
   const [editState, setEditState] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [showPage, setShowPage] = useState(null);
+  const [checkstatus, setCheckstatus] = useState(1);
+  const [checkIndex, setCheckIndex] = useState(null);
+  const [checked, setChecked] = useState(true);
+  const [checkboxId, setCheckBoxId] = useState(null);
   const [productId, setProductId] = useState(null);
   const [cart, setCart] = useState("Cart");
   const [showCart, setShowCart] = useState(false);
@@ -838,7 +928,6 @@ export default function VolumePage() {
   };
 
   const handleSecond = () => {
-    // if (values.product === "All Products") {
     const [singleTier] = tier;
     if (singleTier.badge === "") {
       notify.error("Please enter badge text", {
@@ -899,7 +988,6 @@ export default function VolumePage() {
       setShowComponent(3);
       setShowPage("third");
     }
-    // }
   };
 
   const handleTierChange = (index, field, value) => {
@@ -907,10 +995,6 @@ export default function VolumePage() {
       i === index ? { ...item, [field]: value } : item,
     );
     setTier(updatedTiers);
-  };
-
-  const handleCheckboxChange = (id) => {
-    submit();
   };
 
   const handleEdit = (item) => {
@@ -932,6 +1016,38 @@ export default function VolumePage() {
     setProductId(item.id);
     setDiscountId(item.discount_id);
   };
+
+  const handleOnChange = (e, index) => {
+    e.preventDefault();
+    setCheckIndex(index);
+    // setChecked(!checked);
+    // setCheckBoxId(card);
+    submit(e.target.form);
+  };
+
+  useEffect(() => {
+    if (actionResponse?.status == 6) {
+      if (actionResponse?.status === 200) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+        console.log(actionResponse, "kro");
+        // setChecked(actionResponse.isActive)
+      } else if (actionResponse?.status === 500) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      }
+    }
+  }, actionResponse);
 
   useEffect(() => {
     if (actionResponse?.status === 200) {
@@ -1032,7 +1148,6 @@ export default function VolumePage() {
 
   useEffect(() => {
     if (editState) {
-      console.log(details, "hence");
       setId(details.id);
       setValues((prev) => ({
         ...prev,
@@ -1089,28 +1204,33 @@ export default function VolumePage() {
     setMonth(item);
   };
 
-
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
-  
+
     const currentDate = new Date();
-    console.log(currentDate, 'check currentDate')
     return totalBundle.filter((card) => {
-      const bundleDate = new Date(card.createdAt); 
-      console.log(bundleDate, 'check bundleDate')
-  
+      const bundleDate = new Date(card.createdAt);
+
       switch (month) {
         case "Today":
           return bundleDate.toDateString() === currentDate.toDateString();
         case "Yesterday":
           return (
             bundleDate.toDateString() ===
-            new Date(currentDate.setDate(currentDate.getDate() - 1)).toDateString()
+            new Date(
+              currentDate.setDate(currentDate.getDate() - 1),
+            ).toDateString()
           );
         case "Last 3 Days":
-          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 3));
+          return (
+            bundleDate >=
+            new Date(currentDate.setDate(currentDate.getDate() - 3))
+          );
         case "Last 7 Days":
-          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 7));
+          return (
+            bundleDate >=
+            new Date(currentDate.setDate(currentDate.getDate() - 7))
+          );
         case "This Month":
           return (
             bundleDate.getMonth() === currentDate.getMonth() &&
@@ -1128,7 +1248,6 @@ export default function VolumePage() {
       }
     });
   };
-
 
   const filteredBundles = getFilteredBundles();
 
@@ -1209,8 +1328,6 @@ export default function VolumePage() {
                         <Text variant="headingXs" as="h6">
                           {index == 0 ? "Revenue" : "Average"}
                         </Text>
-
-                        {console.log(typeof index, "brther")}
 
                         {index === 0 ? (
                           <>
@@ -1315,7 +1432,7 @@ export default function VolumePage() {
             </div>
 
             {filteredBundles &&
-              filteredBundles.map((card) => (
+              filteredBundles.map((card, index) => (
                 <React.Fragment key={card.id}>
                   <div className={styles.exampleBundle}>
                     <div className={styles.bundleHeading}>
@@ -1323,18 +1440,39 @@ export default function VolumePage() {
                         className={styles.btnFlexWrapper}
                         style={{ alignItems: "center" }}
                       >
-                        <label className={styles.switch}>
+                        <Form method="POST">
+                          <label className={styles.switch}>
+                            <input
+                              type="hidden"
+                              name="checkbox_id"
+                              value={card.discount_id}
+                            />
+                            <input
+                              type="hidden"
+                              name="check_status"
+                              value={card?.isActive}
+                            />
+                            <input
+                              type="hidden"
+                              name="checkId"
+                              value={card.id}
+                            />
+
+                            <input
+                              type="checkbox"
+                              name="checkbox"
+                              value={checked}
+                              checked={index}
+                              onChange={(e) => handleOnChange(e, index)}
+                            />
+                            <span className={styles.slider}></span>
+                          </label>
                           <input
-                            type="checkbox"
+                            type="hidden"
                             name="intent"
-                            value="bundle"
-                            checked={card?.isActive === 1 ? false : true}
-                            onChange={() =>
-                              handleCheckboxChange(card.discount_id)
-                            }
+                            value="deactivate"
                           />
-                          <span className={styles.slider}></span>
-                        </label>
+                        </Form>
 
                         <h2 className={styles.cardHeading}>
                           {card?.bundle_name}
@@ -1779,11 +1917,6 @@ export default function VolumePage() {
                                       onClick={() => handleDelete(item.id)}
                                       className={styles.deletedBtn}
                                     >
-                                      {/* <img
-                                        src={deletedIcon}
-                                        width={20}
-                                        height={20}
-                                      /> */}
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         width="18"
@@ -1805,17 +1938,6 @@ export default function VolumePage() {
                               </div>
                             </React.Fragment>
                           ))}
-                          {/* 
-                          {values.product !== "All Products" && (
-                            <div className={styles.Addanotherdiv}>
-                              <label
-                                style={{ cursor: "pointer", color: "blue" }}
-                                onClick={addAnotherTier}
-                              >
-                                <span>+</span>Add Another Tier
-                              </label>
-                            </div>
-                          )} */}
 
                           <div className={styles.Add_btn}>
                             <button
@@ -2808,76 +2930,117 @@ export default function VolumePage() {
                     )}
 
                     {showComponent <= 3 && (
-                      <div className={styles.live_preview}>
-                        <img
-                          src={preview_mockup}
-                          width={404}
-                          height={822}
-                          className={styles.mockup_tab}
-                        />
-                        <div className={styles.Preview_bundle}>
-                          <div className={styles.limited}>
-                            Limited Time Offer
+                      <>
+                        <div className={styles.live_preview}>
+                          <img
+                            src={preview_mockup}
+                            width={404}
+                            height={822}
+                            className={styles.mockup_tab}
+                          />
+                          <div
+                            className={styles.Preview_bundle}
+                            style={{
+                              backgroundColor: background.backgroundColor,
+                              boxShadow: background.backgroundShadow
+                                ? "0px 40.5px 108.01px 0px #0000001a"
+                                : "none",
+                            }}
+                          >
+                            <div
+                              className={styles.limited}
+                              style={{
+                                fontSize: `${titleSection.titleSectionSize}px`,
+                                color: titleSection.titleSectionColor,
+                              }}
+                            >
+                              {titleSection.titleSectionText}
+                            </div>
+                            <h4
+                              style={{
+                                fontSize: `${title.titleSize}px`,
+                                color: title.titleColor,
+                              }}
+                            >
+                              {title.titleText}
+                            </h4>
+
+                            {selectProducts.length > 0 &&
+                              products
+                                .filter((item) =>
+                                  selectProducts.some(
+                                    (buy) => buy.productId === item?.node?.id,
+                                  ),
+                                )
+                                .map((item) => (
+                                  <>
+                                    <div className={styles.both_product}>
+                                    <div className={styles.left_productsample}>
+                                      <img
+                                        src={
+                                          item?.node?.images?.edges[0]?.node
+                                            ?.src
+                                        }
+                                        width={112}
+                                        height={112}
+                                        className={styles.mockup_tab}
+                                      />
+
+                                      <select name="" id="">
+                                        <option value="newest">Gold 14K</option>
+                                        <option value="old">Gold 14K</option>
+                                      </select>
+
+                                      <h6>{item?.node?.title}</h6>
+                                    </div>
+                                    <div className={styles.AddProduct}>
+                                      <span>+</span>
+                                    </div>
+
+                                    <div className={styles.left_productsample}>
+                                      <img
+                                        src={Productpreview}
+                                        width={112}
+                                        height={112}
+                                        className={styles.mockup_tab}
+                                      />
+                                      <select name="" id="">
+                                        <option value="newest">Gold 14K</option>
+                                        <option value="old">Gold 14K</option>
+                                      </select>
+                                      <h6>Product Name</h6>
+                                    </div>
+                                  </div>
+                                  </>
+                                ))}
+
+                            <div className={styles.productTotal}>
+                              <span>Total</span>
+                              <button
+                                className={styles.AddBtn}
+                                style={{
+                                  fontSize: `${callAction.ctaSize}px`,
+                                  color: callAction.ctaColor,
+                                }}
+                              >
+                                {callAction.ctaText}
+                              </button>
+                              <p
+                                className={styles.wrrantyTag}
+                                style={{
+                                  fontSize: `${textBelow.tbSize}px`,
+                                  color: textBelow.tbColor,
+                                }}
+                              >
+                                {textBelow.tbText}
+                              </p>
+                            </div>
                           </div>
-                          <h4>Add Bundle And Save 10%!</h4>
-
-                          <div className={styles.both_product}>
-                            <div className={styles.left_productsample}>
-                              <img
-                                src={Productpreview}
-                                width={112}
-                                height={112}
-                                className={styles.mockup_tab}
-                              />
-                              <select name="" id="">
-                                <option value="newest">Gold 14K</option>
-                                <option value="old">Gold 14K</option>
-                              </select>
-
-                              <h6>Product Name</h6>
-                            </div>
-                            <div className={styles.AddProduct}>
-                              <span>+</span>
-                            </div>
-
-                            <div className={styles.left_productsample}>
-                              <img
-                                src={Productpreview}
-                                width={112}
-                                height={112}
-                                className={styles.mockup_tab}
-                              />
-                              <select name="" id="">
-                                <option value="newest">Gold 14K</option>
-                                <option value="old">Gold 14K</option>
-                              </select>
-
-                              <h6>Product Name</h6>
-                            </div>
-                          </div>
-
-                          <div className={styles.productTotal}>
-                            <span>Total</span>
-                            <div className={styles.Pricetab}>
-                              <span className={styles.delPriceOuter}>
-                                <span className={styles.delPrice}>230$</span>
-                              </span>
-                              <span className={styles.totalPrice}>130$</span>
-                              <span className={styles.SaveTab}>Save 10%</span>
-                            </div>
-
-                            <button className={styles.AddBtn}>
-                              👉 Add To Cart
-                            </button>
-                            <p className={styles.wrrantyTag}>
-                              Lifetime Warranty & Free Returns
-                            </p>
+                          <div className={styles.btnLivePreview}>
+                            <button>Live Preview</button>
                           </div>
                         </div>
-                        <div className={styles.btnLivePreview}>
-                          <button>Live Preview</button>
-                        </div>
-                      </div>
+                      </>
                     )}
                   </div>
                   {showPage === "Return" && (

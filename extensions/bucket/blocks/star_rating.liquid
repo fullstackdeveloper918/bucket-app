@@ -1,0 +1,1329 @@
+
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+h1, h2, h3 , h4 ,h5 , p , div , span , button { 
+    font-family: "Nunito Sans", sans-serif ;
+}
+.popup {
+  width: 100%;
+  height: calc(100% - 10rem);
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  overflow-y: auto;
+
+  .popup__content {
+    width: 80%;
+    overflow:auto;
+    padding: 50px;
+    background: white;
+    color: black;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -10%);
+    box-sizing: border-box;
+    .close {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 20px;
+      display: block;
+      span {
+        cursor: pointer;
+        position: fixed;
+        width: 20px;
+        height: 3px;
+        background: #000;
+        &:nth-child(1) {
+          transform: rotate(45deg);
+        }
+        &:nth-child(2) {
+          transform: rotate(135deg);
+        }
+      }
+    }
+  }
+}
+.review_main {
+  color: white;
+  padding: 5px 0px;
+  cursor: pointer;
+  border: none;
+}
+.review_main button {
+    width: 100%;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+progress {
+  direction:rtl;
+  width: 100%;
+  appearance: none; /* Removes the default styles */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #f0f0f0; /* Background color */
+  border-radius: 5px;
+  height: 6px;
+  overflow: hidden; /* Ensures border-radius is applied */
+  position: relative;
+}
+
+/* Progress bar fill color for WebKit browsers */
+progress::-webkit-progress-value {
+  background: #000; /* Yellow color for the fill */
+  border-radius: 5px;
+}
+
+/* Progress bar background for WebKit browsers */
+progress::-webkit-progress-bar {
+  background: #f0f0f0; /* Light gray background */
+  border-radius: 5px;
+}
+
+/* Progress bar fill color for Firefox */
+progress::-moz-progress-bar {
+  background: #0000; /* Yellow color for the fill */
+  border-radius: 5px;
+}
+.progress_bar {
+    width: 90%;
+}
+
+.bucket_review_main h4:first-child {
+  margin-top: 20px;
+    text-align: center;
+    margin-bottom: 10px ;
+}
+div#ratings-container div div {
+    flex-direction: row-reverse;
+}
+.bucket_main {
+    width: 100%;
+    height: 100%;
+    margin: 10% 0;
+}
+.highest_reviews {
+    margin-top: 1.5rem;
+}
+/* mani sir */
+.bucket_main .bucket_review {
+    border-radius: 24px !important;
+    box-shadow: 0px 30px 80px 0px #0000001A !important;
+    border: 0px !important;
+    padding: 50px !important;
+}
+.bucket_main h4 {
+    font-family: Nunito Sans;
+    font-size: 18px !important;
+    font-weight: 500 !important;
+    line-height: 32px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    margin-top: 0px !important;!i;!;
+}
+.highest_reviews {
+    font-family: Nunito Sans;
+    font-size: 48px !important;
+    font-weight: 800;
+    line-height: 64px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #261E27 !important;
+}
+.total_reviews {
+    font-family: Nunito Sans;
+    font-size: 16px !important;
+    font-weight: 400;
+    line-height: 21.82px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: ##767177;
+}
+div#ratings-container span {
+    font-family: Nunito Sans;
+    font-size: 14px !important;
+    line-height: 31px;
+    font-weight: 400 !important;
+    text-align: right;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #5B555C !important;
+    white-space: pre;
+}
+progress#progress-bar-1 {
+    height: 16px !important;
+    border-radius: 4px !important;
+}
+div#ratings-container {
+    margin: 20px 0px 0px;
+}
+.review_main button {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 24px;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    background: #261E27 !important;
+}
+.upload-box {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s, border-color 0.3s;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.upload-box:hover {
+    background-color: #f0f8ff;
+    border-color: #00aaff;
+}
+
+.upload-box .upload-icon {
+    font-size: 2rem;
+    color: #888;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.upload-box p {
+    font-size: 1rem;
+    color: #888;
+    margin: 0;
+}
+
+.upload-box.dragging {
+    background-color: #e6f7ff;
+    border-color: #00aaff;
+}
+
+.error-message {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    text-align: center;
+}
+section.customerreview_data .cutomers_All_reviews {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+section.customerreview_data .cutomers_All_reviews .image_bucket img {
+    width: 100%;
+    border-radius: 40.09px 40.09px 0px 0px;
+    height: 393px;
+    object-fit: cover;
+    object-position: center;
+}
+.reviews_bucket {
+    box-shadow: 0px 30px 80px 0px #0000001A;
+    border-radius: 40.09px;
+}
+.main_review_bucket {
+    padding: 23px;
+}
+.review_ratingname h3 {
+    font-family: Nunito Sans;
+    font-size: 19.4px;
+    font-weight: 700;
+    line-height: 25.87px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #000;
+    margin: 10px 0px;
+}
+.review_ratingemail h4 {
+    font-family: Nunito Sans;
+    font-size: 15.78px;
+    font-weight: 400;
+    line-height: 21.04px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #111;
+    margin: 0px;
+}
+.review_comment p {
+    font-family: Nunito Sans;
+    font-size: 20.04px;
+    font-weight: 400;
+    line-height: 26.72px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #000;
+    word-break: break-all;
+}
+.bucket_verfied {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.bucket_verfied h3 {
+    font-family: Nunito Sans;
+    font-size: 15.78px;
+    font-weight: 400;
+    line-height: 21.04px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #000;
+    margin: 0px;
+}
+.bucket_verfied span {
+    display: inline-grid;
+}
+div#ratings-container>div>div {
+    gap: 10px !important;
+}
+.popup
+ .popup__content {
+    width: 100%;
+    max-width: 100rem;
+    border-radius: 58px;
+    box-shadow: 0px 8.61px 51.65px 0px #E2ECF980;
+    padding-top: 80px;
+}
+.popup .popup__content div#review-form {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0px !important;
+    margin: 0px !important;
+}
+.popup .popup__content div#review-form h3 {
+    font-family: Poppins;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 44px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #292D32;
+    margin: 50px 0px 30px;
+}
+div#reviews-container_pro_imgr {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+div#reviews-container_pro_imgr .bucket_img {
+    width: 80px;
+    height: 80px;
+}
+div#reviews-container_pro_imgr .bucket_img img {
+    width: 100%;
+    height: 100%;
+    border-radius: 21.12px;
+}
+div#reviews-container_pro_imgr h4 {
+    font-family: Poppins;
+    font-size: 22.76px;
+    font-weight: 600;
+    line-height: 22.14px;
+    letter-spacing: -0.01em;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #292D32;
+    margin: 0px;
+}
+.popup .popup__content .close {
+    width: fit-content !important;
+    position: unset !important;
+}
+.popup .popup__content .close span {
+    cursor: pointer;
+    position: absolute;
+    width: 40px;
+    height: 3px;
+    background: #000;
+}
+form#reviewForm h4.bucket_reveiew_title, form#reviewForm label {
+    font-family: Poppins;
+    font-size: 20.11px;
+    font-weight: 600;
+    line-height: 37.67px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    width: 100%;
+    display: block;
+}
+div#dynamic-rating {
+    gap: 5px;
+    justify-content: flex-start !important;
+}
+div#dynamic-rating span.dynamic-star svg {
+    width: 30px;
+    height: 30px;
+}
+form#reviewForm textarea {
+  box-shadow: 6px 6px 47.8px 0px #00000026;
+    height: 259px;
+    margin: 10px 0px 0px;
+    border: 0px !important;
+    border-radius: 19px !important;
+    width: 100% !important;
+    font-family: Poppins;
+    font-size: 16.44px !important;
+    font-weight: 500;
+    line-height: 25.16px;
+    padding: 20px !important
+}
+form#reviewForm div#fileDropArea {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 20px 0px 40px;
+    border-color: #000;
+    box-shadow: 6px 6px 47.8px 0px #00000026;
+    border-radius: 19px;
+}
+.upload-box p {
+    color: #888;
+    margin: 0;
+    font-family: Poppins;
+    font-size: 14.32px;
+    font-weight: 500;
+    line-height: 28.98px;
+    letter-spacing: -0.01em;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    text-align: center;
+}
+form#reviewForm input {
+    box-shadow: 6px 6px 47.8px 0px #00000026;
+    border-radius: 13px !important;
+    padding: 20px !important;
+    height: 60px;
+    font-family: Poppins;
+    font-size: 16.44px !important;
+    font-weight: 500;
+    line-height: 25.16px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    margin: 10px 0px 0px;
+    border: 0px !important;!im;!;
+}
+form#reviewForm button#submitReview {
+    width: 100%;
+    border-radius: 12px !important;
+    font-family: Nunito Sans;
+    font-size: 18.22px !important;
+    font-weight: 600;
+    line-height: 32.88px;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    margin: 30px 0px;
+}
+.popup {
+    padding: 20px;
+}
+/* list-tag */
+section.customerreview_data.listData .cutomers_All_reviews {
+    grid-template-columns: 1fr;
+}
+
+section.customerreview_data.listData .cutomers_All_reviews .reviews_bucket {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    border-radius: 27.08px;
+    height: 100%;
+    gap: 20px;
+}
+
+section.customerreview_data.listData .cutomers_All_reviews .reviews_bucket img {
+    height: 100%;
+    border-radius: 0px 27.08px 27.08px 0px;
+}
+section.customerreview_data.listData .cutomers_All_reviews .image_bucket {
+    width: 100%;
+    max-width: 320px;
+}
+
+
+/* list-tag end */
+@media (max-width:767px){
+  section.customerreview_data.listData .cutomers_All_reviews .image_bucket {
+    width: 100%;
+    max-width: 160px;
+}
+section.customerreview_data.listData svg {
+    width: 14px;
+    height: 14px;
+}
+section.customerreview_data.listData .review_comment p {
+    font-size: 15.93px;
+    line-height: 21.24px;
+    text-align: left;
+}
+section.customerreview_data.listData .bucket_verfied h3 {
+    font-size: 12.54px;
+    line-height: 16.72px;
+}
+section.customerreview_data.listData .cutomers_All_reviews .reviews_bucket {
+    border-radius: 24px;
+}
+  .popup
+ .popup__content {
+    border-radius: 18px;
+    box-shadow: 0px 8.61px 51.65px 0px #E2ECF980;
+    padding-top: 80px;
+    padding: 70px 20px 10px;
+}
+.popup .popup__content div#review-form h3 {
+    font-size: 23px;
+    margin: 50px 0px 30px;
+}
+div#reviews-container_pro_imgr .bucket_img img {
+    border-radius: 11px;
+}
+div#reviews-container_pro_imgr .bucket_img {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+}
+div#reviews-container_pro_imgr h4 {
+    font-family: Poppins;
+    font-size: 16.44px;
+}
+form#reviewForm textarea {
+    font-size: 14.44px !important;
+    line-height: 25.16px;
+    padding: 15px 15px !important;
+}
+form#reviewForm h4.bucket_reveiew_title, form#reviewForm label {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 21px;
+}
+div#dynamic-rating span.dynamic-star svg {
+    width: 20px;
+    height: 20px;
+}
+form#reviewForm textarea {
+    height: 112px;
+    border-radius: 6px !important;
+}
+form#reviewForm div#fileDropArea {
+    border-radius: 6px;
+}
+.upload-box .upload-icon {
+    font-size: 40px !Important;
+    display: block;
+    margin-bottom: 10px;
+    line-height: 40px !Important;
+    color: #111 !Important;
+}
+form#reviewForm input {
+    font-size: 13.44px !important;
+    height: 46px;
+    padding: 10px 15px !important;
+}
+form#reviewForm button#submitReview {
+    border-radius: 8px !important;
+    font-size: 14.22px !important;
+    line-height: 26.88px;
+}
+section.customerreview_data .cutomers_All_reviews {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+.review_comment p {
+    font-size: 12px;
+    line-height: 16px;
+}
+.bucket_verfied h3 {
+    font-family: Nunito Sans;
+    font-size: 9.45px;
+    font-weight: 400;
+    line-height: 12.6px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+}
+.bucket_verfied svg {
+    width: 12px;
+    height: 12px;
+}
+.bucket_verfied {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.review_ratingname h3 {
+    font-family: Nunito Sans;
+    font-size: 12.21px;
+    font-weight: 700;
+    line-height: 16.28px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+}
+section.customerreview_data .cutomers_All_reviews .image_bucket img {
+    height: 294px;
+}
+.reviews_bucket {
+    border-radius: 24px;
+}
+.main_review_bucket {
+    padding: 15px;
+}
+section.customerreview_data .cutomers_All_reviews .image_bucket img {
+    border-radius: 24px 24px 0px 0px;
+}
+}
+/* list css */
+</style>
+<div class="bucket_main list_view">
+<div class="bucket_review" product_id="{{ product.id }}" style="border: 1px solid #f0f0f0; border-radius: 10px; padding: 20px; box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); background: #fff; text-align: center; font-family: 'Arial', sans-serif;">
+  
+<h4 style="font-size: 2.8rem; color: #000; font-weight: 600;">Customer Reviews</h4>
+  
+  <!-- Average Rating Display -->
+  <div class="highest_reviews" style="font-size: 2rem; font-weight: bold; color: #000;">
+    
+  </div>
+  <div class="stars_main"></div>
+  <!-- Star Ratings Display -->
+  <div  class="highest_review_main fg">
+    <!-- Render Stars Dynamically -->
+    <div style="color: #FABF35; font-size: 3.5rem;" class="highest_review_color">
+      {% comment %} &#9733;&#9733;&#9733;&#9733;&#9734; {% endcomment %}
+    </div>
+  </div>
+  
+  <div style="color: #666; font-size: 1rem;" class="total_reviews">
+   
+  </div>
+
+  <!-- Rating Distribution -->
+  <div>
+    <div id="ratings-container" style="width: 100%;">
+
+  <!-- Template for Progress Bars -->
+  <div>
+    <div style="display: flex; justify-content: space-between;" class="five_star">
+      <span>5 Stars</span>
+      <div class="progress_bar">
+      <progress style="background: #f0f0f0; border-radius: 12px; height: 12px; position: relative;" id="progress-bar-1" value="0" max="5"></progress>
+
+    </div>
+      <span id="five-stars-count" style="color: #000; font-weight: bold;"></span>
+    </div>
+
+  </div>
+
+  <div>
+    <div style="display: flex; justify-content: space-between;"  class="four_star">
+      <span>4 Stars</span>
+      <div class="progress_bar">
+      <progress style="background: #f0f0f0; border-radius: 12px; height: 12px; position: relative;" id="progress-bar-1" value="0" max="5"></progress>
+
+    </div>
+      <span id="four_star-count" style="color: #000; font-weight: bold;"></span>
+
+    </div>
+  </div>
+
+  <div>
+    <div style="display: flex; justify-content: space-between;"  class="three_star">
+      <span>3 Stars</span>
+      <div class="progress_bar">
+      <progress style="background: #f0f0f0; border-radius: 12px; height: 12px; position: relative;" id="progress-bar-1" value="0" max="5"></progress>
+
+    </div>
+      <span id="three_star-count" style="color: #000; font-weight: bold;"></span>
+    
+    </div>
+  </div>  
+  
+  <div>
+    <div style="display: flex; justify-content: space-between;"  class="two_star">
+      <span>2 Stars</span>
+      <div class="progress_bar">
+      <progress style="background: #f0f0f0; border-radius: 12px; height: 12px; position: relative;" id="progress-bar-1" value="0" max="5"></progress>
+
+    </div>
+      <span id="two_star-count" style="color: #000; font-weight: bold;"></span>
+    
+    </div>
+   </div>
+    <div>
+      <div style="display: flex; justify-content: space-between;"  class="single_star">
+        <span>1 Stars</span>
+        <div class="progress_bar">
+          <progress style="background: #f0f0f0; border-radius: 12px; height: 12px; position: relative;" id="progress-bar-1" value="0" max="5"></progress>
+
+        </div>
+        <span id="single_star-count" style="color: #000; font-weight: bold;"></span>
+      
+      </div>
+      
+  </div>    
+
+    <!-- Repeat for other star ratings (4 Stars, 3 Stars, etc.) -->
+    <!-- Similar structure as the 5 Stars block -->
+  </div>
+  </div>
+  <div class="review_main">  <button 
+  style="margin-top: 20px; background: #333; color: #fff; padding: 12px 20px; border: none; cursor: pointer; transition: background 0.3s;"
+  onclick="showReviewForm()">
+  Add A Review
+  </button></div>
+  <!-- Add Review Button -->
+ 
+</div>
+</div>
+
+<section class="customerreview_data listData">
+  <div class="cutomers_All_reviews">
+    
+  </div>
+
+</section>
+<section class="popup">
+  <div class="popup__content">
+    <div class="close">
+      <span></span>
+      <span></span>
+    </div>
+     
+
+<!-- Review Form -->
+<div id="review-form" style="margin-top: 20px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+ <h3>Leave A  Review</h3>
+ <div id="reviews-container_pro_imgr">
+ <div class="pro_img" style="display:none;"> {{ product.featured_image | img_url: 'large' }}</div>
+  <div class="bucket_img"><img src="{{ product.featured_image | img_url: 'large' }}"></div> 
+ <h4>{{product.title}}</h4>
+  </div>
+  
+<form id="reviewForm" enctype="multipart/form-data">
+<h4 class="bucket_reveiew_title">You Rating </h4>
+  <!-- Dynamic Rating Inputs -->
+  <div id="dynamic-rating" style="display: flex; justify-content: center; margin-bottom: 15px;">
+    <span class="dynamic-star" data-value="1"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></span>
+    <span class="dynamic-star" data-value="2"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></span>
+    <span class="dynamic-star" data-value="3"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></span>
+    <span class="dynamic-star" data-value="4"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></span>
+    <span class="dynamic-star" data-value="5"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></span>
+  </div>
+
+  <input type="hidden" name="rating" id="rating-input" />
+  <input type="hidden" name="productId" value="{{ product.id }}" />
+  <input type="hidden" name="shopDomain" value="{{ shop.domain }}" />
+  <input type="hidden" name="productName" value="{{ product.title }}" />
+
+  <label>Your Review</label>
+  <textarea
+    name="comment"
+    placeholder=""
+    style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;"
+    required
+  ></textarea>
+
+  <div class="upload-box" id="fileDropArea">
+    <span class="upload-icon">+</span>
+    <p>Add Photo</p>
+</div>
+<input type="file" id="reviewFiles" name="reviewFiles" accept=".jpg, .jpeg, .png" multiple style="display: none;">
+<div id="fileError" class="error-message"></div>
+<ul id="fileList" class="file-list"></ul>
+<label>Your Name</label>
+  <input
+    type="text"
+    name="userName"
+    placeholder="John Doe"
+    style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;"
+    required
+  />
+  <label>Your Best Email</label>
+  <input
+    type="email"
+    name="userEmail"
+    placeholder="example@example.coml"
+    style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;"
+    required
+  />
+  {% comment %} <input
+    type="file"
+    name="reviewFiles"
+    id="reviewFiles"
+    style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;"
+    multiple
+  /> {% endcomment %}
+
+  <button
+    type="button"
+    id="submitReview"
+    style="padding: 10px 20px; background: #000; border-radius: 25px; border: none; font-size: 1rem; color: #fff; cursor: pointer; transition: background 0.3s;"
+  >
+  Submit Review!
+  </button>
+</form>
+
+<div id="responseMessage" style="margin-top: 20px; color: green;"></div>
+
+
+</div>
+
+  </div>
+</section>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+const appUrl=shopifyConfig.AppUrl;
+console.log("appUrl is "+appUrl)
+    const fileDropArea = document.getElementById('fileDropArea');
+    const fileUploadInput = document.getElementById('reviewFiles');
+    const fileError = document.getElementById('fileError');
+    const fileList = document.getElementById('fileList');
+
+    // Handle click to trigger file input
+    fileDropArea.addEventListener('click', () => {
+        fileUploadInput.click();
+    });
+
+    // Handle drag-and-drop functionality
+    fileDropArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        fileDropArea.classList.add('dragging');
+    });
+
+    fileDropArea.addEventListener('dragleave', () => {
+        fileDropArea.classList.remove('dragging');
+    });
+
+    fileDropArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        fileDropArea.classList.remove('dragging');
+
+        // Get dropped files
+        const files = event.dataTransfer.files;
+        validateAndDisplayFiles(files);
+    });
+
+    // Handle file selection via input
+    fileUploadInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        validateAndDisplayFiles(files);
+    });
+
+    // Function to validate and display files
+    function validateAndDisplayFiles(files) {
+        fileError.textContent = ''; // Clear previous errors
+
+        if (files.length > 0) {
+            const validExtensions = ['.jpg', '.jpeg', '.png'];
+            let validFiles = [];
+
+            Array.from(files).forEach((file) => {
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                if (validExtensions.includes(`.${fileExtension}`)) {
+                    validFiles.push(file);
+                } else {
+                    fileError.textContent = 'Only JPG and PNG files are allowed.';
+                }
+            });
+
+            // Display valid files with options
+            if (validFiles.length > 0) {
+                displayFiles(validFiles);
+            }
+        } else {
+            fileError.textContent = 'No files selected or dropped.';
+        }
+    }
+
+    // Function to display files with upload and delete options
+    function displayFiles(files) {
+        files.forEach((file) => {
+            const listItem = document.createElement('li');
+            listItem.className = 'file-item';
+
+            const fileName = document.createElement('span');
+            fileName.textContent = file.name;
+
+            const uploadButton = document.createElement('button');
+            uploadButton.textContent = 'Upload';
+            uploadButton.className = 'upload-button';
+            uploadButton.addEventListener('click', () => {
+                console.log(`Uploading ${file.name}`);
+                // Add your upload logic here
+            });
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.className = 'delete-button';
+            deleteButton.addEventListener('click', () => {
+                listItem.remove();
+                console.log(`${file.name} removed`);
+            });
+
+            listItem.appendChild(fileName);
+            listItem.appendChild(uploadButton);
+            listItem.appendChild(deleteButton);
+            fileList.appendChild(listItem);
+        });
+    }
+});
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // Get the product ID from the element
+    const productId = document.querySelector('.bucket_review').getAttribute('product_id');
+    const reviewsContainer = document.getElementById("reviews-container_pro_img");
+// const featuredImage = reviewsContainer.dataset.featuredImage; // Get the featured image from the data attribute
+const proImgElement = document.querySelector('.pro_img');
+const proImgHTML = proImgElement ? proImgElement.innerHTML : '';
+
+    function showReviewForm() {
+  const popup = document.getElementById("reviewPopup");
+  popup.style.display = ""; // Removes the inline display property
+}
+  // Fetch reviews and average rating
+fetch(`https://decade-terrorism-white-should.trycloudflare.com/app/api/get/singleproduct-reviews?productId=${productId}`)
+    .then(response => response.json())
+    .then(data => {
+      
+        // Destructure reviews and average rating from the response
+        const { reviews, averageRating,starCounts } = data;
+        // Log data to the console for debugging
+      
+        const totalcountis = starCounts.fiveStars+starCounts.fourStars+starCounts.threeStars+starCounts.twoStars+starCounts.oneStar;
+     
+        const reviewcount = document.querySelector('.total_reviews');
+        if (totalcountis === "") {
+            reviewcount.innerHTML = "No Reviews";
+        } else {
+            reviewcount.innerHTML = totalcountis + " Reviews";
+        }
+
+        // Select the progress element
+        console.log("jvdonec")
+        const progressBar5 = document.querySelector('.five_star .progress_bar progress#progress-bar-1');
+        progressBar5.value = starCounts.fiveStars;
+        const progressBar5count= document.querySelector('.five_star span#five-stars-count');
+        if( starCounts.fiveStars == "")
+        {
+          progressBar5count.innerHTML= 0;
+        }else{
+          progressBar5count.innerHTML= starCounts.fiveStars;
+
+        }
+        const progressBar4 = document.querySelector('.four_star .progress_bar progress#progress-bar-1');
+         progressBar4.value = starCounts.fourStars;
+         const progressBar4count= document.querySelector('.four_star span#four_star-count');
+        progressBar4count.innerHTML= starCounts.fourStars;
+         const progressBar3 = document.querySelector('.three_star .progress_bar progress#progress-bar-1');
+        progressBar3.value = starCounts.threeStars;
+        const progressBar3count= document.querySelector('.three_star span#three_star-count');
+        progressBar3count.innerHTML= starCounts.threeStars;
+        const progressBar2 = document.querySelector('.two_star .progress_bar progress#progress-bar-1');
+         progressBar2.value = starCounts.twoStars;
+         const progressBar2count= document.querySelector('.two_star span#two_star-count');
+        progressBar2count.innerHTML= starCounts.twoStars;
+         const progressBar1 = document.querySelector('.single_star .progress_bar progress#progress-bar-1');
+         progressBar1.value = starCounts.oneStar;
+         const progressBar1count= document.querySelector('.single_star span#single_star-count');
+         progressBar1count.innerHTML= starCounts.oneStar;
+        const average_rating = document.querySelector('.highest_reviews');
+    // Format the value: Remove '.00' but retain significant decimals
+        average_rating.innerHTML = parseFloat(averageRating) % 1 === 0
+          ? parseInt(averageRating, 10)
+          : parseFloat(averageRating).toFixed(1);
+          // for stars fills
+          const starsContainer = document.querySelector('.highest_review_color');
+          // Calculate the number of filled and empty stars
+          const filledStars = Math.min(Math.floor(averageRating), 5); // Limit to a maximum of 5
+          console.log("filledStars" +filledStars)
+          const emptyStars = 5 - filledStars;
+          let starsHTML = '';
+          for (let i = 0; i < filledStars; i++) {
+    starsHTML += `
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="22" viewBox="0 0 21 22" fill="none">
+            <path d="M9.10663 1.74627L9.10609 1.74736L7.28085 5.39784C7.10382 5.75794 6.80301 6.07364 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619778 8.22253C0.517986 8.53922 0.606781 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62017 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74836 11.6629 1.74826 11.6629 1.74817C11.207 0.841416 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" fill="#E8E8E8" stroke="#E8E8E8" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+            <g clip-path="url(#clip0_2499_304)">
+                <path d="M8.58406 1.48635L6.7579 5.13868C6.50887 5.6471 5.84481 6.13476 5.28451 6.22815L1.9746 6.77807C-0.142092 7.13085 -0.640135 8.66649 0.885124 10.1814L3.45835 12.7546C3.89414 13.1904 4.13279 14.0308 3.9979 14.6326L3.26121 17.8181C2.68016 20.3394 4.01865 21.3147 6.24948 19.997L9.35188 18.1605C9.91218 17.8284 10.8356 17.8284 11.4063 18.1605L14.5087 19.997C16.7292 21.3147 18.078 20.329 17.497 17.8181L16.7603 14.6326C16.6254 14.0308 16.864 13.1904 17.2998 12.7546L19.8731 10.1814C21.3879 8.66649 20.9003 7.13085 18.7836 6.77807L15.4737 6.22815C14.9237 6.13476 14.2597 5.6471 14.0107 5.13868L12.1845 1.48635C11.1884 -0.49545 9.56977 -0.49545 8.58406 1.48635Z" fill="#FABF35"/>
+            </g>
+            <defs>
+                <clipPath id="clip0_2499_304">
+                    <rect width="21" height="22" fill="white"/>
+                </clipPath>
+            </defs>
+        </svg>
+    `;
+}
+
+          for (let i = 0; i < emptyStars; i++) {
+              starsHTML += `<svg xmlns='http://www.w3.org/2000/svg' width='21' height='21' viewBox='0 0 21 21' fill='none'>
+    <path d='M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z' stroke='#FABF35' stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`; // Empty star
+          }
+          starsContainer.innerHTML = starsHTML;
+                  // Select the reviews container
+        const reviewsContainer = document.querySelector('.cutomers_All_reviews');
+        reviewsContainer.innerHTML = '';
+    
+
+function generateStarRating(rating) {
+    let starsHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        if (rating >= i) {
+            // Full star
+            starsHTML += '<span class="star full">&#9733;</span>';
+        } else if (rating > i - 1) {
+            // Half star
+            starsHTML += '<span class="star half">&#9733;</span>';
+        } else {
+            // Empty star
+            starsHTML += '<span class="star empty">&#9733;</span>';
+        }
+    }
+    return starsHTML;
+}
+
+reviews.forEach((review, index) => {
+    const comment = review.comment || '';
+    const words = comment.split(' ');
+
+    // Check if the comment has more than 40 words
+    let truncatedComment = comment;
+    let isLongComment = false;
+    if (words.length > 40) {
+        truncatedComment = words.slice(0, 40).join(' ') + '...';
+        isLongComment = true;
+    }
+
+    reviewsContainer.innerHTML += `
+        <div class="reviews_bucket">
+            <div class="image_bucket"><div></div>
+                <img src='${proImgHTML}' alt="Review Image"/>
+            </div>
+            <div class="main_review_bucket">
+                <div class="review_rating">
+                    <strong>Rating: ${Number(review.rating)}</strong>
+                    <div class="stars">${generateStarRating(Number(review.rating) || 0)}</div>
+                </div>
+                <div class="review_ratingname"><h3>${review.userName || ''}</h3></div>
+                <div class="bucket_verfied">
+                    <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="19" viewBox="0 0 18 19" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M9.20103 18.0232C13.9978 18.0232 17.8864 14.1346 17.8864 9.33775C17.8864 4.54093 13.9978 0.652344 9.20103 0.652344C4.40421 0.652344 0.515625 4.54093 0.515625 9.33775C0.515625 14.1346 4.40421 18.0232 9.20103 18.0232ZM13.388 7.3739C13.6525 7.01021 13.5721 6.50096 13.2084 6.23646C12.8447 5.97196 12.3355 6.05237 12.071 6.41606L8.28873 11.6166L6.24835 9.57624C5.93036 9.25825 5.41481 9.25825 5.09682 9.57624C4.77883 9.89423 4.77883 10.4098 5.09682 10.7278L7.81101 13.442C7.97939 13.6104 8.21306 13.6966 8.45047 13.678C8.68787 13.6593 8.90523 13.5377 9.04529 13.3451L13.388 7.3739Z" fill="#0F172A"/>
+                        </svg>
+                    </span>
+                    <h3>Verified Purchase</h3>
+                </div>
+              
+                <div class="review_comment">
+                    <p>
+                        <span id="truncated-comment-${index}">${truncatedComment}</span>
+                        ${isLongComment ? `<span id="full-comment-${index}" class="hidden">${comment}</span>` : ''}
+                        ${isLongComment ? `<button class="toggle-comment" data-index="${index}">Show More</button>` : ''}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+// Add event listeners for "Show More" and "Show Less"
+reviewsContainer.addEventListener('click', (event) => {
+  console.log("hjbdshj")
+    if (event.target.classList.contains('toggle-comment')) {
+        const index = event.target.getAttribute('data-index');
+        const truncatedSpan = document.getElementById(`truncated-comment-${index}`);
+        const fullSpan = document.getElementById(`full-comment-${index}`);
+        const button = event.target;
+
+        // Toggle visibility
+        if (fullSpan.classList.contains('hidden')) {
+            truncatedSpan.classList.add('hidden');
+            fullSpan.classList.remove('hidden');
+            button.textContent = 'Show Less';
+        } else {
+            fullSpan.classList.add('hidden');
+            truncatedSpan.classList.remove('hidden');
+            button.textContent = 'Show More';
+        }
+    }
+});
+
+
+// Add event listeners for "See More" and "Read Less"
+reviewsContainer.addEventListener('click', (event) => {
+    if (event.target.classList.contains('toggle-comment')) {
+        const index = event.target.getAttribute('data-index');
+        const commentParagraph = document.getElementById(`comment-${index}`);
+        const fullComment = reviews[index].comment;
+
+        if (commentParagraph.classList.contains('truncated')) {
+            commentParagraph.textContent = fullComment;
+            commentParagraph.classList.remove('truncated');
+            event.target.textContent = 'Read Less';
+        } else {
+            const truncatedComment = fullComment.split(' ').slice(0, 40).join(' ') + '...';
+            commentParagraph.textContent = truncatedComment;
+            commentParagraph.classList.add('truncated');
+            event.target.textContent = 'See More';
+        }
+    }
+});
+
+
+
+    })
+    .catch(error => {
+        console.error('Error fetching reviews:', error);
+    });
+    // Existing functionality to show the review form
+    window.showReviewForm = () => {
+        document.getElementById('review-form').style.display = 'block';
+        const reviewForm = document.getElementById('review-form');
+        const body = document.body;
+        reviewForm.classList.toggle('visible');
+  body.classList.toggle('openpop');
+    };
+    
+
+
+    document.querySelectorAll('div#dynamic-rating span.dynamic-star').forEach((star) => {
+    star.addEventListener('click', function () {
+        const idis = this.getAttribute('data-value');
+     
+
+        // Add the 'clicked' class to the clicked element and remove it from siblings
+        this.classList.add('clicked');
+        const siblings = this.parentElement.querySelectorAll('.dynamic-star');
+        siblings.forEach((sibling) => {
+            if (sibling !== this) {
+                sibling.classList.remove('clicked');
+            }
+        });
+
+        // Set the value of input#rating-input
+        const ratingInput = document.querySelector('input#rating-input');
+        if (ratingInput) {
+            ratingInput.value = idis; // Update the input value with the clicked idis
+        }
+    });
+});
+
+
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const closeButton = document.querySelector('.close');
+  // Handling the star rating click event
+  document.querySelectorAll('div#dynamic-rating span.dynamic-star').forEach((star) => {
+    star.addEventListener('click', function () {
+        const idis = this.getAttribute('data-value');
+      
+
+        // Add the 'clicked' class to the clicked element and remove it from siblings
+        this.classList.add('clicked');
+        const siblings = this.parentElement.querySelectorAll('.dynamic-star');
+        siblings.forEach((sibling) => {
+            if (sibling !== this) {
+                sibling.classList.remove('clicked');
+            }
+        });
+
+        // Set the value of input#rating-input
+        const ratingInput = document.querySelector('input#rating-input');
+        if (ratingInput) {
+            ratingInput.value = idis; // Update the input value with the clicked idis
+        }
+    });
+});
+
+
+  
+  // Show review form function
+  window.showReviewForm = () => {
+    document.getElementById('review-form').style.display = 'block';
+    const reviewForm = document.getElementById('review-form');
+    const body = document.body;
+    reviewForm.classList.toggle('visible');
+    body.classList.toggle('openpop');
+  };
+  // Submit review button click event
+  document.getElementById('submitReview').addEventListener('click', async () => {
+    
+    const form = document.getElementById('reviewForm');
+    const formData = new FormData(form);
+    // Check if rating is provided (if rating-input is empty, rating hasn't been selected)
+    const rating = document.getElementById('rating-input').value;
+    if (!rating) {
+      document.getElementById('responseMessage').textContent = 'Please provide a rating before submitting the review.';
+      return;  // Stop form submission
+    }
+  
+    for (let [key, value] of formData.entries()) {
+      
+    }
+  
+    async function fetchReviews() {
+    const productId = document.querySelector('.bucket_review').getAttribute('product_id');
+
+    try {
+      const response = await fetch(`https://decade-terrorism-white-should.trycloudflare.com/app/api/get/singleproduct-reviews?productId=${productId}`);
+      const data = await response.json();
+
+      if (data.reviews) {
+        updateReviewsUI(data.reviews);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  }
+
+    try {
+      const response = await fetch('https://decade-terrorism-white-should.trycloudflare.com/app/api/post/reviews', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+    
+      if (response.ok) {
+        // document.getElementById('responseMessage').textContent = result.message;
+        document.getElementById('responseMessage').textContent = 'Thanks for your review!';
+        form.reset();
+        fetchReviews();
+      } else {
+        document.getElementById('responseMessage').textContent = `Error: ${result.message}`;
+      }
+    } catch (error) {
+      console.error('Error submitting the form:', error);
+      document.getElementById('responseMessage').textContent = 'An unexpected error occurred.';
+    }
+      // Update reviews section dynamically
+  function updateReviewsUI(reviews) {
+    reviewsContainer.innerHTML = ''; // Clear current reviews
+    reviews.forEach((review) => {
+      const reviewHTML = `
+        <div class="reviews_bucket">
+          <div class="image_bucket">
+            <img src="${review.image || 'default-image.png'}" alt="Review Image">
+          </div>
+          <div class="main_review_bucket">
+            <div class="review_rating">
+              <strong>Rating: ${Number(review.rating)}</strong>
+              <div class="stars">${generateStarRating(review.rating)}</div>
+            </div>
+            <div class="review_ratingname">
+              <h3>${review.userName || 'Anonymous'}</h3>
+            </div>
+            <div class="review_comment">
+              <p>${review.comment || 'No comment provided.'}</p>
+            </div>
+          </div>
+        </div>
+      `;
+      reviewsContainer.insertAdjacentHTML('beforeend', reviewHTML);
+    });
+  }
+    // Generate star rating
+    function generateStarRating(rating) {
+    let starsHTML = '';
+    for (let i = 1; i <= 5; i++) {
+      starsHTML += i <= rating ? '★' : '☆';
+    }
+    return starsHTML;
+  }
+
+  // Close the popup
+  document.querySelector('.close').addEventListener('click', () => {
+    reviewPopup.style.opacity = 0;
+    setTimeout(() => {
+      reviewPopup.style.display = 'none';
+    }, 500);
+  });
+  
+  }
+);
+});
+</script>
+<script>
+document.querySelectorAll('.review_main').forEach(button => {
+  button.addEventListener('click', function() {
+    const popup = document.querySelector('.popup');
+    popup.style.display = 'block'; // Show the popup (fadeIn equivalent)
+    setTimeout(() => {
+      popup.style.opacity = 1; // Smooth fade effect using opacity
+    }, 10); // Small delay to apply the opacity change after displaying
+  });
+});
+// Get the close button
+const closeButton2 = document.querySelector('.close');
+if (closeButton2) {
+  closeButton2.addEventListener('click', function() {
+    const popup = document.querySelector('.popup');
+    popup.style.opacity = 0; // Fade effect by changing opacity
+    setTimeout(() => {
+      popup.style.display = 'none'; // Hide the popup after the fade effect
+    }, 500); // Match the fade duration
+  });
+}
+</script>
+
+ 
+
+{% schema %}
+{
+  "name": "new Star Rating",
+  "target": "section",
+  "enabled_on": {
+      "templates": ["product"]
+    },
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "Product",
+      "autofill": true
+    },
+    {
+      "type": "color",
+      "id": "colour",
+      "label": "Star Colour",
+      "default": "#ffcc00"
+    }
+  ]
+}
+{% endschema %}

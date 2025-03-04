@@ -1,0 +1,189 @@
+
+{% if template == 'product' %}
+<div class="bundle_main">
+
+    <div class="child_bundle">
+        <div class="subheading_bundle">
+            <p> Limited Time Offer</p>
+        </div>
+        <div class="heading_bundle">
+            <h2>Add Product And Save 10%!</h2>
+        </div>
+        {% comment %} <div class="for_mobile" style="display: none;">
+            <div class="bundle_child">
+                <div class="product_block">
+                    <div class="product_mainc" product="{{product.id}}">
+                        <img src="{{ "product.png" | asset_img_url :"600"}}">
+        
+                    </div>
+        
+                    <div class="dropdown">
+                        <input type="checkbox" class="dropdown__switch" id="filter-switch" hidden />
+                        <label for="filter-switch" class="dropdown__options-filter">
+                            <ul class="dropdown__filter" role="listbox" tabindex="-1">
+                                <li class="dropdown__filter-selected" aria-selected="true">
+                                    Default option
+                                </li>
+                                <li>
+                                    <ul class="dropdown__select">
+                                        <li class="dropdown__select-option" role="option">
+                                            Option 1
+                                        </li>
+                                        <li class="dropdown__select-option" role="option">
+                                            Option 2
+                                        </li>
+                                        <li class="dropdown__select-option" role="option">
+                                            Option 3
+                                        </li>
+                                        <li class="dropdown__select-option" role="option">
+                                            Option 4
+                                        </li>
+                                        <li class="dropdown__select-option" role="option">
+                                            Option 5
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </label>
+                    </div>
+                </div>
+              <div class="bundleplus"> +</div>
+             
+                <div class="product_block">
+                    <div class="product_mainc" product="{{product.id}}">
+                        <img src="{{ "product2.png" | asset_img_url :"600"}}">
+                    </div>
+        
+                    <div class="dropdown2">
+                        <input type="checkbox" class="dropdown__switch2" id="filter-switch2" hidden />
+                        <label for="filter-switch2" class="dropdown__options-filter2">
+                            <ul class="dropdown__filter2" role="listbox" tabindex="-1">
+                                <li class="dropdown__filter-selected2" aria-selected="true">
+                                    Default option
+                                </li>
+                                <li>
+                                    <ul class="dropdown__select2">
+                                        <li class="dropdown__select-option2" role="option">
+                                            Option 1
+                                        </li>
+                                        <li class="dropdown__select-option2" role="option">
+                                            Option 2
+                                        </li>
+                                        <li class="dropdown__select-option2" role="option">
+                                            Option 3
+                                        </li>
+                                        <li class="dropdown__select-option2" role="option">
+                                            Option 4
+                                        </li>
+                                        <li class="dropdown__select-option2" role="option">
+                                            Option 5
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div> {% endcomment %}
+        <div class="price_block">
+            <div class="total_csrt">
+                <span>Total</span>
+
+            </div>
+            <div class="bundle_price">
+                <div class="pro_price linethoorgh">
+                    <h3> 124$</h3>
+                </div>
+                <div class="pro_price noneline">
+                    <h3>114$</h3>
+                </div>
+                <div class="save_block" style="background:#000; color:#fff;">
+                    Save 10%
+                </div>
+            </div>
+            <div class="bucket_add_cart_btn">
+                <a> 👉 Add To Cart</a>
+            </div>
+            <p>Lifetime Warranty & Free Returns </p>
+        </div>
+    </div>
+    <div class="bundle_child">
+        <div class="product_block">
+            <div class="product_mainc product_intial" product="{{product.id}}">
+                <img src="{{ "product.png" | asset_img_url :"600"}}">
+
+            </div>
+
+            <div class="dropdown">
+                <input type="checkbox" class="dropdown__switch" id="filter-switch" hidden />
+                <label for="filter-switch" class="dropdown__options-filter">
+                    <ul class="dropdown__filter" role="listbox" tabindex="-1">
+                        <li class="dropdown__filter-selected" aria-selected="true">
+                            Default option
+                        </li>
+                        <li>
+                            <ul class="dropdown__select">
+                                <li class="dropdown__select-option" role="option">
+                                    Option 1
+                                </li>
+                                <li class="dropdown__select-option" role="option">
+                                    Option 2
+                                </li>
+                            
+                            </ul>
+                        </li>
+                    </ul>
+                </label>
+            </div>
+        </div>
+      <div class="bundleplus"> +</div>
+        
+        <div class="product_block">
+            <div class="product_mainc product_final" product="{{product.id}}">
+               
+                        <img class="fhb" src="{{ product.featured_image | image_url: 'small' }}" alt="{{ product.title }}">
+            
+            </div>
+
+            <div class="dropdown2" >
+                <input type="checkbox" class="dropdown__switch2" id="filter-switch2" hidden />
+                <label for="filter-switch2" class="dropdown__options-filter2">
+                    <ul class="dropdown__filter2" role="listbox" tabindex="-1">
+                        <li class="dropdown__filter-selected2" aria-selected="true">
+                            Default option
+                        </li>
+                        <li>
+                            <ul class="dropdown__select2">
+                                <li class="dropdown__select-option2" role="option">
+                                    Option 1
+                                </li>
+                                <li class="dropdown__select-option2" role="option">
+                                    Option 2
+                                </li>
+                                
+                            </ul>
+                        </li>
+                    </ul>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{%endif%}
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+<script>
+
+</script>
+{% schema %}
+{
+"name": "Bundle",
+"target": "section",
+ 
+"enabled_on": {
+      "templates": ["product"]
+    },
+"settings": []
+}
+{% endschema %}

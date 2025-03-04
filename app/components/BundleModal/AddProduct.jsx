@@ -1,15 +1,20 @@
 
-import React from "react";
+import React, { useState } from "react";
 import styles from '../../styles/main.module.css'
 import searchImg from '../../routes/assets/searchImg@.svg'
-import Search from "../Search/Search";
+// import Search from "../Search/Search";
 
 
 
 const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, handleSave}) => {
 
+  const [searchQuery, setSearchQuery] = useState("");
 
-  console.log(selectProduct,'selectproduct')
+
+  const filteredProducts = products?.filter((item) => {
+    console.log(item);
+    return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
 
   const handleParentCheckBox = (e, product, variants) => {
@@ -60,6 +65,10 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
   //   });
   // };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
 
   return (
     <div className={`${styles.modal_overlay} ${styles.productModal}`}>
@@ -68,11 +77,16 @@ const AddProduct = ({ onClose, products , selectProduct, setSelectedPrducts, han
         <div className={styles.search_select}>
           <div className={styles.search_images}>
             <img src={searchImg} width={20} height={20} />
-            <Search />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </div>
         </div>
         <ul className={styles.addProductlist}>
-          {products?.map((item, index) => {
+          {filteredProducts?.map((item, index) => {
             const productId = (item.node.id);
             const variantIds = item.node.variants.edges.map((variant) =>
               (variant.node.id)

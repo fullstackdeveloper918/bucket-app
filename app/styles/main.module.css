@@ -1276,7 +1276,8 @@
 }
 
 .live_preview .Preview_bundle img {
-  width: 100%;
+  /* width: 100%; */
+  border-radius: 15px;
 }
 
 .live_preview .AddProduct {
@@ -2737,6 +2738,7 @@ input:checked+.slider:before {
   max-width: 100%;
   width: auto;
   height: 100%;
+  border-radius: 30px;
 }
 
 .playlistView .audio_player {
@@ -3326,8 +3328,207 @@ a.prev.dot {
   z-index: 99999;
   color: #000;
 }
+/* visitorapp */
+.VisitorsReplay {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  margin: 50px auto 0px;
+  max-width: 1134px;
+  box-shadow: 6px 6px 54px 0px #0000000D;
+  border-radius: 36px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #fff;
+}
+.recodingconntent h2 {
+  font-family: Poppins;
+  font-weight: 700;
+  font-size: 36.61px;
+  line-height: 54.91px;
+  letter-spacing: -0.13px;
+  margin: 0px;
+}
+.recodingconntent p {
+  font-family: Poppins;
+  font-weight: 400;
+  font-size: 20.16px;
+  line-height: 30.24px;
+  letter-spacing: -1%;
+  color: #ACACAC;
+}
+.VisitorsReplay img {
+  max-width: 290px;
+}
+/* visitorapp end */
+/* visitdetail */
+.popup {
+  background: white;
+  padding: 7rem 2rem 4rem;
+  width: 100%;
+  max-width: 50rem;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  text-align: center;
+  overflow-y: auto;
+}
+.close-btn {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  border: none;
+  background: none;
+  font-size: 50px;
+  cursor: pointer;
+  color: #0F172A;
+}
+.time-info {
+  display: flex;
+  padding: 10px 25px;
+  border-radius: 35px;
+  color: #000;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 14px;
+  letter-spacing: 0px;
+  border: 0.9px solid #000000;
+  width: 100%;
+  max-width: fit-content;
+  margin: 0px auto 20px;
+}
+.UnlockReward h2 {
+  font-weight: 700;
+  font-size: 40px;
+  letter-spacing: -0.28px;
+  line-height: 50px;
+  margin: 10px 0;
+}
+.description {
+  color: #ACACAC;
+  font-size: 22px;
+  line-height: 1.5;
+  text-align: center;
+  margin: 10px auto;
+  max-width: 40rem;
+}
+.steps {
+  text-align: left;
+  width: 100%;
+  max-width: 30rem;
+  margin: 30px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+.step {
+  display: flex;
+  /* margin-bottom: 15px; */
+  gap: 30px;
+}
+.step-number {
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(85.59deg, rgba(0, 198, 251, 0.1) 0.01%, rgba(0, 91, 234, 0.1) 102.97%);
+  padding: 20px;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50px;
+}
+span.nuberstep {
+  background: linear-gradient(262.41deg, #005BEA -6.13%, #00C6FB 147.64%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 30px;
+}
+.step-info h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 52.1px;
+  letter-spacing: -0.12px;
+  color: #202224;
+}
+.step-info p {
+  margin: 5px 0 0;
+  color: #ACACAC;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 34px;
+}
+.linkContainer {
+  display: flex;
+  max-width: 33rem;
+  margin: 50px auto 0px;
+  position: relative;
+}
+.linkContainer input {
+  flex: 1;
+  border: 1px solid #EDEDED;
+  background: #EDEDED;
+  border-radius: 15px;
+  min-height: 30px;
+  padding: 10px 20px;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 42.82px;
+  color: #8C8C8C;
+}
+.copy-btn {
+  color: white;
+  border: none;
+  padding: 8px 45px;
+  border-radius: 15px;
+  cursor: pointer;
+  margin-left: 5px;
+  background: linear-gradient(82.44deg, #00C6FB 0.77%, #005BEA 106.19%);
+  font-size: 22.51px;
+  line-height: 29.63px;
+  letter-spacing: 0px;
+  position: absolute;
+  right: 0px;
+  top: 0;
+  bottom: 0;
+}
+.linkContainer input:focus-visible, .linkContainer input:focus {
+  outline: 0;
+  offset: 0px;
+  box-shadow: none;
+  outline-offset: 0px;
+}
 
-
+.closeBtn{
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  border: none;
+  background: none;
+  font-size: 50px;
+  cursor: pointer;
+  color: #0F172A;
+}
+.timeInfo{
+  display: flex;
+  padding: 10px 25px;
+  border-radius: 35px;
+  color: #000;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 14px;
+  letter-spacing: 0px;
+  border: 0.9px solid #000000;
+  width: 100%;
+  max-width: fit-content;
+  margin: 0px auto 20px;
+}
+/* visitdetail end*/
 @media (max-width: 1440px) {
 
   /* bundle_wrapper*/

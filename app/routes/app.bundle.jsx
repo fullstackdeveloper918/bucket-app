@@ -21,6 +21,7 @@ import {
   useActionData,
   useLoaderData,
   useNavigation,
+  useSubmit,
 } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
@@ -36,8 +37,9 @@ export async function loader({ request }) {
     const { shop } = session;
 
     // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse,salesResponse] = await Promise.all([
-      admin.graphql(`
+    const [graphqlResponse, totalBundleResponse, salesResponse] =
+      await Promise.all([
+        admin.graphql(`
         {
           products(first: 50) {
             edges {
@@ -72,16 +74,16 @@ export async function loader({ request }) {
           }
         }
       `),
-      getAllBundle(shop),
-      fetchSalesData(shop),
-    ]);
+        getAllBundle(shop),
+        fetchSalesData(shop),
+      ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
     const sales = await salesResponse.json();
-    return json({ products, totalBundle,sales });
+    return json({ products, totalBundle, sales });
   } catch (error) {
     console.error(error);
     return json({
@@ -133,7 +135,7 @@ export async function action({ request }) {
       text: formData.get("ctaText"),
       size: formData.get("ctaSize"),
       color: formData.get("ctaColor"),
-      cart: formData.get("cart")
+      cart: formData.get("cart"),
     };
 
     const text_below_cta = {
@@ -206,13 +208,81 @@ export async function action({ request }) {
         });
       }
     } catch (error) {
-      
       return json({
         message: "Failed to process the request",
         error: error.message,
         status: 500,
       });
     }
+  } else if (intent === "deactivate") {
+    console.log(formData.get("checkbox"), "see them");
+    let data = JSON.stringify({
+      query:
+        "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
+      variables: {
+        id: "gid://shopify/DiscountAutomaticNode/1161176350799",
+      },
+    });
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `https://${shop}/admin/api/2025-01/graphql.json`,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": session?.accessToken,
+        Cookie:
+          "_master_udr=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaEpJaWxrTlRaalptVTJNUzFqTURVd0xUUTVPR1F0WVRGaU9DMHlOelpoTWpOa016azRPVGNHT2daRlJnPT0iLCJleHAiOiIyMDI3LTAyLTEyVDA1OjM3OjU5Ljc0NVoiLCJwdXIiOiJjb29raWUuX21hc3Rlcl91ZHIifX0%3D--6a2ae39f942f1b36d2674a0bdaf23f7b38b88770; _secure_admin_session_id=efdc1b1f18ec43e79a4d28387c8a81cb; _secure_admin_session_id_csrf=efdc1b1f18ec43e79a4d28387c8a81cb",
+      },
+      data: data,
+    };
+    axios
+      .request(config)
+      .then((response) => {
+        console.log(JSON.stringify(response.data), "casefour");
+      })
+      .catch((error) => {
+        console.log(error, "errorfour");
+      });
+
+    return undefined;
+
+    // try {
+    //     const updatedDiscount = await db.bundle.update({
+    //       where: { id: parseInt(id) },
+    //       data: {
+    //         name,
+    //         displayLocation,
+    //         method,
+    //         chooseAmount: parseFloat(chooseAmount),
+    //         products,
+    //         position,
+    //         section,
+    //         title_section,
+    //         title,
+    //         product,
+    //         bundle_cost,
+    //         call_to_action_button,
+    //         text_below_cta,
+    //         backgroud,
+    //         domainName: shop,
+    //       },
+    //     });
+
+    //     return json({
+    //       message: "Bundle Updated Successfully",
+    //       data: updatedDiscount,
+    //       status: 200,
+    //       step: 4,
+    //       activeTab: "Return",
+    //     });
+
+    // } catch (error) {
+    //   return json({
+    //     message: "Failed to process the request",
+    //     error: error.message,
+    //     status: 500,
+    //   });
+    // }
   } else if (request.method === "DELETE") {
     try {
       const domainName = shop;
@@ -301,7 +371,6 @@ export async function action({ request }) {
   }
 }
 
-
 const svgs = [
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -349,7 +418,8 @@ const svgs = [
 ];
 
 export default function PlansPage() {
-  const { products, totalBundle,sales } = useLoaderData();
+  const { products, totalBundle, sales } = useLoaderData();
+  const submit = useSubmit();
 
   const actionResponse = useActionData();
   const navigation = useNavigation();
@@ -357,17 +427,19 @@ export default function PlansPage() {
   const [position, setPosition] = useState("Below Section");
   const [activeApp, setActiveApp] = useState("Active");
   const [active, setActive] = useState(false);
+  const [checkboxId, setCheckBoxId] = useState("");
   const [showPosition, setShowPosition] = useState(false);
   const [showComponent, setShowComponent] = useState(1);
+  const [checked, setChecked] = useState(true);
   const [showPage, setShowPage] = useState(null);
   const [productSections, setProductSections] = useState([{ id: 1 }]);
   const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
-  const [cart, setCart] = useState("Cart"); 
+  const [cart, setCart] = useState("Cart");
   const [isMonth, setIsMonth] = useState(false);
   const [month, setMonth] = useState("This Month");
   const [section, setSection] = useState("Buy Buttons");
-  const [showCart, setShowCart] = useState(false)
+  const [showCart, setShowCart] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [isProduct, setIsProduct] = useState(false);
   const [id, setId] = useState(null);
@@ -387,6 +459,14 @@ export default function PlansPage() {
     }));
   };
 
+  const handleOnChange = (e, card) => {
+    console.log(card, "card check hee");
+    setChecked(!checked);
+    e.preventDefault();
+    setCheckBoxId();
+    submit(e.target.form);
+  };
+
   const [cards, setCards] = useState([
     { id: 1, title: "Example Bundle 1", reviews: 280 },
   ]);
@@ -398,7 +478,7 @@ export default function PlansPage() {
   });
 
   const [title, seTitle] = useState({
-    titleText: "Limited Time Offer",
+    titleText: "Add Bundle And Save 10%!",
     titleSize: "5",
     titleColor: "#000000",
   });
@@ -416,7 +496,7 @@ export default function PlansPage() {
   });
 
   const [callAction, setCallAction] = useState({
-    ctaText: "Add to Cart",
+    ctaText: "👉 Add To Cart",
     ctaSize: "5",
     ctaColor: "#000000",
   });
@@ -582,7 +662,6 @@ export default function PlansPage() {
           },
         });
       } else if (values.amount == "") {
-        
         notify.error("Please enter percentage", {
           position: "top-center",
           style: {
@@ -610,8 +689,6 @@ export default function PlansPage() {
     }
   };
 
- 
-
   useEffect(() => {
     if (actionResponse?.status === 200) {
       if (actionResponse?.step === 4) {
@@ -631,6 +708,7 @@ export default function PlansPage() {
         discount: "Percentage",
         amount: "",
       });
+      setChecked(true);
       setSelectedPrducts([]);
       setPosition("Below Section");
       setSection("Buy Buttons");
@@ -660,7 +738,7 @@ export default function PlansPage() {
         ctaSize: 5,
         ctaColor: "#000000",
       });
-      setCart("Cart")
+      setCart("Cart");
       setTextBelow({
         tbText: "Lifetime warranty & Free Returns",
         tbSize: 5,
@@ -682,67 +760,67 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
-
   useEffect(() => {
-      if (showEdit) {
-         setId(details.id);
-        setValues((prev) => ({
-          ...prev,
-          bundle_name: details.name,
-          displayBundle: details.displayLocation,
-          amount: details.chooseAmount,
-          discount: details.method,
-        }));
-        setSelectedPrducts(JSON.parse(details.products));
-        setPosition(details.position);
-        setSection(details.section);
-        seTitleSection((prev) => ({
-          ...prev,
-          titleSectionText: details.title_section.text,
-          titleSectionSize: details.title_section.size,
-          titleSectionColor: details.title_section.color,
-        }));
-        seTitle((prev) => ({
-          ...prev,
-          titleText: details.title.text,
-          titleSize: details.title.size,
-          titleColor: details.title.color,
-        }));
-        setProductTitle((prev) =>  ({
-          ...prev,
-          productColor: details.product.color,
-          productSize: details.product.size
-        }))
-        setBundleCost((prev => ({
-          ...prev,
-          bundleCostSize: details.bundle_cost.size,
-          bundleCostColor: details.bundle_cost.color,
-          bundleCostComparedPrice: details.bundle_cost.comparedPrice === "on" ? true : false,
-          bundleCostSave: details.bundle_cost.save === "on" ? true :  false,
-        })))
-  
-        setCallAction((prev) => ({
-          ...prev,
-          ctaText: details.call_to_action_button.text,
-          ctaSize: details.call_to_action_button.size,
-          ctaColor: details.call_to_action_button.color,
-        }));
-        setCart(details.call_to_action_button.cart)
-        setTextBelow((prev) => ({
-          ...prev,
-          tbText: details.text_below_cta.text,
-          tbSize: details.text_below_cta.size,
-          tbColor: details.text_below_cta.color,
-        }));
-        setBackGround((prev) => ({
-          ...prev,
-          backgroundColor: details.backgroud.color,
-          backgroundShadow: details.backgroud.shadow === 'on' ? true: false
-        }))
-      }
-    }, [showEdit]);
+    if (showEdit) {
+      setId(details.id);
+      setValues((prev) => ({
+        ...prev,
+        bundle_name: details.name,
+        displayBundle: details.displayLocation,
+        amount: details.chooseAmount,
+        discount: details.method,
+      }));
+      setChecked(details.isActive === 1 ? true : false);
+      setSelectedPrducts(JSON.parse(details.products));
+      setPosition(details.position);
+      setSection(details.section);
+      seTitleSection((prev) => ({
+        ...prev,
+        titleSectionText: details.title_section.text,
+        titleSectionSize: details.title_section.size,
+        titleSectionColor: details.title_section.color,
+      }));
+      seTitle((prev) => ({
+        ...prev,
+        titleText: details.title.text,
+        titleSize: details.title.size,
+        titleColor: details.title.color,
+      }));
+      setProductTitle((prev) => ({
+        ...prev,
+        productColor: details.product.color,
+        productSize: details.product.size,
+      }));
+      setBundleCost((prev) => ({
+        ...prev,
+        bundleCostSize: details.bundle_cost.size,
+        bundleCostColor: details.bundle_cost.color,
+        bundleCostComparedPrice:
+          details.bundle_cost.comparedPrice === "on" ? true : false,
+        bundleCostSave: details.bundle_cost.save === "on" ? true : false,
+      }));
 
- 
+      setCallAction((prev) => ({
+        ...prev,
+        ctaText: details.call_to_action_button.text,
+        ctaSize: details.call_to_action_button.size,
+        ctaColor: details.call_to_action_button.color,
+      }));
+      setCart(details.call_to_action_button.cart);
+      setTextBelow((prev) => ({
+        ...prev,
+        tbText: details.text_below_cta.text,
+        tbSize: details.text_below_cta.size,
+        tbColor: details.text_below_cta.color,
+      }));
+      setBackGround((prev) => ({
+        ...prev,
+        backgroundColor: details.backgroud.color,
+        backgroundShadow: details.backgroud.shadow === "on" ? true : false,
+      }));
+    }
+  }, [showEdit]);
+
   useEffect(() => {
     if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
@@ -766,27 +844,34 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
-
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
-  
+
     const currentDate = new Date();
-   
+
     return totalBundle.filter((card) => {
-      const bundleDate = new Date(card.createdAt); 
-  
+      const bundleDate = new Date(card.createdAt);
+
       switch (month) {
         case "Today":
           return bundleDate.toDateString() === currentDate.toDateString();
         case "Yesterday":
           return (
             bundleDate.toDateString() ===
-            new Date(currentDate.setDate(currentDate.getDate() - 1)).toDateString()
+            new Date(
+              currentDate.setDate(currentDate.getDate() - 1),
+            ).toDateString()
           );
         case "Last 3 Days":
-          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 3));
+          return (
+            bundleDate >=
+            new Date(currentDate.setDate(currentDate.getDate() - 3))
+          );
         case "Last 7 Days":
-          return bundleDate >= new Date(currentDate.setDate(currentDate.getDate() - 7));
+          return (
+            bundleDate >=
+            new Date(currentDate.setDate(currentDate.getDate() - 7))
+          );
         case "This Month":
           return (
             bundleDate.getMonth() === currentDate.getMonth() &&
@@ -805,9 +890,7 @@ export default function PlansPage() {
     });
   };
 
-
   const filteredBundles = getFilteredBundles();
-
 
   return (
     <>
@@ -848,12 +931,15 @@ export default function PlansPage() {
             </div>
             {active && (
               <ul className={styles.selectDropdown}>
-                <li data-value="option1" onClick={() => handleActive("Active")}>
+                <li
+                  data-value="option1"
+                  // onClick={() => handleActive("Active")}
+                >
                   Active
                 </li>
                 <li
                   data-value="option2"
-                  onClick={() => handleActive("Inactive")}
+                  // onClick={() => handleActive("Inactive")}
                 >
                   Inactive
                 </li>
@@ -875,8 +961,6 @@ export default function PlansPage() {
                         <Text variant="headingXs" as="h6">
                           {index == 0 ? "Revenue" : "Average"}
                         </Text>
-
-                      
 
                         {index === 0 ? (
                           <>
@@ -981,137 +1065,154 @@ export default function PlansPage() {
               </div>
             </div>
 
-            {filteredBundles ?
-              filteredBundles.map((card, index) => (
-                <React.Fragment key={card.id}>
-                 
-                  <div className={styles.exampleBundle}>
-                    <div className={styles.bundleHeading}>
-                      <div
-                        className={styles.btnFlexWrapper}
-                        style={{ alignItems: "center" }}
-                      >
-                        <label className={styles.switch}>
-                          <input type="checkbox" />
-                          <span className={styles.slider}></span>
-                        </label>
-                        <h2 className={styles.cardHeading}>{card?.name}</h2>
-                      </div>
-                      <div className={styles.btnFlexWrapper}>
-                        <Form method="DELETE">
-                          <input
-                            type="hidden"
-                            name="product_id"
-                            value={card?.id}
-                          />
+            {filteredBundles
+              ? filteredBundles.map((card, index) => (
+                  <React.Fragment key={card.id}>
+                    <div className={styles.exampleBundle}>
+                      <div className={styles.bundleHeading}>
+                        <div
+                          className={styles.btnFlexWrapper}
+                          style={{ alignItems: "center" }}
+                        >
+                          <Form method="POST">
+                            <label className={styles.switch}>
+                              <input
+                                type="hidden"
+                                name="intent"
+                                value="deactivate"
+                              />
+                              <input type="hidden" name="checkboxId" />
+                              <input
+                                type="checkbox"
+                                name="checkbox"
+                                value={card?.isActive}
+                                checked={checked}
+                                onChange={(e) => handleOnChange(e, card)}
+                              />
+                              <span className={styles.slider}></span>
+                            </label>
+                          </Form>
+                          <h2 className={styles.cardHeading}>{card?.name}</h2>
+                        </div>
+                        <div className={styles.btnFlexWrapper}>
+                          <Form method="DELETE">
+                            <input
+                              type="hidden"
+                              name="product_id"
+                              value={card?.id}
+                            />
 
-                          <input
-                            type="hidden"
-                            name="discount_id"
-                            value={card?.discount_id}
-                          />
+                            <input
+                              type="hidden"
+                              name="discount_id"
+                              value={card?.discount_id}
+                            />
+                            <button
+                              className={styles.deletedBtn}
+                              type="button"
+                              onClick={() => setShowPopup(true)}
+                            >
+                              <svg
+                                width="20"
+                                height="24"
+                                viewBox="0 0 18 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  clipRule="evenodd"
+                                  d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
+                                  fill="#F24747"
+                                />
+                              </svg>
+                            </button>
+                            {showPopup && (
+                              <DeletePopup
+                                setShowPopup={setShowPopup}
+                                actionResponse={actionResponse}
+                              />
+                            )}
+                          </Form>
                           <button
-                            className={styles.deletedBtn}
-                            type="button"
-                            onClick={() => setShowPopup(true)}
+                            className={styles.copyIcon}
+                            title="Duplicate"
+                            onClick={() => handleCopy(card.id)}
                           >
                             <svg
-                              width="20"
-                              height="24"
-                              viewBox="0 0 18 20"
+                              width="22"
+                              height="22"
+                              viewBox="0 0 27 27"
                               fill="none"
                               xmlns="http://www.w3.org/2000/svg"
                             >
                               <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
-                                fill="#F24747"
+                                d="M20.1675 4.43957C20.1675 1.98551 18.1781 -0.00390625 15.724 -0.00390625H4.61535C2.16129 -0.00390625 0.171875 1.98551 0.171875 4.43957V15.5483C0.171875 18.0023 2.16129 19.9917 4.61535 19.9917V11.1048C4.61535 7.42369 7.59947 4.43957 11.2806 4.43957H20.1675Z"
+                                fill="#005BEA"
+                              />
+                              <path
+                                d="M22.3893 6.66131C24.8433 6.66131 26.8327 8.65072 26.8327 11.1048V22.2135C26.8327 24.6675 24.8433 26.657 22.3893 26.657H11.2806C8.82651 26.657 6.83709 24.6675 6.83709 22.2135V11.1048C6.83709 8.65072 8.82651 6.66131 11.2806 6.66131H22.3893Z"
+                                fill="#005BEA"
                               />
                             </svg>
                           </button>
-                          {showPopup && (
-                            <DeletePopup
-                              setShowPopup={setShowPopup}
-                              actionResponse={actionResponse}
-                            />
-                          )}
-                        </Form>
-                        <button
-                          className={styles.copyIcon}
-                          title="Duplicate"
-                          onClick={() => handleCopy(card.id)}
-                        >
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 27 27"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                          <button
+                            className={styles.edit_Btn}
+                            title="Edit"
+                            onClick={() => handleEdit(card)}
                           >
-                            <path
-                              d="M20.1675 4.43957C20.1675 1.98551 18.1781 -0.00390625 15.724 -0.00390625H4.61535C2.16129 -0.00390625 0.171875 1.98551 0.171875 4.43957V15.5483C0.171875 18.0023 2.16129 19.9917 4.61535 19.9917V11.1048C4.61535 7.42369 7.59947 4.43957 11.2806 4.43957H20.1675Z"
-                              fill="#005BEA"
-                            />
-                            <path
-                              d="M22.3893 6.66131C24.8433 6.66131 26.8327 8.65072 26.8327 11.1048V22.2135C26.8327 24.6675 24.8433 26.657 22.3893 26.657H11.2806C8.82651 26.657 6.83709 24.6675 6.83709 22.2135V11.1048C6.83709 8.65072 8.82651 6.66131 11.2806 6.66131H22.3893Z"
-                              fill="#005BEA"
-                            />
-                          </svg>
-                        </button>
-                        <button className={styles.edit_Btn} title="Edit"  onClick={() => handleEdit(card)}>
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 22 22"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M20.384 1.61947C19.3614 0.596894 17.7035 0.596894 16.6809 1.61947L15.5267 2.77375L19.2297 6.47684L20.384 5.32256C21.4066 4.29998 21.4066 2.64205 20.384 1.61947Z"
-                              fill="#464646"
-                            />
-                            <path
-                              d="M18.1717 7.53486L14.4686 3.83178L2.34799 15.9524C1.73274 16.5677 1.28047 17.3265 1.03207 18.1604L0.234279 20.8386C0.155855 21.1019 0.228022 21.387 0.422267 21.5812C0.616513 21.7755 0.90159 21.8476 1.16486 21.7692L3.84308 20.9714C4.67697 20.723 5.43583 20.2708 6.05109 19.6555L18.1717 7.53486Z"
-                              fill="#464646"
-                            />
-                          </svg>
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 22 22"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M20.384 1.61947C19.3614 0.596894 17.7035 0.596894 16.6809 1.61947L15.5267 2.77375L19.2297 6.47684L20.384 5.32256C21.4066 4.29998 21.4066 2.64205 20.384 1.61947Z"
+                                fill="#464646"
+                              />
+                              <path
+                                d="M18.1717 7.53486L14.4686 3.83178L2.34799 15.9524C1.73274 16.5677 1.28047 17.3265 1.03207 18.1604L0.234279 20.8386C0.155855 21.1019 0.228022 21.387 0.422267 21.5812C0.616513 21.7755 0.90159 21.8476 1.16486 21.7692L3.84308 20.9714C4.67697 20.723 5.43583 20.2708 6.05109 19.6555L18.1717 7.53486Z"
+                                fill="#464646"
+                              />
+                            </svg>
                           </button>
-                       
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.inline_stackwraper}>
-                      {Array.from({ length: 3 }).map((item) => (
-                        <React.Fragment>
-                          <div className={styles.upper_box}>
-                            <div className={styles.PolarisBox}>
-                              <div className={styles.inlineStack}>
-                                <div className={styles.card_img}>
-                                  <img
-                                    src={collectedIcon}
-                                    width={33}
-                                    height={40}
-                                  />
-                                </div>
+                      <div className={styles.inline_stackwraper}>
+                        {Array.from({ length: 3 }).map((item) => (
+                          <React.Fragment>
+                            <div className={styles.upper_box}>
+                              <div className={styles.PolarisBox}>
+                                <div className={styles.inlineStack}>
+                                  <div className={styles.card_img}>
+                                    <img
+                                      src={collectedIcon}
+                                      width={33}
+                                      height={40}
+                                    />
+                                  </div>
 
-                                <div className={styles.ContentWraper}>
-                                  <Text variant="headingXs" as="h6">
-                                    Revenue
-                                  </Text>
+                                  <div className={styles.ContentWraper}>
+                                    <Text variant="headingXs" as="h6">
+                                      Revenue
+                                    </Text>
 
-                                  <Text as="h3" variant="heading2xl">
-                                    5,423$
-                                  </Text>
+                                    <Text as="h3" variant="heading2xl">
+                                      5,423$
+                                    </Text>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </React.Fragment>
-                      ))}
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </React.Fragment>
-              )): "No Bundle"}
+                  </React.Fragment>
+                ))
+              : "No Bundle"}
           </>
         )}
 
@@ -1251,81 +1352,83 @@ export default function PlansPage() {
                             />
                           </div>
 
-                          <div className={styles.addProductdiv} >
-                          {productSections.map((section, index) => (
-                            <div
-                              className={styles.input_labelCustomize}
-                              key={section.id}
-                            >
-                              <label htmlFor="">
-                                Select Product {index + 1}
-                              </label>
-                              <div className={styles.input_labelCustomize}>
-                                {selectProducts.length > 0 ? (
-                                  products
-                                    .filter((item) =>
-                                      selectProducts.some(
-                                        (buy) =>
-                                          buy.productId === item?.node?.id,
-                                      ),
-                                    )
-                                    .map((item, index) => (
-                                      <>
-                                        <div
-                                          className={styles.images_upload}
-                                          key={index}
-                                        >
-                                          <img
-                                            src={
-                                              item?.node?.images?.edges[0]?.node
-                                                ?.src
-                                            }
-                                            alt="Preview"
-                                            style={{
-                                              width: "100px",
-                                              height: "100px",
-                                              maxHeight: "100px",
-                                              maxWidth: "100px",
-                                              objectFit: "cover",
-                                              borderRadius: "15px",
-                                            }}
-                                          />
-                                          <div className={styles.image_name}>
-                                            <h4>14K Gold Necklace</h4>
-                                            <button 
-                                            type="button"
-                                            onClick={() => setSelectedPrducts([])}
-                                              className={styles.deletedBtn}
-                                            >
-                                              <img
-                                                src={deletedIcon}
-                                                width={20}
-                                                height={20}
-                                              />
-                                              Delete
-                                            </button>
+                          <div className={styles.addProductdiv}>
+                            {productSections.map((section, index) => (
+                              <div
+                                className={styles.input_labelCustomize}
+                                key={section.id}
+                              >
+                                <label htmlFor="">
+                                  Select Product {index + 1}
+                                </label>
+                                <div className={styles.input_labelCustomize}>
+                                  {selectProducts.length > 0 ? (
+                                    products
+                                      .filter((item) =>
+                                        selectProducts.some(
+                                          (buy) =>
+                                            buy.productId === item?.node?.id,
+                                        ),
+                                      )
+                                      .map((item, index) => (
+                                        <>
+                                          <div
+                                            className={styles.images_upload}
+                                            key={index}
+                                          >
+                                            <img
+                                              src={
+                                                item?.node?.images?.edges[0]
+                                                  ?.node?.src
+                                              }
+                                              alt="Preview"
+                                              style={{
+                                                width: "100px",
+                                                height: "100px",
+                                                maxHeight: "100px",
+                                                maxWidth: "100px",
+                                                objectFit: "cover",
+                                                borderRadius: "15px",
+                                              }}
+                                            />
+                                            <div className={styles.image_name}>
+                                              <h4>14K Gold Necklace</h4>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setSelectedPrducts([])
+                                                }
+                                                className={styles.deletedBtn}
+                                              >
+                                                <img
+                                                  src={deletedIcon}
+                                                  width={20}
+                                                  height={20}
+                                                />
+                                                Delete
+                                              </button>
+                                            </div>
                                           </div>
-                                        </div>
-                                      </>
-                                    ))
-                                ) : (
-                                  <>
-                                    <label
-                                      htmlFor="file-upload"
-                                      style={{
-                                        cursor: "pointer",
-                                        color: "blue",
-                                      }}
-                                      className={styles.inputUpload}
-                                      onClick={() => setIsProduct(true)}
-                                    >
-                                      <span>+</span>Add Product
-                                    </label>
-                                  </>
-                                )}
+                                        </>
+                                      ))
+                                  ) : (
+                                    <>
+                                      <label
+                                        htmlFor="file-upload"
+                                        style={{
+                                          cursor: "pointer",
+                                          color: "blue",
+                                        }}
+                                        className={styles.inputUpload}
+                                        onClick={() => setIsProduct(true)}
+                                      >
+                                        <span>+</span>Add Product
+                                      </label>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
                           </div>
 
                           <div className={styles.Addanotherdiv}>
@@ -1337,9 +1440,6 @@ export default function PlansPage() {
                               Product
                             </label>
                           </div>
-
-                          
-
 
                           <div className={styles.input_labelCustomize}>
                             <label htmlFor="">Where to display bundle</label>
@@ -2014,26 +2114,24 @@ export default function PlansPage() {
                                       <ul
                                         className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                                       >
-                                         <li
+                                        <li
                                           data-value="option1"
-                                          onClick={() =>
-                                            setCart("Cart")
-                                          }
+                                          onClick={() => setCart("Cart")}
                                         >
                                           Cart
                                         </li>
                                         <li
                                           data-value="option1"
-                                          onClick={() =>
-                                            setCart("Checkout")
-                                          }
+                                          onClick={() => setCart("Checkout")}
                                         >
                                           Checkout
                                         </li>
                                         <li
                                           data-value="option2"
                                           onClick={() =>
-                                            setCart("Don't redirect (only add to cart)")
+                                            setCart(
+                                              "Don't redirect (only add to cart)",
+                                            )
                                           }
                                         >
                                           Don't redirect (only add to cart)
@@ -2193,7 +2291,7 @@ export default function PlansPage() {
                                   onChange={handleBackground}
                                 />
                                 <label htmlFor="shadow">
-                                  Display “Save” tag
+                                  Display Shadow
                                 </label>
                               </div>
                             </div>
@@ -2225,80 +2323,180 @@ export default function PlansPage() {
                       </>
                     )}
 
-                    {showComponent <= 3 && (
-                      <>
-                        <div className={styles.live_preview}>
-                          <img
-                            src={preview_mockup}
-                            width={404}
-                            height={822}
-                            className={styles.mockup_tab}
-                          />
-                          <div className={styles.Preview_bundle}>
-                            <div className={styles.limited}>
-                              Limited Time Offer
+                    {showComponent <= 3 &&
+                      (selectProducts.length > 0 ? 
+                        products
+                        .filter((item) =>
+                          selectProducts.some(
+                            (buy) =>
+                              buy.productId === item?.node?.id,
+                          ),
+                        )
+                        .map((item) => (
+                          <>
+                          <div className={styles.live_preview}>
+                            <img
+                              src={preview_mockup}
+                              width={404}
+                              height={822}
+                              className={styles.mockup_tab}
+                            />
+                            <div className={styles.Preview_bundle} style={{ backgroundColor: background.backgroundColor, boxShadow: background.backgroundShadow ? "0px 40.5px 108.01px 0px #0000001a" : "none" }}>
+                              <div className={styles.limited} style={{ fontSize: `${titleSection.titleSectionSize}px`, color: titleSection.titleSectionColor }}>
+                                {titleSection.titleSectionText}
+                              </div>
+                              <h4 style={{ fontSize: `${title.titleSize}px`, color: title.titleColor }}>{title.titleText}</h4>
+
+                              <div className={styles.both_product}>
+                                <div className={styles.left_productsample}>
+                                  <img
+                                    src={
+                                      item?.node?.images?.edges[0]
+                                        ?.node?.src
+                                    }
+                                    width={112}
+                                    height={112}
+                                    className={styles.mockup_tab}
+                                  />
+                                  
+                                  <select name="" id="">
+                                    <option value="newest">Gold 14K</option>
+                                    <option value="old">Gold 14K</option>
+                                  </select>
+
+                                  <h6>{item?.node?.title}</h6>
+                                </div>
+                                <div className={styles.AddProduct}>
+                                  <span>+</span>
+                                </div>
+
+                                <div className={styles.left_productsample}>
+                                  <img
+                                    src={Productpreview}
+                                    width={112}
+                                    height={112}
+                                    className={styles.mockup_tab}
+                                  />
+                                  <select name="" id="">
+                                    <option value="newest">Gold 14K</option>
+                                    <option value="old">Gold 14K</option>
+                                  </select>
+
+                                  <h6>Product Name</h6>
+                                </div>
+                              </div>
+
+                              <div className={styles.productTotal}>
+                                <span>Total</span>
+                                <div className={styles.Pricetab}>
+                                  <span className={styles.delPriceOuter}>
+                                    <span className={styles.delPrice} style={{display: bundleCost.bundleCostComparedPrice ? "block": "none"}}>
+                                      230$
+                                    </span>
+                                  </span>
+                                  <span className={styles.totalPrice} style={{fontSize: `${bundleCost.bundleCostSize}px`, color: bundleCost.bundleCostColor }}>
+                                    130$
+                                  </span>
+                                  <span className={styles.SaveTab} style={{display: bundleCost.bundleCostSave ? "block": "none"}}>
+                                    Save 10%
+                                  </span>
+                                </div>
+                                <button 
+                                className={styles.AddBtn}
+                                 style={{ fontSize: `${callAction.ctaSize}px`, color: callAction.ctaColor }}>
+                                  {callAction.ctaText}
+                                </button>
+                                <p className={styles.wrrantyTag} style={{ fontSize: `${textBelow.tbSize}px`, color: textBelow.tbColor }}>
+                                  {textBelow.tbText}
+                                </p>
+                              </div>
                             </div>
-                            <h4>Add Bundle And Save 10%!</h4>
-
-                            <div className={styles.both_product}>
-                              <div className={styles.left_productsample}>
-                                <img
-                                  src={Productpreview}
-                                  width={112}
-                                  height={112}
-                                  className={styles.mockup_tab}
-                                />
-                                <select name="" id="">
-                                  <option value="newest">Gold 14K</option>
-                                  <option value="old">Gold 14K</option>
-                                </select>
-
-                                <h6>Product Name</h6>
-                              </div>
-                              <div className={styles.AddProduct}>
-                                <span>+</span>
-                              </div>
-
-                              <div className={styles.left_productsample}>
-                                <img
-                                  src={Productpreview}
-                                  width={112}
-                                  height={112}
-                                  className={styles.mockup_tab}
-                                />
-                                <select name="" id="">
-                                  <option value="newest">Gold 14K</option>
-                                  <option value="old">Gold 14K</option>
-                                </select>
-
-                                <h6>Product Name</h6>
-                              </div>
-                            </div>
-
-                            <div className={styles.productTotal}>
-                              <span>Total</span>
-                              <div className={styles.Pricetab}>
-                                <span className={styles.delPriceOuter}>
-                                  <span className={styles.delPrice}>230$</span>
-                                </span>
-                                <span className={styles.totalPrice}>130$</span>
-                                <span className={styles.SaveTab}>Save 10%</span>
-                              </div>
-
-                              <button className={styles.AddBtn}>
-                                👉 Add To Cart
-                              </button>
-                              <p className={styles.wrrantyTag}>
-                                Lifetime Warranty & Free Returns
-                              </p>
+                            <div className={styles.btnLivePreview}>
+                              <button>Live Preview</button>
                             </div>
                           </div>
-                          <div className={styles.btnLivePreview}>
-                            <button>Live Preview</button>
+                          </>
+                        ))
+                       : (
+                        <>
+                          <div className={styles.live_preview}>
+                            <img
+                              src={preview_mockup}
+                              width={404}
+                              height={822}
+                              className={styles.mockup_tab}
+                            />
+                            <div className={styles.Preview_bundle}>
+                              <div className={styles.limited}>
+                                Limited Time Offer
+                              </div>
+                              <h4>Add Bundle And Save 10%!</h4>
+
+                              <div className={styles.both_product}>
+                                <div className={styles.left_productsample}>
+                                  <img
+                                    src={Productpreview}
+                                    width={112}
+                                    height={112}
+                                    className={styles.mockup_tab}
+                                  />
+                                  <select name="" id="">
+                                    <option value="newest">Gold 14K</option>
+                                    <option value="old">Gold 14K</option>
+                                  </select>
+
+                                  <h6>Product Name</h6>
+                                </div>
+                                <div className={styles.AddProduct}>
+                                  <span>+</span>
+                                </div>
+
+                                <div className={styles.left_productsample}>
+                                  <img
+                                    src={Productpreview}
+                                    width={112}
+                                    height={112}
+                                    className={styles.mockup_tab}
+                                  />
+                                  <select name="" id="">
+                                    <option value="newest">Gold 14K</option>
+                                    <option value="old">Gold 14K</option>
+                                  </select>
+
+                                  <h6>Product Name</h6>
+                                </div>
+                              </div>
+
+                              <div className={styles.productTotal}>
+                                <span>Total</span>
+                                <div className={styles.Pricetab}>
+                                  <span className={styles.delPriceOuter}>
+                                    <span className={styles.delPrice}>
+                                      230$
+                                    </span>
+                                  </span>
+                                  <span className={styles.totalPrice}>
+                                    130$
+                                  </span>
+                                  <span className={styles.SaveTab}>
+                                    Save 10%
+                                  </span>
+                                </div>
+
+                                <button className={styles.AddBtn}>
+                                  👉 Add To Cart
+                                </button>
+                                <p className={styles.wrrantyTag}>
+                                  Lifetime Warranty & Free Returns
+                                </p>
+                              </div>
+                            </div>
+                            <div className={styles.btnLivePreview}>
+                              <button>Live Preview</button>
+                            </div>
                           </div>
-                        </div>
-                      </>
-                    )}
+                        </>
+                      ))}
                   </div>
 
                   {showPage === "Return" && (

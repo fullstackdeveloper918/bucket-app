@@ -1,0 +1,210 @@
+<div id="loader" style="display: flex; justify-content: center; align-items: center; height: 100px;">
+    <img src="https://i.gifer.com/ZZ5H.gif" alt="Loading..." width="50">
+</div>
+
+<div class="Discount discount_main" style="display:none" >
+  <input type="hidden" id="bucketproduct-id" value="{{ product.id }}">
+  <span>{{ option.selected_value }}</span>
+  <input type="hidden" id="bucketV-id" value="{{ product.variants.first.id }}">
+  <input type="hidden" id="bucketV-price" value="{{ product.variants.first.price| money_without_currency }}">
+  <input type="hidden" id="bucketV-currency" value="{{shop.currency}}">
+
+
+
+
+<div class="container bucket_cv">
+  <div class="header">
+    <div class="child_Discount">
+      <div class="subheading_bundle">
+        <p></p>
+      </div>
+      <div class="heading_bundle">
+        <h2>Add More & Save</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="bundle_main_option">
+  <!-- Bundle 2 Products -->
+  {% comment %} <div class="bundle-option" id="option2">
+    <strong>Buy 2 Products</strong>
+    <span class="pricediscount">$25 <small style="color:#777;text-decoration:line-through;">$50</small></span>
+    <div  class="save_discount">
+     <span> Save 50%</span>
+
+    </div>
+    <div class="dropdown-section" id="dropdown2">
+      <div class="dropdown">
+        <span>Size  </span>
+        <select>
+          <option>
+            25+5 CM
+          </option>
+          <option>
+            25+6 CM
+          </option>
+        </select>
+
+      </div>
+      <div class="dropdown">
+        <span>Color   </span>
+        <select>
+          <option>
+            Gold 14K
+          </option>
+          <option>
+            Gold 16K
+          </option>
+        </select>
+    </div>
+
+      </div>
+      
+  </div> {% endcomment %}
+  <div class="bundle-option" id="option2">
+ 
+  <strong qBuckt="">Buy 2 Products</strong>
+  <span class="pricediscount">
+    <small class="product_price" style="color:#777;text-decoration:line-through;">
+      {{ product.price | money }} 
+    </small> 
+    <small class="product_discount" style="color:#777;">
+      {{ product.price | money }} 
+    </small>
+  </span>
+  <div class="save_discount">
+    <span>Save 10%
+      {% comment %} {{ product.compare_at_price | minus: product.price | times: 100.0 | divided_by: product.compare_at_price | round }}% {% endcomment %}
+      </span>
+  </div>
+  <div class="dropdown-section" id="dropdown2">
+    <!-- Size Dropdown -->
+    {% comment %} <div class="dropdown">
+      <span>Size</span>
+      <select>
+        {% for option in product.options_with_values %}
+          {% if option.name == "Size" %}
+            {% for value in option.values %}
+              <option value="{{ value }}">{{ value }}</option>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div> {% endcomment %}
+    <!-- Color Dropdown -->
+    {% comment %} <div class="dropdown">
+      <span>Color</span>
+      <select>
+        {% for option in product.options_with_values %}
+          {% if option.name == "Color" %}
+            {% for value in option.values %}
+              <option value="{{ value }}">{{ value }}</option>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div> {% endcomment %}
+  </div>
+</div>
+
+
+{% comment %} <!-- Bundle 4 Products -->
+<div class="bundle-option" id="option4">
+  <strong>Buy 4 Products</strong>
+  <span class="pricediscount">
+    {{ product.price | money }} 
+    <small style="color:#777;text-decoration:line-through;">
+      {{ product.compare_at_price | money }}
+    </small>
+  
+  </span>
+  <div class="save_discount">
+    <span>Save 50%</span>
+  </div>
+  <div class="dropdown-section" id="dropdown4">
+    <!-- Size Dropdown -->
+    <div class="dropdown">
+      <span>Size</span>
+      <select>
+        {% for value in product.options_with_values[0].values %}
+          <option value="{{ value }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <!-- Color Dropdown -->
+    <div class="dropdown">
+      <span>Color</span>
+      <select>
+        {% for value in product.options_with_values[1].values %}
+          <option value="{{ value }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div> {% endcomment %}
+
+<!-- Bundle 6 Products -->
+{% comment %} <div class="bundle-option" id="option6">
+  <strong>Buy 6 Products</strong>
+  <span class="pricediscount">
+    {{ product.price | money }} 
+    <small style="color:#777;text-decoration:line-through;">
+      {{ product.compare_at_price | money }}
+    </small>
+  </span>
+  <div class="save_discount">
+    <span>Save 50%</span>
+  </div>
+  <div class="dropdown-section" id="dropdown6">
+    <!-- Size Dropdown -->
+    <div class="dropdown">
+      <span>Size</span>
+      <select>
+        {% for value in product.options_with_values[0].values %}
+          {% assign variant = product.variants | where: 'option1', value | first %}
+          <option valueId="{{ variant.id }}" value="{{ value }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <!-- Color Dropdown -->
+    <div class="dropdown">
+      <span>Color</span>
+      <select>
+        {% for value in product.options_with_values[1].values %}
+          {% assign variant = product.variants | where: 'option2', value | first %}
+          <option valueId="{{ variant.id }}" value="{{ value }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div> {% endcomment %}
+
+
+
+  
+  </div>
+  <!-- Add to Cart Button -->
+  <div class="add-to-cart">👉 Add To Cart</div>
+
+  <!-- Footer -->
+  <div class="footer">Lifetime Warranty & Free Returns</div>
+</div>
+
+
+</div>
+<script src="{{ 'config.js' | asset_url }}"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+{% schema %}
+{
+"name": "Volume new",
+"target": "section",
+"stylesheet": "Volume.css",
+"javascript": "Volume.js",
+"enabled_on":{
+  "templates":["product"]
+},
+"settings": [
+
+]
+}
+{% endschema %}
