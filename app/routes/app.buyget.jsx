@@ -1461,7 +1461,7 @@ export default function BuyGetPage() {
                 <div className={styles.table_content}>
                   <div className={styles.requestReview}>
                     <div className={styles.timing_after}>
-                      {showComponent == 1 && (
+                      {showPage === "first" && (
                         <>
                           <div className={styles.leftContent}>
                             <h3>
@@ -1734,7 +1734,7 @@ export default function BuyGetPage() {
                       )}
 
                       <>
-                        {showComponent == 2 && (
+                        {showPage === "second" && (
                           <>
                             <div className={styles.leftContent}>
                               <h3>
@@ -1833,7 +1833,7 @@ export default function BuyGetPage() {
                                 <button
                                   type="button"
                                   className={styles.Backbtn}
-                                  onClick={() => setShowComponent(1)}
+                                  onClick={() => setShowPage("first")}
                                 >
                                   Back
                                 </button>
@@ -1851,7 +1851,7 @@ export default function BuyGetPage() {
                         )}
                       </>
 
-                      {showComponent == 3 && (
+                      {showPage === "third" && (
                         <>
                           <input type="hidden" name="bundle_id" value={id} />
                           <input
@@ -2603,7 +2603,7 @@ export default function BuyGetPage() {
                                 <div className={styles.Add_btn}>
                                   <button
                                     type="button"
-                                    onClick={() => setShowComponent(2)}
+                                    onClick={() => setShowPage("second")}
                                     className={styles.Backbtn}
                                   >
                                     Back

@@ -31,6 +31,7 @@ import AddProduct from "../components/BundleModal/AddProduct";
 import axios from "axios";
 import Loader from "../components/Loader/Loader";
 
+
 export async function loader({ request }) {
   try {
     const { admin, session } = await authenticate.admin(request);
@@ -246,43 +247,6 @@ export async function action({ request }) {
 
     return undefined;
 
-    // try {
-    //     const updatedDiscount = await db.bundle.update({
-    //       where: { id: parseInt(id) },
-    //       data: {
-    //         name,
-    //         displayLocation,
-    //         method,
-    //         chooseAmount: parseFloat(chooseAmount),
-    //         products,
-    //         position,
-    //         section,
-    //         title_section,
-    //         title,
-    //         product,
-    //         bundle_cost,
-    //         call_to_action_button,
-    //         text_below_cta,
-    //         backgroud,
-    //         domainName: shop,
-    //       },
-    //     });
-
-    //     return json({
-    //       message: "Bundle Updated Successfully",
-    //       data: updatedDiscount,
-    //       status: 200,
-    //       step: 4,
-    //       activeTab: "Return",
-    //     });
-
-    // } catch (error) {
-    //   return json({
-    //     message: "Failed to process the request",
-    //     error: error.message,
-    //     status: 500,
-    //   });
-    // }
   } else if (request.method === "DELETE") {
     try {
       const domainName = shop;
@@ -458,6 +422,7 @@ export default function PlansPage() {
       discount: item,
     }));
   };
+  
 
   const handleOnChange = (e, card) => {
     console.log(card, "card check hee");
@@ -593,6 +558,7 @@ export default function PlansPage() {
   };
 
   const addProductSection = () => {
+    console.log(productSections, 'addProductSection')
     setProductSections((prevSections) => [
       ...prevSections,
       { id: prevSections.length + 1 },
@@ -635,6 +601,7 @@ export default function PlansPage() {
 
   const handleMonth = (item) => {
     setMonth(item);
+    
   };
 
   const handleCreate = () => {
@@ -844,6 +811,13 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
+
+
+  const handleAdd = (index) => {
+    setIsProduct(true)
+    console.log(index, 'index')
+  }
+
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
 
@@ -966,14 +940,14 @@ export default function PlansPage() {
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._sum?.total || 0}{" "}
-                              {/* Fallback to 0 if value doesn't exist */}
+                             
                             </Text>
                           </>
                         ) : (
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._avg?.total || 0}{" "}
-                              {/* Fallback to 0 if value doesn't exist */}
+                          
                             </Text>
                           </>
                         )}
@@ -1329,7 +1303,7 @@ export default function PlansPage() {
               <div className={styles.table_content}>
                 <div className={styles.requestReview}>
                   <div className={styles.timing_after}>
-                    {showComponent == 1 && (
+                    {showPage === "first" && (
                       <>
                         <div className={styles.leftContent}>
                           <h3>
@@ -1420,7 +1394,8 @@ export default function PlansPage() {
                                           color: "blue",
                                         }}
                                         className={styles.inputUpload}
-                                        onClick={() => setIsProduct(true)}
+                                        // onClick={() => setIsProduct(true)}
+                                        onClick={() => handleAdd(index)}
                                       >
                                         <span>+</span>Add Product
                                       </label>
@@ -1521,7 +1496,7 @@ export default function PlansPage() {
                       </>
                     )}
 
-                    {showComponent == 2 && (
+                    {showPage === "second" && (
                       <div className={styles.leftContent}>
                         <h3>
                           Sweeten the Deal,
@@ -1601,7 +1576,7 @@ export default function PlansPage() {
                         />
 
                         <div className={styles.Add_btn}>
-                          <button type="button" className={styles.Backbtn}>
+                          <button type="button" onClick={() => setShowPage("first")} className={styles.Backbtn}>
                             Back
                           </button>
                           <button
@@ -2115,19 +2090,16 @@ export default function PlansPage() {
                                         className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                                       >
                                         <li
-                                          data-value="option1"
                                           onClick={() => setCart("Cart")}
                                         >
                                           Cart
                                         </li>
                                         <li
-                                          data-value="option1"
                                           onClick={() => setCart("Checkout")}
                                         >
                                           Checkout
                                         </li>
                                         <li
-                                          data-value="option2"
                                           onClick={() =>
                                             setCart(
                                               "Don't redirect (only add to cart)",
@@ -2300,7 +2272,7 @@ export default function PlansPage() {
                           <>
                             <div className={styles.Add_btn}>
                               <button
-                                onClick={() => setShow("Ready To Increase")}
+                                onClick={() => setShowPage("second")}
                                 className={styles.Backbtn}
                               >
                                 Back

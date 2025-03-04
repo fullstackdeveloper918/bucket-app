@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import styles from "../../styles/main.module.css";
+import Loader from "../Loader/Loader";
 // import infoImage from "../../routes/assets/infoImage.png";
 // import AddGradient from "../../routes/assets/AddGradient.png";
 const grid = {
@@ -7,7 +8,7 @@ const grid = {
   gridTemplateColumns: "repeat(2, 1fr)",
 };
 
-const DeletePopup = ({ setShowPopup }) => {
+const DeletePopup = ({ setShowPopup,state }) => {
 
 
   return (
@@ -43,8 +44,10 @@ const DeletePopup = ({ setShowPopup }) => {
             Cancel
             </button>
 
+            {console.log(state, 'state see')}
+
             <button className={styles.NextBtn} type="submit">
-            Delete Bundle
+            {state == "submitting" ? <Loader /> :  "Delete Bundle"}
             </button>
           </div>
         </div>

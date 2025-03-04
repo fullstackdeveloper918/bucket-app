@@ -452,7 +452,7 @@ export default function ProfitsPage() {
                     <div className={styles.relativeDiv}>
                       <video
                         ref={videoRef}
-                        src={`https://gardening-dancing-sport-highways.trycloudflare.com/${details.videoURL}`}
+                        src={`https://organ-obesity-divorce-duncan.trycloudflare.com/${details.videoURL}`}
                         autoPlay
                         controls
                         onClick={togglePlayHandler}
@@ -595,7 +595,7 @@ export default function ProfitsPage() {
 
       {/* {shareReward && */}
       
-      <section>
+      <section className={styles.modal_overlay}>
         <div className={`${styles.popup} ${styles.UnlockReward}`}>
           <button className={styles.closeBtn}>&times;</button>
           <p className={styles.timeInfo}>Takes Less Than 3 Minutes</p>

@@ -4,9 +4,8 @@ import db from "../db.server";
 import { TitleBar } from "@shopify/app-bridge-react";
 import React, { useEffect, useState } from "react";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
-import deletedIcon from "../routes/assets/deleted.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
-import Productpreview from "../routes/assets/product_sample.png";
+import deletedIcon from "../routes/assets/deleted.svg";
 import Loader from "../components/Loader/Loader";
 import styles from "../styles/main.module.css";
 import offerIcon from "../../app/routes/assets/offerIcon.svg";
@@ -149,6 +148,22 @@ export async function action({ request }) {
         color: formData.get("backgroundColor"),
         shadow: formData.get("backgroundShadow"),
       };
+
+      if (bundle_name) {
+        // Check if a bundle with the same name already exists
+        const existingBundle = await db.volumeDiscount.findFirst({
+          where: {
+            bundle_name, // Check for the exact match of the bundle name
+          },
+        });
+
+        if (existingBundle) {
+          return json({
+            error: "Bundle name already exists. Please choose another title.",
+            status: 500,
+          });
+        }
+      }
 
       let data;
 
@@ -405,7 +420,7 @@ export async function action({ request }) {
           });
 
           return json({
-            message: "Data Updated successfully",
+            message: "Volume Bundle Updated successfully",
             data: updatedDiscount,
             status: 200,
             step: 4,
@@ -434,7 +449,7 @@ export async function action({ request }) {
           });
 
           return json({
-            message: "Data saved successfully",
+            message: "Volume Bundle created successfully",
             data: savedDiscount,
             status: 200,
             step: 4,
@@ -766,13 +781,13 @@ export default function VolumePage() {
   ]);
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
-    titleSectionSize: 5,
+    titleSectionSize: 13,
     titleSectionColor: "#000000",
   });
 
   const [title, seTitle] = useState({
     titleText: "Add More & Save",
-    titleSize: 5,
+    titleSize: 13,
     titleColor: "#000000",
   });
 
@@ -785,14 +800,14 @@ export default function VolumePage() {
 
   const [textBelow, setTextBelow] = useState({
     tbText: "Lifetime warranty & Free Returns",
-    tbSize: 5,
+    tbSize: 11,
     tbColor: "#555555",
   });
 
   const [callAction, setCallAction] = useState({
     ctaText: "Add To Cart",
-    ctaSize: 5,
-    ctaColor: "#000000",
+    ctaSize: 13,
+    ctaColor: "#FFFFFF",
   });
 
   const [background, setBackGround] = useState({
@@ -871,12 +886,18 @@ export default function VolumePage() {
   };
 
   const handleSave = () => {
+    if(selectProducts.length  > 1) {
+      notify.error("Please select only one product", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+      return ;
+    }
     setIsProduct(false);
   };
-
-  // const addTier = () => {
-  //   setTiers([...tiers, { quantity: "", discount: "", title: "", badge: "" }]);
-  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -887,9 +908,11 @@ export default function VolumePage() {
     }));
   };
 
-  const handleActive = (item) => {
-    setActiveApp(item);
+  const handleActive = (e, item) => {
+    e.preventDefault();
     setActive(false);
+    setActiveApp(item);
+    useSubmit(e.target.form);
   };
 
   const handleDesign = () => {
@@ -1300,7 +1323,7 @@ export default function VolumePage() {
               </div>
             </div>
             {active && (
-              <ul className={styles.selectDropdown}>
+              <ul className={styles.selectDropdown} ref={activeRef}>
                 <li data-value="option1" onClick={() => handleActive("Active")}>
                   Active
                 </li>
@@ -1333,14 +1356,12 @@ export default function VolumePage() {
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._sum?.total || 0}{" "}
-                              {/* Fallback to 0 if value doesn't exist */}
                             </Text>
                           </>
                         ) : (
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._avg?.total || 0}{" "}
-                              {/* Fallback to 0 if value doesn't exist */}
                             </Text>
                           </>
                         )}
@@ -1376,48 +1397,23 @@ export default function VolumePage() {
                       <ul
                         className={` ${styles.selectDropdown} ${styles.InactiveButton} `}
                       >
-                        <li
-                          data-value="option1"
-                          onClick={() => handleMonth("Today")}
-                        >
-                          Today
-                        </li>
-                        <li
-                          data-value="option2"
-                          onClick={() => handleMonth("Yesterday")}
-                        >
+                        <li onClick={() => handleMonth("Today")}>Today</li>
+                        <li onClick={() => handleMonth("Yesterday")}>
                           Yesterday
                         </li>
-                        <li
-                          data-value="option2"
-                          onClick={() => handleMonth("Last 3 Days")}
-                        >
+                        <li onClick={() => handleMonth("Last 3 Days")}>
                           Last 3 Days
                         </li>
-                        <li
-                          data-value="option2"
-                          onClick={() => handleMonth("Last 7 Days")}
-                        >
+                        <li onClick={() => handleMonth("Last 7 Days")}>
                           Last 7 Days
                         </li>
-                        <li
-                          data-value="option2"
-                          onClick={() => handleMonth("This Month")}
-                        >
+                        <li onClick={() => handleMonth("This Month")}>
                           This Month
                         </li>
-                        <li
-                          data-value="option2"
-                          onClick={() => handleMonth("Last Month")}
-                        >
+                        <li onClick={() => handleMonth("Last Month")}>
                           Last Month
                         </li>
-                        <li
-                          data-value="option2"
-                          onClick={() => handleMonth("Custom")}
-                        >
-                          Custom
-                        </li>
+                        <li onClick={() => handleMonth("Custom")}>Custom</li>
                       </ul>
                     </>
                   )}
@@ -1517,6 +1513,7 @@ export default function VolumePage() {
                             <DeletePopup
                               setShowPopup={setShowPopup}
                               actionResponse={actionResponse}
+                              state={navigation.state}
                             />
                           )}
                         </Form>
@@ -1701,6 +1698,7 @@ export default function VolumePage() {
                             <label htmlFor="">
                               Select Products for Volume Discount
                             </label>
+
                             <div className={styles.bundle_product}>
                               <input
                                 type="radio"
@@ -1724,27 +1722,87 @@ export default function VolumePage() {
                               />
                               <label htmlFor="second">Specific products</label>
                             </div>
+
                             {values.product === "Specific Products" && (
-                              <div className={styles.bundle_product}>
+                              <div 
+                              className={styles.bundle_product}
+                              >
                                 <div
                                   className={` ${styles.customSelect} ${styles.customTabsec} `}
                                   id="second"
-                                >
-                                  <div
-                                    className={styles.selectBox}
-                                    onClick={() => setIsProduct(true)}
-                                  >
-                                    <span className={styles.selected}>
-                                      Choose products
-                                    </span>
-                                    <div className={styles.arrow}>
-                                      <img
-                                        src={DorpDownIcon}
-                                        width={20}
-                                        height={16}
-                                      />
-                                    </div>
-                                  </div>
+                                >  
+                                  {selectProducts.length > 0 ? (
+                                    products
+                                      .filter((item) =>
+                                        selectProducts.some(
+                                          (buy) =>
+                                            buy.productId === item?.node?.id,
+                                        ),
+                                      )
+                                      .map((item, index) => (
+                                        <>
+                                          <label htmlFor="">
+                                            Select Product {index + 1}
+                                          </label>
+                                          <div
+                                            className={styles.images_upload}
+                                            key={index}
+                                          >
+                                            <img
+                                              src={
+                                                item?.node?.images?.edges[0]
+                                                  ?.node?.src
+                                              }
+                                              alt="Preview"
+                                              style={{
+                                                width: "100px",
+                                                height: "100px",
+                                                maxHeight: "100px",
+                                                maxWidth: "100px",
+                                                objectFit: "cover",
+                                                borderRadius: "15px",
+                                              }}
+                                            />
+                                            <div className={styles.image_name}>
+                                              <h4>14K Gold Necklace</h4>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setSelectedPrducts([])
+                                                }
+                                                className={styles.deletedBtn}
+                                              >
+                                                <img
+                                                  src={deletedIcon}
+                                                  width={20}
+                                                  height={20}
+                                                />
+                                                Delete
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </>
+                                      ))
+                                  ) : (
+                                    <>
+                                      <div
+                                        className={styles.selectBox}
+                                        onClick={() => setIsProduct(true)}
+                                      >
+                                        <span className={styles.selected}>
+                                          Choose products
+                                        </span>
+                                        <div className={styles.arrow}>
+                                          <img
+                                            src={DorpDownIcon}
+                                            width={20}
+                                            height={16}
+                                          />
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                 
                                 </div>
                               </div>
                             )}
@@ -1942,7 +2000,7 @@ export default function VolumePage() {
                           <div className={styles.Add_btn}>
                             <button
                               type="button"
-                              onClick={() => setShowComponent(1)}
+                              onClick={() => setShowPage("first")}
                               className={styles.Backbtn}
                             >
                               Back
@@ -2617,13 +2675,11 @@ export default function VolumePage() {
                                               className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                                             >
                                               <li
-                                                data-value="option1"
                                                 onClick={() => setCart("Cart")}
                                               >
                                                 Cart
                                               </li>
                                               <li
-                                                data-value="option1"
                                                 onClick={() =>
                                                   setCart("Checkout")
                                                 }
@@ -2631,7 +2687,6 @@ export default function VolumePage() {
                                                 Checkout
                                               </li>
                                               <li
-                                                data-value="option2"
                                                 onClick={() =>
                                                   setCart(
                                                     "Don't redirect (only add to cart)",
@@ -2654,9 +2709,7 @@ export default function VolumePage() {
                                     <div
                                       className={styles.input_labelCustomize}
                                     >
-                                      <label htmlFor="title_section_color">
-                                        Color
-                                      </label>
+                                      <label htmlFor="">Color</label>
                                       <div className={styles.color_styles}>
                                         <span
                                           className={styles.color_pilate}
@@ -2674,7 +2727,7 @@ export default function VolumePage() {
                                         </span>
                                         <input
                                           type="text"
-                                          id="title_section_color"
+                                          id=""
                                           name="ctaColor"
                                           value={callAction.ctaColor}
                                         />
@@ -2715,7 +2768,6 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                            data-value="option1"
                                             onClick={() =>
                                               handleBtn("textBelow")
                                             }
@@ -2723,7 +2775,6 @@ export default function VolumePage() {
                                             Show
                                           </li>
                                           <li
-                                            data-value="option2"
                                             onClick={() =>
                                               handleBtn("textBelow")
                                             }
@@ -2787,6 +2838,7 @@ export default function VolumePage() {
                                         >
                                           <input
                                             type="color"
+                                            id="text_below_color"
                                             name="tbColor"
                                             value={textBelow.tbColor}
                                             onChange={handleTextBelow}
@@ -2835,7 +2887,6 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                            data-value="option1"
                                             onClick={() =>
                                               handleBtn("background")
                                             }
@@ -2843,7 +2894,6 @@ export default function VolumePage() {
                                             Show
                                           </li>
                                           <li
-                                            data-value="option2"
                                             onClick={() =>
                                               handleBtn("background")
                                             }
@@ -2905,7 +2955,7 @@ export default function VolumePage() {
                             <>
                               <div className={styles.Add_btn}>
                                 <button
-                                  onClick={() => setShow("Ready To Increase")}
+                                  onClick={() => setShowPage("second")}
                                   className={styles.Backbtn}
                                 >
                                   Back
@@ -2965,57 +3015,156 @@ export default function VolumePage() {
                               {title.titleText}
                             </h4>
 
-                            {selectProducts.length > 0 &&
-                              products
-                                .filter((item) =>
-                                  selectProducts.some(
-                                    (buy) => buy.productId === item?.node?.id,
-                                  ),
-                                )
-                                .map((item) => (
-                                  <>
-                                    <div className={styles.both_product}>
-                                    <div className={styles.left_productsample}>
-                                      <img
-                                        src={
-                                          item?.node?.images?.edges[0]?.node
-                                            ?.src
-                                        }
-                                        width={112}
-                                        height={112}
-                                        className={styles.mockup_tab}
-                                      />
-
-                                      <select name="" id="">
-                                        <option value="newest">Gold 14K</option>
-                                        <option value="old">Gold 14K</option>
-                                      </select>
-
-                                      <h6>{item?.node?.title}</h6>
-                                    </div>
-                                    <div className={styles.AddProduct}>
-                                      <span>+</span>
-                                    </div>
-
-                                    <div className={styles.left_productsample}>
-                                      <img
-                                        src={Productpreview}
-                                        width={112}
-                                        height={112}
-                                        className={styles.mockup_tab}
-                                      />
-                                      <select name="" id="">
-                                        <option value="newest">Gold 14K</option>
-                                        <option value="old">Gold 14K</option>
-                                      </select>
-                                      <h6>Product Name</h6>
-                                    </div>
+                            <div className={styles.left_productsample}>
+                              <div className={styles.bundlewrapper}>
+                                <div
+                                  className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
+                                >
+                                  <div className={styles.inputDiv}>
+                                    <input
+                                      type="radio"
+                                      name=""
+                                      id="bundle Product"
+                                      checked
+                                    />
+                                    <label htmlFor="">Buy 2 Products</label>
                                   </div>
-                                  </>
-                                ))}
+
+                                  <div className={styles.Pricetab}>
+                                    <span className={styles.delPriceOuter}>
+                                      <span className={styles.delPrice}>
+                                        $50
+                                      </span>
+                                    </span>
+                                    <span className={styles.totalPrice}>
+                                      $25
+                                    </span>
+                                    <span className={styles.SaveTab}>
+                                      Save 50%
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className={styles.sizecolor}>
+                                  <ul>
+                                    <li>
+                                      <div className={styles.sizecolrDiv}>
+                                        <label>
+                                          <span>Size</span>
+                                        </label>
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            25+5 CM
+                                          </option>
+                                          <option value="old">25+5 CM</option>
+                                        </select>
+                                      </div>
+
+                                      <div className={styles.sizecolrDiv}>
+                                        <label>
+                                          <span>Color</span>
+                                        </label>
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            Gold 14K
+                                          </option>
+                                          <option value="old">Gold 14K</option>
+                                        </select>
+                                      </div>
+                                    </li>
+
+                                    <li>
+                                      <div className={styles.sizecolrDiv}>
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            25+5 CM
+                                          </option>
+                                          <option value="old">25+5 CM</option>
+                                        </select>
+                                      </div>
+
+                                      <div className={styles.sizecolrDiv}>
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            Gold 14K
+                                          </option>
+                                          <option value="old">Gold 14K</option>
+                                        </select>
+                                      </div>
+                                    </li>
+                                  </ul>
+                                </div>
+                                <div className={styles.mostPopular}>
+                                  Most Popular ⭐️
+                                </div>
+                              </div>
+
+                              <div
+                                className={`${styles.bundlewrapper} ${styles.bundle_wrap}`}
+                              >
+                                <div
+                                  className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
+                                >
+                                  <div className={styles.inputDiv}>
+                                    <input
+                                      type="radio"
+                                      name=""
+                                      id="bundle Product"
+                                      checked
+                                    />
+                                    <label htmlFor="">Buy 4 Products</label>
+                                  </div>
+
+                                  <div className={styles.Pricetab}>
+                                    <span className={styles.delPriceOuter}>
+                                      <span className={styles.delPrice}>
+                                        $75
+                                      </span>
+                                    </span>
+                                    <span className={styles.totalPrice}>
+                                      $35
+                                    </span>
+                                    <span className={styles.SaveTab}>
+                                      Save 65%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div
+                                className={`${styles.bundlewrapper} ${styles.bundle_wrap}`}
+                              >
+                                <div
+                                  className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
+                                >
+                                  <div className={styles.inputDiv}>
+                                    <input
+                                      type="radio"
+                                      name=""
+                                      id="bundle Product"
+                                      checked
+                                    />
+                                    <label htmlFor="">Buy 6 Products</label>
+                                  </div>
+
+                                  <div className={styles.Pricetab}>
+                                    <span className={styles.delPriceOuter}>
+                                      <span className={styles.delPrice}>
+                                        $125
+                                      </span>
+                                    </span>
+                                    <span className={styles.totalPrice}>
+                                      $50
+                                    </span>
+                                    <span className={styles.SaveTab}>
+                                      Save 70%
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
 
                             <div className={styles.productTotal}>
-                              <span>Total</span>
                               <button
                                 className={styles.AddBtn}
                                 style={{
@@ -3035,9 +3184,6 @@ export default function VolumePage() {
                                 {textBelow.tbText}
                               </p>
                             </div>
-                          </div>
-                          <div className={styles.btnLivePreview}>
-                            <button>Live Preview</button>
                           </div>
                         </div>
                       </>

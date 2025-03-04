@@ -3429,16 +3429,17 @@ a.prev.dot {
   /* margin-bottom: 15px; */
   gap: 30px;
 }
-.step-number {
+.stepNumber {
   color: white;
   display: flex;
   justify-content: center;
   align-items: center;
   background: linear-gradient(85.59deg, rgba(0, 198, 251, 0.1) 0.01%, rgba(0, 91, 234, 0.1) 102.97%);
   padding: 20px;
-  min-width: 40px;
-  height: 40px;
-  border-radius: 50px;
+  min-width: 60px;
+  height: 60px;
+  min-height: 60px;
+  border-radius: 60px;
 }
 span.nuberstep {
   background: linear-gradient(262.41deg, #005BEA -6.13%, #00C6FB 147.64%);
@@ -3448,15 +3449,15 @@ span.nuberstep {
   font-size: 30px;
   line-height: 30px;
 }
-.step-info h3 {
+.stepInfo h3 {
   margin: 0;
   font-weight: 700;
   font-size: 25px;
-  line-height: 52.1px;
+  line-height: 25px;
   letter-spacing: -0.12px;
   color: #202224;
 }
-.step-info p {
+.stepInfo p {
   margin: 5px 0 0;
   color: #ACACAC;
   font-weight: 400;
@@ -3481,7 +3482,7 @@ span.nuberstep {
   line-height: 42.82px;
   color: #8C8C8C;
 }
-.copy-btn {
+.copyBtn {
   color: white;
   border: none;
   padding: 8px 45px;
