@@ -2,7 +2,7 @@ import axios from "axios";
 import { Text } from "@shopify/polaris";
 import db from "../db.server";
 import { TitleBar } from "@shopify/app-bridge-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import deletedIcon from "../routes/assets/deleted.svg";
@@ -20,7 +20,7 @@ import {
   useActionData,
   useLoaderData,
   useNavigation,
-  useSubmit,
+  // useSubmit,
 } from "@remix-run/react";
 import {
   fetchSalesData,
@@ -30,6 +30,7 @@ import {
 import { Toaster, toast as notify } from "sonner";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 import AddProduct from "../components/BundleModal/AddProduct";
+import prisma from "../db.server";
 
 export async function loader({ request }) {
   try {
@@ -468,9 +469,6 @@ export async function action({ request }) {
       const checkStatus = formData.get("check_status");
       const checkId = formData.get("checkId");
 
-      console.log(formData, "form");
-      console.log(checkboxId, "seeid");
-
       let mutationQuery;
       if (checkStatus == 1) {
         mutationQuery = {
@@ -568,6 +566,96 @@ export async function action({ request }) {
           step: 6,
         });
       }
+    } 
+    else if (intent === "handleAllDiscount") {
+      const discountId = JSON.parse(formData.get("discountID"));
+      const active = formData.get("active");
+   
+        // const deactivateDiscount = async (id) => {
+        //   const query = {
+        //     query: `mutation discountAutomaticDeactivate($id: ID!) {
+        //       discountAutomaticDeactivate(id: $id) {
+        //         automaticDiscountNode {
+        //           automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+        //         }
+        //         userErrors { field message }
+        //       }
+        //     }`,
+        //     variables: { id },
+        //   };
+
+        const activateDiscount = async (id) => {
+          const query = {
+            query: `mutation discountAutomaticActivate($id: ID!) {
+              discountAutomaticActivate(id: $id) {
+                automaticDiscountNode {
+                  automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+                }
+                userErrors { field message }
+              }
+            }`,
+            variables: { id },
+          };
+
+          return axios.post(
+            `https://${shop}/admin/api/2025-01/graphql.json`,
+            query,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": session?.accessToken,
+              },
+            }
+          );
+        };
+
+
+        try {
+          const responses = await Promise.all(discountId.map((id) => activateDiscount(id)));
+          console.log(responses?.data?.data, 'hashkar');
+          const existingApp = await prisma.appActiveInactive.findFirst({
+            where: { AppType: appType },
+          });
+
+
+
+      
+          if (existingApp) {
+            // If the AppType exists, update the status
+            const updatedApp = await prisma.appActiveInactive.update({
+              where: { id: existingApp.id },
+              data: { status },
+            });
+      
+            return json({
+              message: 'App status updated successfully',
+              updatedApp,
+            });
+          } else {
+            const newApp = await prisma.appActiveInactive.create({
+              data: {
+                AppType: appType,
+                status
+              }
+            })
+            // If the AppType doesn't exist, create a new entry
+            // const newApp = await prisma.appActiveInactive.create({
+            //   data: {
+            //     AppType: appType,
+            //     status,
+            //   },
+            // });
+      
+            return json({
+              message: 'App status created successfully',
+              newApp,
+            });
+          }
+       
+        }catch(err) {
+          console.log(err, 'errororhas');
+          return "nothing"
+        }
     }
   } else if (request.method === "DELETE") {
     try {
@@ -720,10 +808,13 @@ const svgs = [
 export default function VolumePage() {
   const { products, totalBundle, sales, allDiscountId } = useLoaderData();
   const actionResponse = useActionData();
-  const submit = useSubmit();
+  // const submit = useSubmit();
   const navigation = useNavigation();
 
+  console.log(allDiscountId, "allDiscountId");
+
   console.log(totalBundle, "totalBundle");
+  const formRef = useRef(null);
   const [showComponent, setShowComponent] = useState(0);
   const [editState, setEditState] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -754,6 +845,7 @@ export default function VolumePage() {
     callAction: false,
     background: false,
   });
+  
   const [discountId, setDiscountId] = useState("");
   const [showPosition, setShowPosition] = useState(false);
   const [details, setDetails] = useState({});
@@ -815,14 +907,14 @@ export default function VolumePage() {
     backgroundShadow: true,
   });
 
-  const handleBtn = (item) => {
+  const handleBtn = (type,item) => {
     setShowStatus((prev) => ({
       ...prev,
-      [item]: !prev[item],
+      [type]: !prev[type],
     }));
     setShowButton((prev) => ({
       ...prev,
-      [item]: prev[item] === "Show" ? "Hide" : "Show",
+      [type]: item
     }));
   };
 
@@ -886,7 +978,7 @@ export default function VolumePage() {
   };
 
   const handleSave = () => {
-    if(selectProducts.length  > 1) {
+    if (selectProducts.length > 1) {
       notify.error("Please select only one product", {
         position: "top-center",
         style: {
@@ -894,7 +986,7 @@ export default function VolumePage() {
           color: "white",
         },
       });
-      return ;
+      return;
     }
     setIsProduct(false);
   };
@@ -908,11 +1000,11 @@ export default function VolumePage() {
     }));
   };
 
-  const handleActive = (e, item) => {
+  const handleActive = (e,item) => {
     e.preventDefault();
     setActive(false);
     setActiveApp(item);
-    useSubmit(e.target.form);
+      formRef.current.submit(); 
   };
 
   const handleDesign = () => {
@@ -1146,6 +1238,13 @@ export default function VolumePage() {
     }
   }, [actionResponse]);
 
+
+  // useEffect(() => {
+  //   if (activeApp) {
+  //     formRef.current.submit(); 
+  //   }
+  // }, [activeApp]);
+
   useEffect(() => {
     if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
@@ -1323,17 +1422,28 @@ export default function VolumePage() {
               </div>
             </div>
             {active && (
-              <ul className={styles.selectDropdown} ref={activeRef}>
-                <li data-value="option1" onClick={() => handleActive("Active")}>
-                  Active
-                </li>
-                <li
-                  data-value="option2"
-                  onClick={() => handleActive("Inactive")}
-                >
-                  Inactive
-                </li>
-              </ul>
+              <Form method="POST" ref={formRef}>
+                <input type="hidden" name="active" value={activeApp} />
+                <input
+                  type="hidden"
+                  name="discountID"
+                  value={JSON.stringify(allDiscountId?.data)}
+                />
+                <input type="hidden" name="intent" value="handleAllDiscount" />
+
+                <ul className={styles.selectDropdown}>
+                  <li 
+                  onClick={(e) => handleActive(e,"Active")}
+                  >
+                    Active
+                    </li>
+                  <li 
+                  onClick={(e) => handleActive(e, "Inactive")}
+                  >
+                      Inactive
+                      </li>
+                </ul>
+              </Form>
             )}
           </div>
         </div>
@@ -1724,13 +1834,11 @@ export default function VolumePage() {
                             </div>
 
                             {values.product === "Specific Products" && (
-                              <div 
-                              className={styles.bundle_product}
-                              >
+                              <div className={styles.bundle_product}>
                                 <div
                                   className={` ${styles.customSelect} ${styles.customTabsec} `}
                                   id="second"
-                                >  
+                                >
                                   {selectProducts.length > 0 ? (
                                     products
                                       .filter((item) =>
@@ -1802,7 +1910,6 @@ export default function VolumePage() {
                                       </div>
                                     </>
                                   )}
-                                 
                                 </div>
                               </div>
                             )}
@@ -2097,7 +2204,6 @@ export default function VolumePage() {
                                           className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                                         >
                                           <li
-                                            data-value="option1"
                                             onClick={() =>
                                               setPosition("Below Section")
                                             }
@@ -2105,7 +2211,6 @@ export default function VolumePage() {
                                             Below Section
                                           </li>
                                           <li
-                                            data-value="option2"
                                             onClick={() =>
                                               setPosition("Above Section")
                                             }
@@ -2224,17 +2329,15 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                            data-value="option1"
                                             onClick={() =>
-                                              handleBtn("titleSection")
+                                              handleBtn("titleSection", "Show")
                                             }
                                           >
                                             Show
                                           </li>
                                           <li
-                                            data-value="option2"
                                             onClick={() =>
-                                              handleBtn("titleSection")
+                                              handleBtn("titleSection", "Hide")
                                             }
                                           >
                                             Hide
@@ -2345,14 +2448,12 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                            data-value="option1"
-                                            onClick={() => handleBtn("title")}
+                                            onClick={() => handleBtn("title", "Show")}
                                           >
                                             Show
                                           </li>
                                           <li
-                                            data-value="option2"
-                                            onClick={() => handleBtn("title")}
+                                            onClick={() => handleBtn("title", "Hide")}
                                           >
                                             Hide
                                           </li>
@@ -2448,14 +2549,14 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                            data-value="option1"
-                                            onClick={() => handleBtn("tiers")}
+                                           
+                                            onClick={() => handleBtn("tiers", "Show")}
                                           >
                                             Show
                                           </li>
                                           <li
-                                            data-value="option2"
-                                            onClick={() => handleBtn("tiers")}
+                                           
+                                            onClick={() => handleBtn("tiers", "Hide")}
                                           >
                                             Hide
                                           </li>
@@ -2594,7 +2695,7 @@ export default function VolumePage() {
                                           <li
                                             data-value="option1"
                                             onClick={() =>
-                                              handleBtn("callAction")
+                                              handleBtn("callAction", "Show")
                                             }
                                           >
                                             Show
@@ -2602,7 +2703,7 @@ export default function VolumePage() {
                                           <li
                                             data-value="option2"
                                             onClick={() =>
-                                              handleBtn("callAction")
+                                              handleBtn("callAction", "Hide")
                                             }
                                           >
                                             Hide
@@ -2769,14 +2870,14 @@ export default function VolumePage() {
                                         <>
                                           <li
                                             onClick={() =>
-                                              handleBtn("textBelow")
+                                              handleBtn("textBelow", "Show")
                                             }
                                           >
                                             Show
                                           </li>
                                           <li
                                             onClick={() =>
-                                              handleBtn("textBelow")
+                                              handleBtn("textBelow", "Hide")
                                             }
                                           >
                                             Hide
@@ -2888,14 +2989,14 @@ export default function VolumePage() {
                                         <>
                                           <li
                                             onClick={() =>
-                                              handleBtn("background")
+                                              handleBtn("background", "Show")
                                             }
                                           >
                                             Show
                                           </li>
                                           <li
                                             onClick={() =>
-                                              handleBtn("background")
+                                              handleBtn("background", "Hide")
                                             }
                                           >
                                             Hide

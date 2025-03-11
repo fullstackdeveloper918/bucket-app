@@ -39,7 +39,9 @@
     "prisma": "^5.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-player": "^2.16.0",
     "remix-utils": "^8.0.0",
+    "screenfull": "^6.0.2",
     "sonner": "^1.7.2",
     "vite-tsconfig-paths": "^5.0.1"
   },

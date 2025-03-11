@@ -72,8 +72,10 @@ model Images {
 model Bundle {
   id                    Int     @id @default(autoincrement())
   isActive              Int     @default(1)
-  name                  String?
+  name                  String @unique
   displayLocation       String?
+  discount_info         Json?
+  discount_id           String?
   method                String?
   chooseAmount          Float?
   totalAmount           Float?
@@ -196,4 +198,13 @@ model VisitorAction {
   userName   String?
   actionNumber Int?  
   createdAt  DateTime @default(now())
+}
+
+
+model AppActiveInactive {
+  id   String @id @default(uuid())
+  AppType  String
+  status   Int 
+   createdAt  DateTime @default(now())
+
 }

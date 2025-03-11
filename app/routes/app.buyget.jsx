@@ -1,5 +1,5 @@
 import { TitleBar } from "@shopify/app-bridge-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import db from "../db.server";
 import styles from "../styles/main.module.css";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
@@ -28,7 +28,7 @@ import {
 } from "@remix-run/react";
 import AddProduct from "../components/BuyComponents/AddProduct";
 import { Toaster, toast as notify } from "sonner";
-import { fetchSalesData, getAllBundle } from "../api/buyxGety.server";
+import { fetchSalesData, getAllBundle, getAllDiscountId } from "../api/buyxGety.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 
 export async function loader({ request }) {
@@ -36,46 +36,47 @@ export async function loader({ request }) {
     const { admin, session } = await authenticate.admin(request);
     const { shop } = session;
 
-    // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse, salesResponse] =
+    // Perform Promise.all and wait for all three responses
+    const [graphqlResponse, totalBundleResponse, salesResponse, allIds] =
       await Promise.all([
         admin.graphql(`
-          {
-            products(first: 50) {
-              edges {
-                node {
-                  id
-                  title
-                  variants(first: 10) {
-                    edges {
-                      node {
-                        id
-                        title
-                        price
-                        sku
-                        inventoryQuantity
-                        image {
-                          src
-                          altText
-                        }
-                      }
-                    }
-                  }
-                  images(first: 5) {
-                    edges {
-                      node {
+        {
+          products(first: 50) {
+            edges {
+              node {
+                id
+                title
+                variants(first: 10) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price
+                      sku
+                      inventoryQuantity
+                      image {
                         src
                         altText
                       }
                     }
                   }
                 }
+                images(first: 5) {
+                  edges {
+                    node {
+                      src
+                      altText
+                    }
+                  }
+                }
               }
             }
           }
-        `),
+        }
+      `),
         getAllBundle(shop),
         fetchSalesData(shop),
+        getAllDiscountId(shop),
       ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
@@ -83,16 +84,19 @@ export async function loader({ request }) {
 
     const totalBundle = totalBundleResponse?.data || [];
     const sales = await salesResponse.json();
-    return json({ products, totalBundle, sales });
+
+    const allDiscountId = await allIds.json();
+
+    return json({ products, totalBundle, sales, allDiscountId });
   } catch (error) {
     console.error(error);
-    return json({
-      message: "Error occurred while fetching data",
-      error: error.message,
-      status: 500,
-    });
+    return json(
+      { message: "Error occurred while fetching data", error: error.message },
+      { status: 500 },
+    );
   }
 }
+
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -295,18 +299,16 @@ export async function action({ request }) {
         console.log(bundle_name, 'checkmybundlename')
 
      
-        const existingBundle = await db.bogoxy.findUnique({
-          where: { bundle_name: bundle_name},
-        });
+        // const existingBundle = await db.bogoxy.findUnique({
+        //   where: { bundle_name: bundle_name},
+        // });
 
-        console.log(existingBundle, 'existingBundle')
-
-        if (existingBundle) {
-          return json({
-            error: "Bundle name is already in use. Please choose a different name.",
-            status: 500,
-          });
-        }
+        // if (existingBundle) {
+        //   return json({
+        //     error: "Bundle name is already in use. Please choose a different name.",
+        //     status: 500,
+        //   });
+        // }
 
         if (bundle_id) {
           const updatedDiscount = await db.bogoxy.update({
@@ -378,6 +380,96 @@ export async function action({ request }) {
           status: 500,
         });
       }
+    } 
+    else if (intent === "handleAllDiscount") {
+      const discountId = JSON.parse(formData.get("discountID"));
+      const active = formData.get("active");
+   
+        // const deactivateDiscount = async (id) => {
+        //   const query = {
+        //     query: `mutation discountAutomaticDeactivate($id: ID!) {
+        //       discountAutomaticDeactivate(id: $id) {
+        //         automaticDiscountNode {
+        //           automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+        //         }
+        //         userErrors { field message }
+        //       }
+        //     }`,
+        //     variables: { id },
+        //   };
+
+        const activateDiscount = async (id) => {
+          const query = {
+            query: `mutation discountAutomaticActivate($id: ID!) {
+              discountAutomaticActivate(id: $id) {
+                automaticDiscountNode {
+                  automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+                }
+                userErrors { field message }
+              }
+            }`,
+            variables: { id },
+          };
+
+          return axios.post(
+            `https://${shop}/admin/api/2025-01/graphql.json`,
+            query,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": session?.accessToken,
+              },
+            }
+          );
+        };
+
+
+        try {
+          const responses = await Promise.all(discountId.map((id) => activateDiscount(id)));
+          console.log(responses?.data?.data, 'hashkar');
+          const existingApp = await prisma.appActiveInactive.findFirst({
+            where: { AppType: appType },
+          });
+
+
+          
+      
+          if (existingApp) {
+            // If the AppType exists, update the status
+            const updatedApp = await prisma.appActiveInactive.update({
+              where: { id: existingApp.id },
+              data: { status },
+            });
+      
+            return json({
+              message: 'App status updated successfully',
+              updatedApp,
+            });
+          } else {
+            const newApp = await prisma.appActiveInactive.create({
+              data: {
+                AppType: appType,
+                status
+              }
+            })
+            // If the AppType doesn't exist, create a new entry
+            // const newApp = await prisma.appActiveInactive.create({
+            //   data: {
+            //     AppType: appType,
+            //     status,
+            //   },
+            // });
+      
+            return json({
+              message: 'App status created successfully',
+              newApp,
+            });
+          }
+       
+        }catch(err) {
+          console.log(err, 'errororhas');
+          return "nothing"
+        }
     }
   } else if (request.method === "DELETE") {
     try {
@@ -529,12 +621,15 @@ const svgs = [
 ];
 
 export default function BuyGetPage() {
-  const { products, totalBundle, sales } = useLoaderData();
+  const { products, totalBundle, sales, allDiscountId } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
 
+  console.log(allDiscountId, 'allDiscountId')
+
   console.log(actionResponse, "actionResponse");
+   const formRef = useRef(null);
   const [id, setId] = useState(null);
   const [values, setValues] = useState({
     bundle_name: "Example Bundle 1",
@@ -553,23 +648,7 @@ export default function BuyGetPage() {
   const [isMonth, setIsMonth] = useState(false);
   const [month, setMonth] = useState("This Month");
 
-  const [showButton, setShowButton] = useState({
-    titleSection: "Show",
-    title: "Show",
-    tiers: "Show",
-    textBelow: "Show",
-    callAction: "Show",
-    background: "Show",
-  });
-
-  const [showStatus, setShowStatus] = useState({
-    titleSection: false,
-    title: false,
-    tiers: false,
-    textBelow: false,
-    callAction: false,
-    background: false,
-  });
+ 
 
   const [discountId, setDiscountId] = useState("");
   const [getProducts, setGetProducts] = useState([]);
@@ -593,6 +672,26 @@ export default function BuyGetPage() {
   const [section, setSection] = useState("Buy Buttons");
 
   const [position, setPosition] = useState("Below Section");
+
+  const [showButton, setShowButton] = useState({
+        titleSection: "Show",
+        title: "Show",
+        productTitle: "Show",
+        bundleCost: "Show",
+        callAction: "Show",
+        textBelow: "Show",
+        background: "Show",
+      });
+  
+     const [showStatus, setShowStatus] = useState({
+      titleSection:false,
+      title:false,
+      productTitle:false,
+      bundleCost:false,
+      callAction:false,
+      textBelow:false,
+      background:false,
+        });
 
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
@@ -634,6 +733,18 @@ export default function BuyGetPage() {
     backgroundColor: "#FFFFFF",
     backgroundShadow: true,
   });
+
+  const handleBtn = (type,item) => {
+    console.log(type, item,'item kya hai')
+    setShowStatus((prev) => ({
+      ...prev,
+      [type]: !prev[type],
+    }));
+    setShowButton((prev) => ({
+      ...prev,
+      [type]: item
+    }));
+  };
 
   const handleMonth = (item) => {
     setMonth(item);
@@ -846,9 +957,11 @@ export default function BuyGetPage() {
     }
   };
 
-  const handleActive = (item) => {
-    setActiveApp(item);
+  const handleActive = (e,item) => {
+    e.preventDefault();
     setActive(false);
+    setActiveApp(item);
+      formRef.current.submit(); 
   };
 
   const handleCopy = (id) => {
@@ -1036,6 +1149,13 @@ export default function BuyGetPage() {
     }
   };
 
+  const handleShowStatus = (item) => {
+    setShowStatus((prev) => ({
+      ...prev,
+      [item]: !prev[item],
+    }));
+  };
+
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
 
@@ -1121,17 +1241,28 @@ export default function BuyGetPage() {
               </div>
             </div>
             {active && (
+              <Form method="POST" ref={formRef}>
+              <input type="hidden" name="active" value={activeApp} />
+              <input
+                type="hidden"
+                name="discountID"
+                value={JSON.stringify(allDiscountId?.data)}
+              />
+              <input type="hidden" name="intent" value="handleAllDiscount" />
+
               <ul className={styles.selectDropdown}>
-                <li data-value="option1" onClick={() => handleActive("Active")}>
-                  Active
-                </li>
-                <li
-                  data-value="option2"
-                  onClick={() => handleActive("Inactive")}
+                <li 
+                onClick={(e) => handleActive(e,"Active")}
                 >
-                  Inactive
-                </li>
+                  Active
+                  </li>
+                <li 
+                onClick={(e) => handleActive(e, "Inactive")}
+                >
+                    Inactive
+                    </li>
               </ul>
+            </Form>
             )}
           </div>
         </div>
@@ -2032,18 +2163,55 @@ export default function BuyGetPage() {
                                     className={`${styles.headingWrapper} ${styles.heading_img}`}
                                   >
                                     <h4>Above title section</h4>
-                                    <button
-                                      type="button"
-                                      class={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() =>
+                                        handleShowStatus("titleSection")
+                                      }
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={downArrow}
-                                        width="20"
-                                        height="20"
-                                      />
-                                    </button>
+                                      {showButton.titleSection}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.titleSection && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() =>
+                                              handleBtn("titleSection", "Show")
+                                            }
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() =>
+                                              handleBtn("titleSection", "Hide")
+                                            }
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
+                                  </div>
+
+                                  {showButton.titleSection === "Show" && (
+                                    <>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="title_section_text">
                                       Text
@@ -2103,6 +2271,8 @@ export default function BuyGetPage() {
                                       />
                                     </div>
                                   </div>
+                                    </>
+                                    )}
                                 </div>
 
                                 <div className={styles.divideDiv}>
@@ -2110,19 +2280,49 @@ export default function BuyGetPage() {
                                     className={`${styles.headingWrapper} ${styles.heading_img}`}
                                   >
                                     <h4>Title</h4>
-                                    <button
-                                      type="button"
-                                      class={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("title")}
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={downArrow}
-                                        width="20"
-                                        height="20"
-                                      />
-                                    </button>
-                                  </div>
+                                      {showButton.title}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
 
+                                    {showStatus.title && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("title", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("title", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
+                                  </div>
+                                  {showButton.title === "Show" && (
+                                  <>
+                                 
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="title_text">Text</label>
                                     <input
@@ -2173,6 +2373,7 @@ export default function BuyGetPage() {
                                       />
                                     </div>
                                   </div>
+                                  </>)}
                                 </div>
 
                                 <div className={styles.divideDiv}>
@@ -2180,19 +2381,51 @@ export default function BuyGetPage() {
                                     className={`${styles.headingWrapper} ${styles.heading_img}`}
                                   >
                                     <h4>Product Title</h4>
-                                    <button
-                                      type="button"
-                                      class={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("productTitle")}
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={downArrow}
-                                        width="20"
-                                        height="20"
-                                      />
-                                    </button>
+                                      {showButton.productTitle}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.productTitle && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("productTitle", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("productTitle", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                                   </div>
 
+                                  {showButton.productTitle === "Show" && (
+
+                                 
+                                  <>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="productSize">Size</label>
 
@@ -2231,6 +2464,7 @@ export default function BuyGetPage() {
                                       />
                                     </div>
                                   </div>
+                                  </> )}
                                 </div>
 
                                 <div className={styles.divideDiv}>
@@ -2238,18 +2472,50 @@ export default function BuyGetPage() {
                                     className={`${styles.headingWrapper} ${styles.heading_img}`}
                                   >
                                     <h4>Bundle Cost</h4>
-                                    <button
-                                      type="button"
-                                      class={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("bundleCost")}
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={downArrow}
-                                        width="20"
-                                        height="20"
-                                      />
-                                    </button>
+                                      {showButton.bundleCost}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.bundleCost && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("bundleCost", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("bundleCost", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
+                                  </div>
+
+
+                                  {showButton.bundleCost === "Show" && (
+                                    <>
 
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="bundleCostSize">Size</label>
@@ -2327,6 +2593,8 @@ export default function BuyGetPage() {
                                       </div>
                                     </div>
                                   </div>
+                                  </>
+                      )}
                                 </div>
 
                                 <div className={styles.divideDiv}>
@@ -2334,18 +2602,52 @@ export default function BuyGetPage() {
                                     className={`${styles.headingWrapper} ${styles.heading_img}`}
                                   >
                                     <h4>Call To Action Button</h4>
-                                    <button
-                                      type="button"
-                                      class={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("callAction")}
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={downArrow}
-                                        width="20"
-                                        height="20"
-                                      />
-                                    </button>
+                                      {showButton.callAction}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.callAction && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("callAction", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("callAction", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
+                                  </div>
+
+
+                                  {
+
+showButton.callAction === "Show" && (
+                                  <>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="call_action_text">
                                       Text
@@ -2462,24 +2764,56 @@ export default function BuyGetPage() {
                                       />
                                     </div>
                                   </div>
+                                  </>  )}
                                 </div>
 
                                 <div className={styles.divideDiv}>
                                   <div className={styles.heading_img}>
                                     <h3>Text Below CTA</h3>{" "}
-                                    <button
-                                      type="button"
-                                      className={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("textBelow")}
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={dropdown}
-                                        width={20}
-                                        height={20}
-                                      />
-                                    </button>
+                                      {showButton.textBelow}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.textBelow && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("textBelow", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("textBelow", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                                   </div>
 
+                                  {
+                                showButton.textBelow === "Show" && (
+                                  <>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="text_below_text">
                                       Text
@@ -2538,23 +2872,54 @@ export default function BuyGetPage() {
                                       />
                                     </div>
                                   </div>
+                                  </>)}
                                 </div>
 
                                 <div className={styles.divideDiv}>
                                   <div className={styles.heading_img}>
                                     <h3>Background</h3>{" "}
-                                    <button
-                                      type="button"
-                                      className={styles.btn_one}
+                                    <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("background")}
+                                      className={styles.butttonsTab}
                                     >
-                                      Show{" "}
-                                      <img
-                                        src={dropdown}
-                                        width={20}
-                                        height={20}
-                                      />
-                                    </button>
+                                      {showButton.background}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.background && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("background", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("background", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
                                   </div>
+                                  </div>
+                                  { showButton.background === "Show" && (
+                                  <>
                                   <div className={styles.input_labelCustomize}>
                                     <label htmlFor="background_color">
                                       Color
@@ -2596,6 +2961,7 @@ export default function BuyGetPage() {
                                       Display “Save” tag
                                     </label>
                                   </div>
+                                  </>)}
                                 </div>
                               </>
 

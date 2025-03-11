@@ -18,6 +18,7 @@ import Search from "../components/Search/Search";
 import EnableModal from "../components/EnabelModal/EnableModal";
 import { authenticate } from "../shopify.server";
 import { Form, json, useLoaderData } from "@remix-run/react";
+import ReactPlayer from "react-player";
 
 export async function loader({ request }) {
   try {
@@ -61,59 +62,124 @@ export async function action({ request }) {
   }
 }
 
+const format = (seconds) => {
+  if (isNaN(seconds)) {
+    return `00:00`;
+  }
+  const date = new Date(seconds * 1000);
+  const hh = date.getUTCHours();
+  const mm = date.getUTCMinutes();
+  const ss = date.getUTCSeconds().toString().padStart(2, "0");
+  if (hh) {
+    return `${hh}:${mm.toString().padStart(2, "0")}:${ss}`;
+  }
+  return `${mm}:${ss}`;
+};
+
 export default function ProfitsPage() {
   const data = useLoaderData();
   const videoRef = useRef(null);
   const playPromise = useRef();
 
   const [isProduct, setIsProduct] = useState(false);
-  const [shareReward, setShareReward] = useState(false)
+  const [shareReward, setShareReward] = useState(false);
   const [component, setComponent] = useState("first");
   const [show, setShow] = useState("visitor");
+  const [duration, setDuration] = useState(0);
+  
   const [videoUrl, setVideoUrl] = useState(null);
   const [playVideo, setPlayVideo] = useState(false);
   const [details, setDetails] = useState({});
-  const [videoState, setVideoState] = useState({
+  const [state, setState] = useState({
+    pip: false,
     playing: true,
-    muted: false,
-    volume: 0.5,
+    controls: false,
+    light: false,
+
+    muted: true,
     played: 0,
+    duration: 0,
+    playbackRate: 1.0,
+    volume: 1,
+    loop: false,
     seeking: false,
-    Buffer: true,
   });
   const [isModal, setIsModal] = useState(false);
 
   const [activeApp, setActiveApp] = useState("Active");
   const [active, setActive] = useState(false);
 
+  const {
+    playing,
+    controls,
+    light,
+    muted,
+    loop,
+    playbackRate,
+    pip,
+    played,
+    seeking,
+    volume,
+  } = state;
+
   const handleActive = (item) => {
     setActiveApp(item);
     setActive(false);
   };
+  const handleProgress = (changeState) => {
+    if (!state.seeking) {
+      setState({ ...state, ...changeState });
+    }
+  };
+
+  const handleDuration = (duration) => {
+    console.log(duration, 'checkdura');
+  
+    // Check if duration is a valid number and not Infinity
+    if (duration !== Infinity && !isNaN(duration)) {
+      setDuration(duration);
+    } else {
+      // Handle the case where the duration is not valid
+      console.error("Invalid duration:", duration);
+    }
+  };
 
   const handlePlay = (item) => {
     setDetails(item);
-    // setVideoUrl(`${item?.videoURL}`);
     setComponent("second");
   };
 
-  const playPauseHandler = () => {
-    setVideoState({ ...videoState, playing: !videoState.playing });
+  const handlePlayPause = () => {
+    setState({ ...state, playing: !state.playing });
   };
 
-  const togglePlayHandler = useCallback(() => {
-    const video = videoRef.current;
+  const handleRewind = () => {
+    videoRef.current.seekTo(videoRef.current.getCurrentTime() - 2);
+  };
 
-    if (video.paused || video.ended) {
-      video.play();
-      setPlayVideo(true);
-      return;
-    } else {
-      video.pause();
-      setPlayVideo(false);
-      return;
-    }
-  }, []);
+  const handleFastForward = () => {
+    videoRef.current.seekTo(videoRef.current.getCurrentTime() + 2);
+  };
+
+ 
+
+  const currentTime =
+    videoRef && videoRef.current ? videoRef.current.getCurrentTime() : "00:00";
+
+    const elapsedTime = format(currentTime);
+const totalDuration = format(duration);
+
+   console.log(elapsedTime, "elapsedTime");
+   console.log(totalDuration, "totalDuration");
+
+  // const duration =
+  //   videoRef && videoRef.current ? videoRef.current.getDuration() : "00:00";
+  // const elapsedTime = format(currentTime);
+
+  // const totalDuration = format(duration);
+
+  // console.log(elapsedTime, "elapsedTime");
+
 
   return (
     <>
@@ -353,16 +419,15 @@ export default function ProfitsPage() {
                 </div>
               </div>
             ) : (
-              
               <section>
-              <div className={styles.VisitorsReplay}>
-                <img src={NoProduct} width={500} height={500} />
-                <div className={styles.recodingconntent}>
-                  <h2>No Recordings Found</h2>
-                  <p>Looks like it's quiet here, no recordings yet!</p>
+                <div className={styles.VisitorsReplay}>
+                  <img src={NoProduct} width={500} height={500} />
+                  <div className={styles.recodingconntent}>
+                    <h2>No Recordings Found</h2>
+                    <p>Looks like it's quiet here, no recordings yet!</p>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
             )}
           </>
         )}
@@ -450,19 +515,39 @@ export default function ProfitsPage() {
                 <div className={styles.playlistView}>
                   <div>
                     <div className={styles.relativeDiv}>
-                      <video
+                      <ReactPlayer
                         ref={videoRef}
-                        src={`https://organ-obesity-divorce-duncan.trycloudflare.com/${details.videoURL}`}
+                        className={styles.videoPlayerImg}
+                        url={`https://patents-indicates-physically-occasional.trycloudflare.com/${details.videoURL}`}
+                        pip={pip}
+                        playing={playing}
+                        controls={true}
+                        light={light}
+                        loop={loop}
+                        playbackRate={playbackRate}
+                        volume={volume}
+                        muted={muted}
+                        onProgress={handleProgress}
+                        onDuration={handleDuration}
+                        
+                        config={{
+                          file: {
+                            attributes: {
+                              crossOrigin: "anonymous",
+                            },
+                          },
+                        }}
+                      />
+
+                      {/* <video
+                        ref={videoRef}
+                        src={`https://patents-indicates-physically-occasional.trycloudflare.com/${details.videoURL}`}
                         autoPlay
                         controls
                         onClick={togglePlayHandler}
                         className={styles.videoPlayerImg}
                       ></video>
-                      {/* <img
-                        src={videoImgplayer}
-                        alt="videoImgplayer"
-                        className={styles.videoPlayerImg}
-                      /> */}
+                      */}
                     </div>
                   </div>
 
@@ -479,19 +564,21 @@ export default function ProfitsPage() {
                       </div>
 
                       <div className={styles.button}>
-                        <img
-                          src={forward}
-                          alt="forward"
-                          width={20}
-                          height={20}
-                        />
+                        <button onClick={handleRewind}>
+                          <img
+                            src={forward}
+                            alt="forward"
+                            width={20}
+                            height={20}
+                          />
+                        </button>
                       </div>
                       <div className="button">
                         <button
-                          onClick={togglePlayHandler}
+                          onClick={handlePlayPause}
                           style={{ cursor: "pointer" }}
                         >
-                          {playVideo ? (
+                          {state.playing ? (
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               id="icon"
@@ -526,20 +613,24 @@ export default function ProfitsPage() {
                         </button>
                       </div>
                       <div className="button">
-                        <img
-                          src={nextPlay}
-                          alt="forward"
-                          width={20}
-                          height={20}
-                        />
+                        <button onClick={handleFastForward}>
+                          <img
+                            src={nextPlay}
+                            alt="forward"
+                            width={20}
+                            height={20}
+                          />
+                        </button>
                       </div>
                       <div className="button">
-                        <img
-                          src={maximiz}
-                          alt="forward"
-                          width={20}
-                          height={20}
-                        />
+                        <button>
+                          <img
+                            src={maximiz}
+                            alt="forward"
+                            width={20}
+                            height={20}
+                          />
+                        </button>
                       </div>
                     </div>
 
@@ -591,61 +682,63 @@ export default function ProfitsPage() {
         {isProduct && <AddProduct onClose={() => setIsProduct(false)} />}
       </div>
 
-      
-
       {/* {shareReward && */}
-      
-      <section className={styles.modal_overlay}>
-        <div className={`${styles.popup} ${styles.UnlockReward}`}>
-          <button className={styles.closeBtn}>&times;</button>
-          <p className={styles.timeInfo}>Takes Less Than 3 Minutes</p>
-          <h2>
-            Share & Unlock Reward! <span>:mega:</span>
-          </h2>
-          <p className={styles.description}>
-            To access <strong>5,000 More Recordings</strong> - share the app
-            with a friend! They install the app = you get the reward!
-          </p>
-          <div className={styles.steps}>
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>
-                <span className={styles.nuberstep}>1</span>
+
+      {shareReward && (
+        <section className={styles.modal_overlay}>
+          <div className={`${styles.popup} ${styles.UnlockReward}`}>
+            <button className={styles.closeBtn}>&times;</button>
+            <p className={styles.timeInfo}>Takes Less Than 3 Minutes</p>
+            <h2>
+              Share & Unlock Reward! <span>:mega:</span>
+            </h2>
+            <p className={styles.description}>
+              To access <strong>5,000 More Recordings</strong> - share the app
+              with a friend! They install the app = you get the reward!
+            </p>
+            <div className={styles.steps}>
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>
+                  <span className={styles.nuberstep}>1</span>
                 </div>
-              <div className={styles.stepInfo}>
-                <h3>Step 1</h3>
-                <p>Copy your referral link</p>
+                <div className={styles.stepInfo}>
+                  <h3>Step 1</h3>
+                  <p>Copy your referral link</p>
+                </div>
+              </div>
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>
+                  <span className={styles.nuberstep}>2</span>
+                </div>
+                <div className={styles.stepInfo}>
+                  <h3>Step 2</h3>
+                  <p>Share the app with a friend</p>
+                </div>
+              </div>
+              <div className={styles.step}>
+                <div className={styles.stepNumber}>
+                  <span className={styles.nuberstep}>3</span>
+                </div>
+                <div className={styles.stepInfo}>
+                  <h3>Step 3</h3>
+                  <p>
+                    They install the app - we will notify you and unlock the
+                    reward!
+                  </p>
+                </div>
               </div>
             </div>
-            <div className={styles.step}>
-              <div className={styles.stepNumber}>
-                <span className={styles.nuberstep}>2</span>
-                </div>
-              <div className={styles.stepInfo}>
-                <h3>Step 2</h3>
-                <p>Share the app with a friend</p>
-              </div>
-            </div>
-            <div className={styles.step}>
-              <div className={styles.stepNumber}><span className={styles.nuberstep}>3</span></div>
-              <div className={styles.stepInfo}>
-                <h3>Step 3</h3>
-                <p>
-                  They install the app - we will notify you and unlock the
-                  reward!
-                </p>
-              </div>
+            <div className={styles.linkContainer}>
+              <input
+                type="text"
+                value="https://apps.shopify.com/example"
+                readOnly
+              />
+              <button className={styles.copyBtn}>Copy</button>
             </div>
           </div>
-          <div className={styles.linkContainer}>
-            <input
-              type="text"
-              value="https://apps.shopify.com/example"
-              readOnly
-            />
-            <button className={styles.copyBtn}>Copy</button>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
       {/* } */}
       {isModal && <EnableModal />}
     </>

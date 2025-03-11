@@ -1,7 +1,7 @@
 import { Text } from "@shopify/polaris";
 import db from "../db.server";
 import { TitleBar } from "@shopify/app-bridge-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
 import Productpreview from "../routes/assets/product_sample.png";
@@ -12,7 +12,6 @@ import DorpDownIcon from "../routes/assets/dropDown.svg";
 import styles from "../styles/main.module.css";
 import deletedIcon from "../routes/assets/deleted.svg";
 import collectedIcon from "../../app/routes/assets/collected_icon.png";
-import dropdown from "../routes/assets/drop_downImg.svg";
 import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
 import {
@@ -25,20 +24,19 @@ import {
 } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
-import { fetchSalesData, getAllBundle } from "../api/bundle.server";
+import { fetchSalesData, getAllBundle, getAllDiscountId } from "../api/bundle.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 import AddProduct from "../components/BundleModal/AddProduct";
 import axios from "axios";
 import Loader from "../components/Loader/Loader";
-
 
 export async function loader({ request }) {
   try {
     const { admin, session } = await authenticate.admin(request);
     const { shop } = session;
 
-    // Perform Promise.all and wait for both responses
-    const [graphqlResponse, totalBundleResponse, salesResponse] =
+    // Perform Promise.all and wait for all three responses
+    const [graphqlResponse, totalBundleResponse, salesResponse, allIds] =
       await Promise.all([
         admin.graphql(`
         {
@@ -77,6 +75,7 @@ export async function loader({ request }) {
       `),
         getAllBundle(shop),
         fetchSalesData(shop),
+        getAllDiscountId(shop),
       ]);
 
     const parsedGraphqlResponse = await graphqlResponse.json();
@@ -84,14 +83,16 @@ export async function loader({ request }) {
 
     const totalBundle = totalBundleResponse?.data || [];
     const sales = await salesResponse.json();
-    return json({ products, totalBundle, sales });
+
+    const allDiscountId = await allIds.json();
+
+    return json({ products, totalBundle, sales, allDiscountId });
   } catch (error) {
     console.error(error);
-    return json({
-      message: "Error occurred while fetching data",
-      error: error.message,
-      status: 500,
-    });
+    return json(
+      { message: "Error occurred while fetching data", error: error.message },
+      { status: 500 },
+    );
   }
 }
 
@@ -101,15 +102,21 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+
+  if (request.method === "POST") {
   if (intent === "stepThird") {
     const bundle_id = formData.get("bundle_id");
     const name = formData.get("bundle_name");
     const products = formData.get("selectProducts");
+    const selectProducts = JSON.parse(products);
     const position = formData.get("position");
     const section = formData.get("section");
     const displayLocation = formData.get("displayBundle");
     const method = formData.get("discount");
     const chooseAmount = formData.get("amount");
+
+   
+
 
     const title_section = {
       text: formData.get("titleSectionText"),
@@ -150,73 +157,246 @@ export async function action({ request }) {
       shadow: formData.get("backgroundShadow"),
     };
 
+    const result = [];
+    selectProducts.forEach((product) => {
+      product.variants.forEach((variantId) => {
+        result.push({
+          option1: variantId,
+          price: "3.05",
+          compare_at_price: "5.02",
+        });
+      });
+    });
+
     try {
+      let productData = JSON.stringify({
+        product: {
+          title:  name,
+          body_html: "<strong>Good snowboard!</strong>",
+          vendor: "Burton",
+          product_type: "Snowboard",
+          status: "active",
+          tags: "dddfdfs",
+          variants: result,
+        },
+      });
+      
+      console.log("shoptest",shop)
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2024-10/products.json`,
+        headers: {
+          "X-Shopify-Access-Token": session?.accessToken,
+          "Content-Type": "application/json",
+        },
+        data: productData,
+      };
+
+      let productResponse = await axios.request(config);
+      console.log(
+        productResponse?.data?.product?.admin_graphql_api_id,
+        "hence productResponse",
+      );
+      let data;
+
+
+
+      if (method === "Percentage") {
+        data = JSON.stringify({
+          query: `mutation CreateVolumeDiscount($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
+  automaticDiscountNode {
+    id
+    automaticDiscount {
+      ... on DiscountAutomaticBasic {
+        title
+        startsAt
+        endsAt
+        customerGets {
+          items {
+            ... on DiscountProducts {
+              products(first: 10) {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+          }
+          value {
+            ... on DiscountPercentage {
+              percentage
+            }
+          }
+        }
+      }
+    }
+  }
+  userErrors {
+    field
+    message
+  }
+}
+}`,
+          variables: {
+            automaticBasicDiscount: {
+              title: name,
+              startsAt: "2025-01-07T01:28:55-05:00",
+              minimumRequirement: {
+                subtotal: {
+                  greaterThanOrEqualToSubtotal: 1,
+                },
+              },
+              customerGets: {
+                value: {
+                  percentage: parseFloat(chooseAmount)/ 100,
+                },
+                items: {
+                  products: {
+                    productsToAdd: productResponse?.data?.product?.admin_graphql_api_id,
+                  },
+                },
+              },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: true,
+                orderDiscounts: true,
+              },
+            },
+          },
+        });
+      } else if(method === "Fixed Amount") {
+        data = JSON.stringify({
+          query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+            discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
+              automaticDiscountNode {
+                id
+                automaticDiscount {
+                  ... on DiscountAutomaticBasic {
+                    title
+                    startsAt
+                    combinesWith { productDiscounts shippingDiscounts orderDiscounts }
+                    minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } }
+                    customerGets {
+                      value { ... on DiscountAmount { amount { amount currencyCode } } }
+                      items { ... on AllDiscountItems { allItems } }
+                    }
+                  }
+                }
+              }
+              userErrors { field code message }
+            }
+          }`,
+          variables: {
+            automaticBasicDiscount: {
+              title: name,
+              startsAt: "2025-01-07T01:28:55-05:00",
+              minimumRequirement: {
+                quantity: {
+                  greaterThanOrEqualToQuantity: "1",
+                },
+              },
+              customerGets: {
+                value: {
+                  discountAmount: {
+                    amount:parseFloat(chooseAmount),
+                    appliesOnEachItem: false,
+                  },
+                },
+                items: {
+                  products: {
+                    productsToAdd: productResponse?.data?.product?.admin_graphql_api_id,
+                  },
+                },
+              },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: true,
+                orderDiscounts: true,
+              },
+            },
+          },
+        });
+      }
+
+      
+
+      let discountconfig = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2025-01/graphql.json`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
+        data: data,
+      };
+
+        const discountResponse = await axios.request(discountconfig);
+
+        console.log(discountResponse?.data?.errors, 'discountResponse')
+        const discount_id = discountResponse?.data?.data?.discountAutomaticBasicCreate?.automaticDiscountNode?.id ;
+        const discount_info = discountResponse?.data?.data?.discountAutomaticBasicCreate ;
+    
+
+      const bundleData = {
+        name,
+        displayLocation,
+        method,
+        discount_id: discount_id,
+        discount_info: discount_info,
+        chooseAmount: parseFloat(chooseAmount),
+        products: selectProducts,
+        position,
+        section,
+        title_section,
+        title,
+        product,
+        bundle_cost,
+        call_to_action_button,
+        text_below_cta,
+        backgroud,
+        domainName: shop,
+      };
+
       if (bundle_id) {
         const updatedDiscount = await db.bundle.update({
           where: { id: parseInt(bundle_id) },
-          data: {
-            name,
-            displayLocation,
-            method,
-            chooseAmount: parseFloat(chooseAmount),
-            products,
-            position,
-            section,
-            title_section,
-            title,
-            product,
-            bundle_cost,
-            call_to_action_button,
-            text_below_cta,
-            backgroud,
-            domainName: shop,
-          },
+          data: bundleData,
         });
 
         return json({
-          message: "Bundle Updated Successfully",
+          message: "Bundle updated successfully",
           data: updatedDiscount,
           status: 200,
           step: 4,
           activeTab: "Return",
         });
-      } else {
-        const savedDiscount = await db.bundle.create({
-          data: {
-            name,
-            displayLocation,
-            method,
-            chooseAmount: parseFloat(chooseAmount),
-            products,
-            position,
-            section,
-            title_section,
-            title,
-            product,
-            bundle_cost,
-            call_to_action_button,
-            text_below_cta,
-            backgroud,
-            domainName: shop,
-          },
-        });
-        return json({
-          message: "Bundle created successfully",
-          data: savedDiscount,
-          status: 200,
-          step: 4,
-          activeTab: "Return",
-        });
       }
+
+      const savedDiscount = await db.bundle.create({
+        data: bundleData,
+      });
+
+      return json({
+        message: "Bundle created successfully",
+        data: savedDiscount,
+        status: 200,
+        step: 4,
+        activeTab: "Return",
+      });
     } catch (error) {
+      console.log("Error encountered:", error);
       return json({
         message: "Failed to process the request",
         error: error.message,
         status: 500,
       });
     }
-  } else if (intent === "deactivate") {
-    console.log(formData.get("checkbox"), "see them");
+  } 
+  else if (intent === "deactivate") {
     let data = JSON.stringify({
       query:
         "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
@@ -246,8 +426,98 @@ export async function action({ request }) {
       });
 
     return undefined;
+  } 
+  else if (intent === "handleAllDiscount") {
+    const discountId = JSON.parse(formData.get("discountID"));
+    const active = formData.get("active");
+ 
+      // const deactivateDiscount = async (id) => {
+      //   const query = {
+      //     query: `mutation discountAutomaticDeactivate($id: ID!) {
+      //       discountAutomaticDeactivate(id: $id) {
+      //         automaticDiscountNode {
+      //           automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+      //         }
+      //         userErrors { field message }
+      //       }
+      //     }`,
+      //     variables: { id },
+      //   };
 
-  } else if (request.method === "DELETE") {
+      const activateDiscount = async (id) => {
+        const query = {
+          query: `mutation discountAutomaticActivate($id: ID!) {
+            discountAutomaticActivate(id: $id) {
+              automaticDiscountNode {
+                automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+              }
+              userErrors { field message }
+            }
+          }`,
+          variables: { id },
+        };
+
+        return axios.post(
+          `https://${shop}/admin/api/2025-01/graphql.json`,
+          query,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "X-Shopify-Access-Token": session?.accessToken,
+            },
+          }
+        );
+      };
+
+
+      try {
+        const responses = await Promise.all(discountId.map((id) => activateDiscount(id)));
+        console.log(responses?.data?.data, 'hashkar');
+        const existingApp = await prisma.appActiveInactive.findFirst({
+          where: { AppType: appType },
+        });
+
+
+        
+    
+        if (existingApp) {
+          // If the AppType exists, update the status
+          const updatedApp = await prisma.appActiveInactive.update({
+            where: { id: existingApp.id },
+            data: { status },
+          });
+    
+          return json({
+            message: 'App status updated successfully',
+            updatedApp,
+          });
+        } else {
+          const newApp = await prisma.appActiveInactive.create({
+            data: {
+              AppType: appType,
+              status
+            }
+          });
+          // If the AppType doesn't exist, create a new entry
+          // const newApp = await prisma.appActiveInactive.create({
+          //   data: {
+          //     AppType: appType,
+          //     status,
+          //   },
+          // });
+    
+          return json({
+            message: 'App status created successfully',
+            newApp,
+          });
+        }
+     
+      }catch(err) {
+        console.log(err, 'errororhas');
+        return "nothing"
+      }
+  }
+ } else if (request.method === "DELETE") {
     try {
       const domainName = shop;
       const productId = formData.get("product_id");
@@ -382,11 +652,12 @@ const svgs = [
 ];
 
 export default function PlansPage() {
-  const { products, totalBundle, sales } = useLoaderData();
+  const { products, totalBundle, sales, allDiscountId } = useLoaderData();
   const submit = useSubmit();
 
   const actionResponse = useActionData();
   const navigation = useNavigation();
+  const formRef = useRef(null);
   const [activeTab, setActiveTab] = useState("Home");
   const [position, setPosition] = useState("Below Section");
   const [activeApp, setActiveApp] = useState("Active");
@@ -409,6 +680,26 @@ export default function PlansPage() {
   const [id, setId] = useState(null);
   const [details, setDetails] = useState({});
 
+   const [showButton, setShowButton] = useState({
+      titleSection: "Show",
+      title: "Show",
+      productTitle: "Show",
+      bundleCost: "Show",
+      callAction: "Show",
+      textBelow: "Show",
+      background: "Show",
+    });
+
+   const [showStatus, setShowStatus] = useState({
+    titleSection:false,
+    title:false,
+    productTitle:false,
+    bundleCost:false,
+    callAction:false,
+    textBelow:false,
+    background:false,
+      });
+
   const [values, setValues] = useState({
     bundle_name: "Example Bundle 1",
     displayBundle: "Bundle Product Pages",
@@ -422,7 +713,6 @@ export default function PlansPage() {
       discount: item,
     }));
   };
-  
 
   const handleOnChange = (e, card) => {
     console.log(card, "card check hee");
@@ -476,6 +766,18 @@ export default function PlansPage() {
     backgroundColor: "#FFFFFF",
     backgroundShadow: true,
   });
+
+
+  const handleBtn = (type,item) => {
+    setShowStatus((prev) => ({
+      ...prev,
+      [type]: !prev[type],
+    }));
+    setShowButton((prev) => ({
+      ...prev,
+      [type]: item
+    }));
+  };
 
   const handleEdit = (item) => {
     setDetails(item);
@@ -558,7 +860,7 @@ export default function PlansPage() {
   };
 
   const addProductSection = () => {
-    console.log(productSections, 'addProductSection')
+    console.log(productSections, "addProductSection");
     setProductSections((prevSections) => [
       ...prevSections,
       { id: prevSections.length + 1 },
@@ -601,7 +903,6 @@ export default function PlansPage() {
 
   const handleMonth = (item) => {
     setMonth(item);
-    
   };
 
   const handleCreate = () => {
@@ -609,6 +910,22 @@ export default function PlansPage() {
     setShowComponent(1);
     setShowPage("first");
   };
+
+  const handleActive = (e,item) => {
+    e.preventDefault();
+    setActive(false);
+    setActiveApp(item);
+    formRef.current.submit(); 
+  };
+
+  const handleShowStatus = (item) => {
+    setShowStatus((prev) => ({
+      ...prev,
+      [item]: !prev[item],
+    }));
+  };
+
+
 
   const handleSecond = () => {
     if (values.discount === "Percentage") {
@@ -727,9 +1044,12 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
+
   useEffect(() => {
     if (showEdit) {
-      setId(details.id);
+      console.log(details, 'checlmine')
+      setSelectedPrducts(details?.products)
+       setId(details.id);
       setValues((prev) => ({
         ...prev,
         bundle_name: details.name,
@@ -738,14 +1058,14 @@ export default function PlansPage() {
         discount: details.method,
       }));
       setChecked(details.isActive === 1 ? true : false);
-      setSelectedPrducts(JSON.parse(details.products));
+      
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
         ...prev,
-        titleSectionText: details.title_section.text,
-        titleSectionSize: details.title_section.size,
-        titleSectionColor: details.title_section.color,
+        titleSectionText: details?.title_section?.text,
+        titleSectionSize: details?.title_section?.size,
+        titleSectionColor: details?.title_section?.color
       }));
       seTitle((prev) => ({
         ...prev,
@@ -811,12 +1131,20 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
-
-
   const handleAdd = (index) => {
-    setIsProduct(true)
-    console.log(index, 'index')
-  }
+    setIsProduct(true);
+    console.log(selectProducts);
+  };
+
+  const handleDeleteProducts = (deletedItem) => {
+    console.log(deletedItem?.node?.id, "deleted");
+    console.log(selectProducts, "september");
+    const updatedProducts = selectProducts.filter(
+      (item) => item?.productId !== deletedItem?.node?.id,
+    );
+    console.log(updatedProducts, "updated");
+    setSelectedPrducts(updatedProducts);
+  };
 
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
@@ -904,20 +1232,28 @@ export default function PlansPage() {
               </div>
             </div>
             {active && (
+              <Form method="POST" ref={formRef}>
+              <input type="hidden" name="active" value={activeApp} />
+              <input
+                type="hidden"
+                name="discountID"
+                value={JSON.stringify(allDiscountId?.data)}
+              />
+              <input type="hidden" name="intent" value="handleAllDiscount" />
+
               <ul className={styles.selectDropdown}>
-                <li
-                  data-value="option1"
-                  // onClick={() => handleActive("Active")}
+                <li 
+                onClick={(e) => handleActive(e,"Active")}
                 >
                   Active
-                </li>
-                <li
-                  data-value="option2"
-                  // onClick={() => handleActive("Inactive")}
+                  </li>
+                <li 
+                onClick={(e) => handleActive(e, "Inactive")}
                 >
-                  Inactive
-                </li>
+                    Inactive
+                    </li>
               </ul>
+            </Form>
             )}
           </div>
         </div>
@@ -940,14 +1276,12 @@ export default function PlansPage() {
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._sum?.total || 0}{" "}
-                             
                             </Text>
                           </>
                         ) : (
                           <>
                             <Text as="h3" variant="heading2xl">
                               {sales[0]?._avg?.total || 0}{" "}
-                          
                             </Text>
                           </>
                         )}
@@ -1369,8 +1703,10 @@ export default function PlansPage() {
                                               <h4>14K Gold Necklace</h4>
                                               <button
                                                 type="button"
-                                                onClick={() =>
-                                                  setSelectedPrducts([])
+                                                onClick={
+                                                  () =>
+                                                    handleDeleteProducts(item)
+                                                  // setSelectedPrducts([])
                                                 }
                                                 className={styles.deletedBtn}
                                               >
@@ -1394,7 +1730,6 @@ export default function PlansPage() {
                                           color: "blue",
                                         }}
                                         className={styles.inputUpload}
-                                        // onClick={() => setIsProduct(true)}
                                         onClick={() => handleAdd(index)}
                                       >
                                         <span>+</span>Add Product
@@ -1576,7 +1911,11 @@ export default function PlansPage() {
                         />
 
                         <div className={styles.Add_btn}>
-                          <button type="button" onClick={() => setShowPage("first")} className={styles.Backbtn}>
+                          <button
+                            type="button"
+                            onClick={() => setShowPage("first")}
+                            className={styles.Backbtn}
+                          >
                             Back
                           </button>
                           <button
@@ -1757,11 +2096,55 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Above title section</h4>
-                                <button type="button" class={styles.btn_one}>
-                                  Show{" "}
-                                  <img src={downArrow} width="20" height="20" />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() =>
+                                        handleShowStatus("titleSection")
+                                      }
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.titleSection}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.titleSection && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() =>
+                                              handleBtn("titleSection", "Show")
+                                            }
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() =>
+                                              handleBtn("titleSection", "Hide")
+                                            }
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
+                             
+                                 {showButton.titleSection === "Show" && (
+                              <>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="title_section_text">Text</label>
                                 <input
@@ -1772,7 +2155,7 @@ export default function PlansPage() {
                                   onChange={handleTitleSection}
                                   placeholder=""
                                   className={styles.inputDiv}
-                                />
+                                  />
                               </div>
 
                               <div className={styles.input_labelCustomize}>
@@ -1785,7 +2168,7 @@ export default function PlansPage() {
                                   name="titleSectionSize"
                                   value={titleSection.titleSectionSize}
                                   onChange={handleTitleSection}
-                                />
+                                  />
                               </div>
 
                               <div className={styles.input_labelCustomize}>
@@ -1795,16 +2178,16 @@ export default function PlansPage() {
                                     className={styles.color_pilate}
                                     style={{
                                       backgroundColor:
-                                        titleSection.titleSectionColor,
+                                      titleSection.titleSectionColor,
                                     }}
-                                  >
+                                    >
                                     <input
                                       type="color"
                                       id="titleSectionColor"
                                       name="titleSectionColor"
                                       value={titleSection.titleSectionColor}
                                       onChange={handleTitleSection}
-                                    />
+                                      />
                                   </span>
 
                                   <input
@@ -1813,9 +2196,12 @@ export default function PlansPage() {
                                     name="titleSectionColor"
                                     value={titleSection.titleSectionColor}
                                     onChange={handleTitleSection}
-                                  />
+                                    />
                                 </div>
                               </div>
+                                    </>
+                                 )}
+
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -1823,15 +2209,50 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Title</h4>
-                                <button
-                                  type="button"
-                                  className={styles.btn_one}
-                                >
-                                  Show{" "}
-                                  <img src={downArrow} width="20" height="20" />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("title")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.title}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.title && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("title", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("title", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
 
+                              {showButton.title === "Show" && (
+                              <>
+                              
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="title_text">Text</label>
                                 <input
@@ -1883,6 +2304,7 @@ export default function PlansPage() {
                                   />
                                 </div>
                               </div>
+                              </>)}
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -1890,15 +2312,51 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Product Title</h4>
-                                <button
-                                  type="button"
-                                  className={styles.btn_one}
-                                >
-                                  Show{" "}
-                                  <img src={downArrow} width="20" height="20" />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("productTitle")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.productTitle}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.productTitle && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("productTitle", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("productTitle", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
 
+                              {showButton.productTitle === "Show" && (
+                                
+                             
+                              <>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="productSize">Size</label>
                                 <input
@@ -1907,7 +2365,7 @@ export default function PlansPage() {
                                   name="productSize"
                                   value={productTitle.productSize}
                                   onChange={handleProductTitle}
-                                />
+                                  />
                               </div>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="productColor">Color</label>
@@ -1918,14 +2376,14 @@ export default function PlansPage() {
                                       backgroundColor:
                                         productTitle.productColor,
                                     }}
-                                  >
+                                    >
                                     <input
                                       type="color"
                                       id="productColor"
                                       name="productColor"
                                       value={productTitle.productColor}
                                       onChange={handleProductTitle}
-                                    />
+                                      />
                                   </span>
 
                                   <input
@@ -1934,9 +2392,11 @@ export default function PlansPage() {
                                     name="productColor"
                                     value={productTitle.productColor}
                                     onChange={handleProductTitle}
-                                  />
+                                    />
                                 </div>
                               </div>
+                                    </> )}
+
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -1944,15 +2404,49 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Bundle Cost</h4>
-                                <button
-                                  type="button"
-                                  className={styles.btn_one}
-                                >
-                                  Show{" "}
-                                  <img src={downArrow} width="20" height="20" />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("bundleCost")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.bundleCost}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.bundleCost && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("bundleCost", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("bundleCost", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
 
+                              {showButton.bundleCost === "Show" && (
+                              <>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="bundleCostSize">Size</label>
 
@@ -2024,6 +2518,7 @@ export default function PlansPage() {
                                   </div>
                                 </div>
                               </div>
+                              </>)}
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -2031,14 +2526,50 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Call To Action Button</h4>
-                                <button
-                                  type="button"
-                                  className={styles.btn_one}
-                                >
-                                  Show{" "}
-                                  <img src={downArrow} width="20" height="20" />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("callAction")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.callAction}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.callAction && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("callAction", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("callAction", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
+                              {
+                                showButton.callAction === "Show" && (
+                             
+                              <>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="call_action_text">Text</label>
                                 <input
@@ -2051,6 +2582,7 @@ export default function PlansPage() {
                                 />
                               </div>
 
+                            
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="title_section_size">Size</label>
 
@@ -2089,14 +2621,10 @@ export default function PlansPage() {
                                       <ul
                                         className={`${styles.selectDropdown} ${styles.newAppdeop} `}
                                       >
-                                        <li
-                                          onClick={() => setCart("Cart")}
-                                        >
+                                        <li onClick={() => setCart("Cart")}>
                                           Cart
                                         </li>
-                                        <li
-                                          onClick={() => setCart("Checkout")}
-                                        >
+                                        <li onClick={() => setCart("Checkout")}>
                                           Checkout
                                         </li>
                                         <li
@@ -2147,20 +2675,56 @@ export default function PlansPage() {
                                   />
                                 </div>
                               </div>
+                              </>)}
                             </div>
 
                             <div className={styles.divideDiv}>
                               <div className={styles.heading_img}>
                                 <h3>Text Below CTA</h3>{" "}
-                                <button
-                                  type="button"
-                                  className={styles.btn_one}
-                                >
-                                  Show{" "}
-                                  <img src={dropdown} width={20} height={20} />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("textBelow")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.textBelow}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.textBelow && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("textBelow", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("textBelow", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
 
+                              {
+                                showButton.textBelow === "Show" && (
+                              <>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="text_below_text">Text</label>
                                 <input
@@ -2213,19 +2777,57 @@ export default function PlansPage() {
                                   />
                                 </div>
                               </div>
+                              </>)}
                             </div>
 
                             <div className={styles.divideDiv}>
                               <div className={styles.heading_img}>
                                 <h3>Background</h3>{" "}
-                                <button
-                                  type="button"
-                                  className={styles.btn_one}
-                                >
-                                  Show{" "}
-                                  <img src={dropdown} width={20} height={20} />
-                                </button>
+                                <div type="button" class={styles.btn_one}>
+                                    <div
+                                      onClick={() => handleShowStatus("background")}
+                                      className={styles.butttonsTab}
+                                    >
+                                      {showButton.background}
+                                      <svg
+                                        width="15"
+                                        height="8"
+                                        viewBox="0 0 22 12"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                          fill="#00AC4F"
+                                        ></path>
+                                      </svg>
+                                    </div>
+
+                                    {showStatus.background && (
+                                      <ul className={styles.selectDropdown}>
+                                        <>
+                                          <li
+                                            onClick={() => handleBtn("background", "Show")}
+                                          >
+                                            Show
+                                          </li>
+                                          <li
+                                            onClick={() => handleBtn("background", "Hide")}
+                                          >
+                                            Hide
+                                          </li>
+                                        </>
+                                      </ul>
+                                    )}
+                                  </div>
                               </div>
+
+
+
+                               { showButton.background === "Show" && (
+                              <>
                               <div className={styles.input_labelCustomize}>
                                 <label htmlFor="backgroundColor">Color</label>
                                 <div className={styles.color_styles}>
@@ -2262,10 +2864,9 @@ export default function PlansPage() {
                                   checked={background.backgroundShadow}
                                   onChange={handleBackground}
                                 />
-                                <label htmlFor="shadow">
-                                  Display Shadow
-                                </label>
+                                <label htmlFor="shadow">Display Shadow</label>
                               </div>
+                              </>)}
                             </div>
                           </>
 
@@ -2295,180 +2896,143 @@ export default function PlansPage() {
                       </>
                     )}
 
-                    {showComponent <= 3 &&
-                      (selectProducts.length > 0 ? 
-                        products
-                        .filter((item) =>
-                          selectProducts.some(
-                            (buy) =>
-                              buy.productId === item?.node?.id,
-                          ),
-                        )
-                        .map((item) => (
-                          <>
-                          <div className={styles.live_preview}>
-                            <img
-                              src={preview_mockup}
-                              width={404}
-                              height={822}
-                              className={styles.mockup_tab}
-                            />
-                            <div className={styles.Preview_bundle} style={{ backgroundColor: background.backgroundColor, boxShadow: background.backgroundShadow ? "0px 40.5px 108.01px 0px #0000001a" : "none" }}>
-                              <div className={styles.limited} style={{ fontSize: `${titleSection.titleSectionSize}px`, color: titleSection.titleSectionColor }}>
-                                {titleSection.titleSectionText}
+                    {showComponent <= 3 && (
+                      <>
+                        <div className={styles.live_preview}>
+                          <img
+                            src={preview_mockup}
+                            width={404}
+                            height={822}
+                            className={styles.mockup_tab}
+                          />
+                          <div className={styles.Preview_bundle}>
+                            <div
+                              className={styles.limited}
+                              style={{
+                                fontSize: `${titleSection.titleSectionSize}px`,
+                                color: titleSection.titleSectionColor,
+                              }}
+                            >
+                              {titleSection.titleSectionText}
+                            </div>
+                            <h4
+                              style={{
+                                fontSize: `${title.titleSize}px`,
+                                color: title.titleColor,
+                              }}
+                            >
+                              {title.titleText}
+                            </h4>
+
+                            <div className={styles.both_product}>
+                              {selectProducts.length > 0 ? (
+                                products
+                                  .filter((item) =>
+                                    selectProducts.some(
+                                      (buy) => buy.productId === item?.node?.id,
+                                    ),
+                                  )
+                                  .map((item) => (
+                                    <>
+                                      <div
+                                        className={styles.left_productsample}
+                                      >
+                                        <img
+                                          src={
+                                            item?.node?.images?.edges[0]?.node
+                                              ?.src
+                                          }
+                                          width={112}
+                                          height={112}
+                                          className={styles.mockup_tab}
+                                        />
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            Gold 14K
+                                          </option>
+                                          <option value="old">Gold 14K</option>
+                                        </select>
+
+                                        <h6>Product Name</h6>
+                                      </div>
+                                      <div className={styles.AddProduct}>
+                                        <span>+</span>
+                                      </div>
+                                    </>
+                                  ))
+                              ) : (
+                                <>
+                                  <div className={styles.left_productsample}>
+                                    <img
+                                      src={Productpreview}
+                                      width={112}
+                                      height={112}
+                                      className={styles.mockup_tab}
+                                    />
+                                    <select name="" id="">
+                                      <option value="newest">Gold 14K</option>
+                                      <option value="old">Gold 14K</option>
+                                    </select>
+
+                                    <h6>Product Name</h6>
+                                  </div>
+                                  <div className={styles.AddProduct}>
+                                    <span>+</span>
+                                  </div>
+                                  <div className={styles.left_productsample}>
+                                    <img
+                                      src={Productpreview}
+                                      width={112}
+                                      height={112}
+                                      className={styles.mockup_tab}
+                                    />
+                                    <select name="" id="">
+                                      <option value="newest">Gold 14K</option>
+                                      <option value="old">Gold 14K</option>
+                                    </select>
+
+                                    <h6>Product Name</h6>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            <div className={styles.productTotal}>
+                              <span>Total</span>
+                              <div className={styles.Pricetab}>
+                                <span className={styles.delPriceOuter}>
+                                  <span className={styles.delPrice}>230$</span>
+                                </span>
+                                <span className={styles.totalPrice}>130$</span>
+                                <span className={styles.SaveTab}>Save 10%</span>
                               </div>
-                              <h4 style={{ fontSize: `${title.titleSize}px`, color: title.titleColor }}>{title.titleText}</h4>
 
-                              <div className={styles.both_product}>
-                                <div className={styles.left_productsample}>
-                                  <img
-                                    src={
-                                      item?.node?.images?.edges[0]
-                                        ?.node?.src
-                                    }
-                                    width={112}
-                                    height={112}
-                                    className={styles.mockup_tab}
-                                  />
-                                  
-                                  <select name="" id="">
-                                    <option value="newest">Gold 14K</option>
-                                    <option value="old">Gold 14K</option>
-                                  </select>
-
-                                  <h6>{item?.node?.title}</h6>
-                                </div>
-                                <div className={styles.AddProduct}>
-                                  <span>+</span>
-                                </div>
-
-                                <div className={styles.left_productsample}>
-                                  <img
-                                    src={Productpreview}
-                                    width={112}
-                                    height={112}
-                                    className={styles.mockup_tab}
-                                  />
-                                  <select name="" id="">
-                                    <option value="newest">Gold 14K</option>
-                                    <option value="old">Gold 14K</option>
-                                  </select>
-
-                                  <h6>Product Name</h6>
-                                </div>
-                              </div>
-
-                              <div className={styles.productTotal}>
-                                <span>Total</span>
-                                <div className={styles.Pricetab}>
-                                  <span className={styles.delPriceOuter}>
-                                    <span className={styles.delPrice} style={{display: bundleCost.bundleCostComparedPrice ? "block": "none"}}>
-                                      230$
-                                    </span>
-                                  </span>
-                                  <span className={styles.totalPrice} style={{fontSize: `${bundleCost.bundleCostSize}px`, color: bundleCost.bundleCostColor }}>
-                                    130$
-                                  </span>
-                                  <span className={styles.SaveTab} style={{display: bundleCost.bundleCostSave ? "block": "none"}}>
-                                    Save 10%
-                                  </span>
-                                </div>
-                                <button 
+                              <button
                                 className={styles.AddBtn}
-                                 style={{ fontSize: `${callAction.ctaSize}px`, color: callAction.ctaColor }}>
-                                  {callAction.ctaText}
-                                </button>
-                                <p className={styles.wrrantyTag} style={{ fontSize: `${textBelow.tbSize}px`, color: textBelow.tbColor }}>
-                                  {textBelow.tbText}
-                                </p>
-                              </div>
-                            </div>
-                            <div className={styles.btnLivePreview}>
-                              <button>Live Preview</button>
-                            </div>
-                          </div>
-                          </>
-                        ))
-                       : (
-                        <>
-                          <div className={styles.live_preview}>
-                            <img
-                              src={preview_mockup}
-                              width={404}
-                              height={822}
-                              className={styles.mockup_tab}
-                            />
-                            <div className={styles.Preview_bundle}>
-                              <div className={styles.limited}>
-                                Limited Time Offer
-                              </div>
-                              <h4>Add Bundle And Save 10%!</h4>
-
-                              <div className={styles.both_product}>
-                                <div className={styles.left_productsample}>
-                                  <img
-                                    src={Productpreview}
-                                    width={112}
-                                    height={112}
-                                    className={styles.mockup_tab}
-                                  />
-                                  <select name="" id="">
-                                    <option value="newest">Gold 14K</option>
-                                    <option value="old">Gold 14K</option>
-                                  </select>
-
-                                  <h6>Product Name</h6>
-                                </div>
-                                <div className={styles.AddProduct}>
-                                  <span>+</span>
-                                </div>
-
-                                <div className={styles.left_productsample}>
-                                  <img
-                                    src={Productpreview}
-                                    width={112}
-                                    height={112}
-                                    className={styles.mockup_tab}
-                                  />
-                                  <select name="" id="">
-                                    <option value="newest">Gold 14K</option>
-                                    <option value="old">Gold 14K</option>
-                                  </select>
-
-                                  <h6>Product Name</h6>
-                                </div>
-                              </div>
-
-                              <div className={styles.productTotal}>
-                                <span>Total</span>
-                                <div className={styles.Pricetab}>
-                                  <span className={styles.delPriceOuter}>
-                                    <span className={styles.delPrice}>
-                                      230$
-                                    </span>
-                                  </span>
-                                  <span className={styles.totalPrice}>
-                                    130$
-                                  </span>
-                                  <span className={styles.SaveTab}>
-                                    Save 10%
-                                  </span>
-                                </div>
-
-                                <button className={styles.AddBtn}>
-                                  👉 Add To Cart
-                                </button>
-                                <p className={styles.wrrantyTag}>
-                                  Lifetime Warranty & Free Returns
-                                </p>
-                              </div>
-                            </div>
-                            <div className={styles.btnLivePreview}>
-                              <button>Live Preview</button>
+                                style={{
+                                  fontSize: `${callAction.ctaSize}px`,
+                                  color: callAction.ctaColor,
+                                }}
+                              >
+                                {callAction.ctaText}
+                              </button>
+                              <p
+                                className={styles.wrrantyTag}
+                                style={{
+                                  fontSize: `${textBelow.tbSize}px`,
+                                  color: textBelow.tbColor,
+                                }}
+                              >
+                                {textBelow.tbText}
+                              </p>
                             </div>
                           </div>
-                        </>
-                      ))}
+                          <div className={styles.btnLivePreview}>
+                            <button>Live Preview</button>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {showPage === "Return" && (

@@ -194,6 +194,39 @@ export const getAllBundle = async( shop) => {
   }
 }
 
+export let getAllDiscountId = async (shop) => {
+  try {
+    const discountList = await db.bogoxy.findMany({
+      where: {
+        domainName: shop,
+      },
+      select: {
+        discount_id: true,
+      },
+    });
+
+    console.log(discountList, 'discountList');
+    if (discountList.length === 0) {
+      return json({
+        status: 200,
+        data: [], 
+      });
+    };
+
+    return json({
+      status: 200,
+      data: discountList.map((discount) => discount.discount_id) 
+    });
+  } catch (error) {
+    console.error(error);
+    return json(
+      { message: "Failed to retrieve discount IDs", error: error.message },
+      { status: 500 },
+    );
+  }
+};
+
+
 
 export async function fetchSalesData(shop) {
   const bundleType = "bogoxy"

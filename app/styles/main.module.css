@@ -1269,6 +1269,7 @@
 
 .both_product {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 20px;
   align-items: center;
@@ -2148,6 +2149,10 @@ justify-content: center;
   display: flex;
   justify-content: flex-end;
   gap: 15px;
+  position: sticky;
+  bottom: -40px;
+  background: #fff;
+  padding: 20px 0px 40px;
 }
 
 .modal_content .formGroup input:checked+label:after {
@@ -2305,7 +2310,7 @@ justify-content: center;
 .activeButton {
   border: 0;
   height: 51px;
-  padding: 5.52px 40px;
+  padding: 5.52px 20px;
   gap: 8px;
   border-radius: 12px;
   background-color: rgba(0, 172, 79, 0.1);
@@ -4389,7 +4394,7 @@ fill:#00AC4F;
 .activeButton {
   border: 0;
   height: 51px;
-  padding: 5.52px 40px;
+  padding: 5.52px 20px;
   gap: 8px;
   border-radius: 12px;
   background-color: rgba(0, 172, 79, 0.1);
@@ -4414,7 +4419,7 @@ fill:#00AC4F;
   background: #F9FBFF;
   color: #7E7E7E;
   width: 100%;
-  max-width:200px;
+  max-width:250px;
 }
 .sortBy .butttonsTab{
   justify-content: space-between;
