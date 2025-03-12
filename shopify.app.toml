@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://pediatric-upload-ri-august.trycloudflare.com"
+application_url = "https://fabric-wallpapers-puzzles-affiliated.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products write_discounts read_discounts"
 
 [auth]
 redirect_urls = [
-  "https://pediatric-upload-ri-august.trycloudflare.com/auth/callback",
-  "https://pediatric-upload-ri-august.trycloudflare.com/auth/shopify/callback",
-  "https://pediatric-upload-ri-august.trycloudflare.com/api/auth/callback"
+  "https://fabric-wallpapers-puzzles-affiliated.trycloudflare.com/auth/callback",
+  "https://fabric-wallpapers-puzzles-affiliated.trycloudflare.com/auth/shopify/callback",
+  "https://fabric-wallpapers-puzzles-affiliated.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

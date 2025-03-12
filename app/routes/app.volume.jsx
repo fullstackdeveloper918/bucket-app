@@ -933,6 +933,20 @@ export default function VolumePage() {
     }));
   };
 
+  const handleBack = () => {
+    console.log('handleback clicked', showPage);
+  
+    if(activeTab === "Products") {
+      if(showPage == "second") {
+        setShowPage("first");
+      }else if(showPage == "third"){
+        setShowPage("second");
+      }else if(showPage == "first") {
+        setActiveTab('Home')
+      }
+    }
+  }
+
   const handleTitle = (e) => {
     const { name, value } = e.target;
     seTitle((prev) => ({
@@ -1379,7 +1393,7 @@ export default function VolumePage() {
         <TitleBar title="Volume Bundles"></TitleBar>
         <div className={styles.flexWrapper}>
           <div className={styles.headingFlex}>
-            <button className={styles.btn_Back}>
+            <button type="button" className={styles.btn_Back} onClick={handleBack}>
               <svg
                 width="14"
                 height="14"

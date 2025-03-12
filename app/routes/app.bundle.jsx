@@ -926,6 +926,20 @@ export default function PlansPage() {
   };
 
 
+  const handleBack = () => {
+    console.log('handleback clicked', showPage);
+  
+    if(activeTab === "Products") {
+      if(showPage == "second") {
+        setShowPage("first");
+      }else if(showPage == "third"){
+        setShowPage("second");
+      }else if(showPage == "first") {
+        setActiveTab('Home')
+      }
+    }
+  }
+
 
   const handleSecond = () => {
     if (values.discount === "Percentage") {
@@ -1200,8 +1214,21 @@ export default function PlansPage() {
         <TitleBar title="Bundles App"></TitleBar>
         <div className={styles.flexWrapper}>
           <div className={styles.headingFlex}>
-            <button className={styles.btn_Back}>
-              <img src={arrowIcon} width={20} height={16} />
+            <button type="button" className={styles.btn_Back} onClick={handleBack}>
+            <svg
+                width="14"
+                height="14"
+                viewBox="0 0 20 17"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M8.78033 0.21967C9.07322 0.512563 9.07322 0.987437 8.78033 1.28033L2.56066 7.5H18.75C19.1642 7.5 19.5 7.83579 19.5 8.25C19.5 8.66421 19.1642 9 18.75 9H2.56066L8.78033 15.2197C9.07322 15.5126 9.07322 15.9874 8.78033 16.2803C8.48744 16.5732 8.01256 16.5732 7.71967 16.2803L0.21967 8.78033C-0.0732233 8.48744 -0.0732233 8.01256 0.21967 7.71967L7.71967 0.21967C8.01256 -0.0732233 8.48744 -0.0732233 8.78033 0.21967Z"
+                  fill="#0F172A"
+                />
+              </svg>
             </button>
 
             <h2>Product Bundles</h2>
