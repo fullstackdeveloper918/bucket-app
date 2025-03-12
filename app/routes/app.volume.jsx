@@ -658,9 +658,13 @@ export async function action({ request }) {
         }
     }
   } else if (request.method === "DELETE") {
+
+    console.log('delete method hit')
     try {
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
+
+      console.log(discount_id, 'discount_id');
       const data = JSON.stringify({
         query: `
           mutation discountAutomaticDelete($id: ID!) {
@@ -694,6 +698,9 @@ export async function action({ request }) {
       // Make the request to Shopify
       const response = await axios.request(config);
       const responseData = response.data;
+
+
+      console.log(responseData?.data?.discountAutomaticDelete?.userErrors, 'responsh')
 
       // Handle user errors from Shopify
       if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {

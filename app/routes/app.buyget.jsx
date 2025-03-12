@@ -473,20 +473,10 @@ export async function action({ request }) {
     }
   } else if (request.method === "DELETE") {
     try {
-      const domainName = shop;
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
-      console.log(productId, "productbvfdj");
-      console.log(discount_id, "easypeesy");
-
-      if (!domainName || !productId) {
-        return json({
-          message: "Missing 'domainName' or 'product_id'",
-          status: 400,
-        });
-      }
-
-      // Prepare GraphQL mutation
+  
+      console.log(discount_id, 'discount_id');
       const data = JSON.stringify({
         query: `
           mutation discountAutomaticDelete($id: ID!) {
@@ -504,7 +494,7 @@ export async function action({ request }) {
           id: discount_id,
         },
       });
-
+  
       // Configure Axios request
       const config = {
         method: "post",
@@ -516,42 +506,37 @@ export async function action({ request }) {
         },
         data: data,
       };
-
+  
       // Make the request to Shopify
       const response = await axios.request(config);
       const responseData = response.data;
-
-      console.log(responseData, "check resresponseData");
-
+  
+  
+      console.log(responseData?.data?.discountAutomaticDelete?.userErrors, 'responsh')
+  
       // Handle user errors from Shopify
       if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-        console.error(
-          "Shopify Errors:",
-          responseData.data.discountAutomaticDelete.userErrors,
-        );
         return json({
           message: "Failed to delete discount on Shopify",
           errors: responseData.data.discountAutomaticDelete.userErrors,
           status: 400,
         });
       }
-
-      console.log("Shopify Response:", JSON.stringify(responseData));
-
+  
       // Delete from your local database
       const result = await db.bogoxy.deleteMany({
         where: {
           AND: [{ id: parseInt(productId) }, { domainName: shop }],
         },
       });
-
+  
       if (result.count === 0) {
         return json({
           message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
           status: 404,
         });
       }
-
+  
       return json({
         message: "Bundle successfully deleted",
         status: 200,
@@ -645,12 +630,9 @@ export default function BuyGetPage() {
   const [showPopup, setShowPopup] = useState(false);
   const [showPage, setShowPage] = useState(null);
   const [productId, setProductId] = useState(null);
+  const [discountId, setDiscountId] = useState("");
   const [isMonth, setIsMonth] = useState(false);
   const [month, setMonth] = useState("This Month");
-
- 
-
-  const [discountId, setDiscountId] = useState("");
   const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
   const [loading, setLoading] = useState(false);
@@ -1430,17 +1412,17 @@ export default function BuyGetPage() {
                         </h2>
                       </div>
                       <div className={styles.btnFlexWrapper}>
-                        <Form method="DELETE">
+                      <Form method="DELETE">
                           <input
                             type="hidden"
                             name="product_id"
-                            value={card?.id}
+                            value={productId}
                           />
 
                           <input
                             type="hidden"
                             name="discount_id"
-                            value={card?.discount_id}
+                            value={discountId}
                           />
 
                           <button
@@ -1467,6 +1449,7 @@ export default function BuyGetPage() {
                             <DeletePopup
                               setShowPopup={setShowPopup}
                               actionResponse={actionResponse}
+                              state={navigation.state}
                             />
                           )}
                         </Form>

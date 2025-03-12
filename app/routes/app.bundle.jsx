@@ -518,88 +518,87 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       }
   }
  } else if (request.method === "DELETE") {
-    try {
-      const domainName = shop;
-      const productId = formData.get("product_id");
-      const discount_id = formData.get("discount_id");
+  try {
+    const productId = formData.get("product_id");
+    const discount_id = formData.get("discount_id");
 
-      if (!domainName || !productId) {
-        return json({
-          message: "Missing 'domainName' or 'product_id'",
-          status: 400,
-        });
-      }
-      const data = JSON.stringify({
-        query: `
-          mutation discountAutomaticDelete($id: ID!) {
-            discountAutomaticDelete(id: $id) {
-              deletedAutomaticDiscountId
-              userErrors {
-                field
-                code
-                message
-              }
+    console.log(discount_id, 'discount_id');
+    const data = JSON.stringify({
+      query: `
+        mutation discountAutomaticDelete($id: ID!) {
+          discountAutomaticDelete(id: $id) {
+            deletedAutomaticDiscountId
+            userErrors {
+              field
+              code
+              message
             }
           }
-        `,
-        variables: {
-          id: discount_id,
-        },
-      });
-      const config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: `https://${shop}/admin/api/2025-01/graphql.json`,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-        },
-        data: data,
-      };
-      const response = await axios.request(config);
-      const responseData = response.data;
+        }
+      `,
+      variables: {
+        id: discount_id,
+      },
+    });
 
-      if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-        console.error(
-          "Shopify Errors:",
-          responseData.data.discountAutomaticDelete.userErrors,
-        );
-        return json({
-          message: "Failed to delete discount on Shopify",
-          errors: responseData.data.discountAutomaticDelete.userErrors,
-          status: 400,
-        });
-      }
+    // Configure Axios request
+    const config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: `https://${shop}/admin/api/2025-01/graphql.json`,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": session?.accessToken,
+      },
+      data: data,
+    };
 
-      const result = await db.bundle.deleteMany({
-        where: {
-          AND: [{ id: parseInt(productId) }, { domainName: shop }],
-        },
-      });
+    // Make the request to Shopify
+    const response = await axios.request(config);
+    const responseData = response.data;
 
-      if (result.count === 0) {
-        return json({
-          message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
-          status: 404,
-        });
-      }
 
+    console.log(responseData?.data?.discountAutomaticDelete?.userErrors, 'responsh')
+
+    // Handle user errors from Shopify
+    if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
       return json({
-        message: "Bundle successfully deleted",
-        status: 200,
-        method: "delete",
-        step: 5,
-      });
-    } catch (error) {
-      console.error("Error in delete process:", error);
-      return json({
-        message: "Failed to delete discount",
-        error: error.message,
-        status: 500,
-        method: "delete",
-        step: 5,
+        message: "Failed to delete discount on Shopify",
+        errors: responseData.data.discountAutomaticDelete.userErrors,
+        status: 400,
       });
     }
+
+    // Delete from your local database
+    const result = await db.bundle.deleteMany({
+      where: {
+        AND: [{ id: parseInt(productId) }, { domainName: shop }],
+      },
+    });
+
+    if (result.count === 0) {
+      return json({
+        message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
+        status: 404,
+      });
+    }
+
+    return json({
+      message: "Bundle successfully deleted",
+      status: 200,
+      method: "delete",
+      step: 5,
+    });
+  } catch (error) {
+    console.error("Error in delete process:", error);
+    return json({
+      message: "Failed to delete discount",
+      error: error.message,
+      status: 500,
+      method: "delete",
+      step: 5,
+    });
+  }
   } else {
     return undefined;
   }
@@ -658,6 +657,8 @@ export default function PlansPage() {
   const actionResponse = useActionData();
   const navigation = useNavigation();
   const formRef = useRef(null);
+  const [discountId, setDiscountId] = useState("");
+  const [productId, setProductId] = useState(null);
   const [activeTab, setActiveTab] = useState("Home");
   const [position, setPosition] = useState("Below Section");
   const [activeApp, setActiveApp] = useState("Active");
@@ -888,7 +889,7 @@ export default function PlansPage() {
         },
       });
     } else if (selectProducts.length == 0) {
-      notify.error("Please select at leat one product", {
+      notify.error("Please select at least one product", {
         position: "top-center",
         style: {
           background: "red",
@@ -1148,6 +1149,12 @@ export default function PlansPage() {
   const handleAdd = (index) => {
     setIsProduct(true);
     console.log(selectProducts);
+  };
+
+  const handleDelete = (item) => {
+    setShowPopup(true);
+    setProductId(item.id);
+    setDiscountId(item.discount_id);
   };
 
   const handleDeleteProducts = (deletedItem) => {
@@ -1430,45 +1437,47 @@ export default function PlansPage() {
                           <h2 className={styles.cardHeading}>{card?.name}</h2>
                         </div>
                         <div className={styles.btnFlexWrapper}>
-                          <Form method="DELETE">
-                            <input
-                              type="hidden"
-                              name="product_id"
-                              value={card?.id}
-                            />
+                        <Form method="DELETE">
+                          <input
+                            type="hidden"
+                            name="product_id"
+                            value={productId}
+                          />
 
-                            <input
-                              type="hidden"
-                              name="discount_id"
-                              value={card?.discount_id}
-                            />
-                            <button
-                              className={styles.deletedBtn}
-                              type="button"
-                              onClick={() => setShowPopup(true)}
+                          <input
+                            type="hidden"
+                            name="discount_id"
+                            value={discountId}
+                          />
+
+                          <button
+                            className={styles.deletedBtn}
+                            type="button"
+                            onClick={() => handleDelete(card)}
+                          >
+                            <svg
+                              width="20"
+                              height="24"
+                              viewBox="0 0 18 20"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
                             >
-                              <svg
-                                width="20"
-                                height="24"
-                                viewBox="0 0 18 20"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  clipRule="evenodd"
-                                  d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
-                                  fill="#F24747"
-                                />
-                              </svg>
-                            </button>
-                            {showPopup && (
-                              <DeletePopup
-                                setShowPopup={setShowPopup}
-                                actionResponse={actionResponse}
+                              <path
+                                fillRule="evenodd"
+                                clipRule="evenodd"
+                                d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
+                                fill="#F24747"
                               />
-                            )}
-                          </Form>
+                            </svg>
+                          </button>
+                          {showPopup && (
+                            <DeletePopup
+                              setShowPopup={setShowPopup}
+                              actionResponse={actionResponse}
+                              state={navigation.state}
+                            />
+                          )}
+                        </Form>
                           <button
                             className={styles.copyIcon}
                             title="Duplicate"

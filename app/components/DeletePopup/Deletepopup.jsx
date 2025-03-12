@@ -1,12 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 import styles from "../../styles/main.module.css";
 import Loader from "../Loader/Loader";
-// import infoImage from "../../routes/assets/infoImage.png";
-// import AddGradient from "../../routes/assets/AddGradient.png";
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, 1fr)",
-};
+
 
 const DeletePopup = ({ setShowPopup,state }) => {
 
@@ -43,8 +38,6 @@ const DeletePopup = ({ setShowPopup,state }) => {
             <button className={styles.Backbtn} type="button" onClick={() => setShowPopup(false)}>
             Cancel
             </button>
-
-            {console.log(state, 'state see')}
 
             <button className={styles.NextBtn} type="submit">
             {state == "submitting" ? <Loader /> :  "Delete Bundle"}
