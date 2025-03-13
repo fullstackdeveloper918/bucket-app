@@ -18,6 +18,7 @@ import {
   Form,
   json,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
   // useSubmit,
@@ -570,22 +571,19 @@ export async function action({ request }) {
     else if (intent === "handleAllDiscount") {
       const discountId = JSON.parse(formData.get("discountID"));
       const active = formData.get("active");
-   
-        // const deactivateDiscount = async (id) => {
-        //   const query = {
-        //     query: `mutation discountAutomaticDeactivate($id: ID!) {
-        //       discountAutomaticDeactivate(id: $id) {
-        //         automaticDiscountNode {
-        //           automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
-        //         }
-        //         userErrors { field message }
-        //       }
-        //     }`,
-        //     variables: { id },
-        //   };
-
-        const activateDiscount = async (id) => {
-          const query = {
+      const appType = "volumeDiscount";
+  
+     if (discountId.length == 0) {
+       return json({
+         error: "No Discount Id present",
+         status: 500,
+         step: 6,
+       });
+      }
+  
+  const activateDiscount = async (id) => {
+    try {
+           const query = {
             query: `mutation discountAutomaticActivate($id: ID!) {
               discountAutomaticActivate(id: $id) {
                 automaticDiscountNode {
@@ -596,66 +594,107 @@ export async function action({ request }) {
             }`,
             variables: { id },
           };
-
-          return axios.post(
-            `https://${shop}/admin/api/2025-01/graphql.json`,
-            query,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                "X-Shopify-Access-Token": session?.accessToken,
-              },
-            }
-          );
-        };
-
-
-        try {
-          const responses = await Promise.all(discountId.map((id) => activateDiscount(id)));
-          console.log(responses?.data?.data, 'hashkar');
-          const existingApp = await prisma.appActiveInactive.findFirst({
-            where: { AppType: appType },
-          });
-
-
-
-      
-          if (existingApp) {
-            // If the AppType exists, update the status
-            const updatedApp = await prisma.appActiveInactive.update({
-              where: { id: existingApp.id },
-              data: { status },
-            });
-      
-            return json({
-              message: 'App status updated successfully',
-              updatedApp,
-            });
-          } else {
-            const newApp = await prisma.appActiveInactive.create({
-              data: {
-                AppType: appType,
-                status
-              }
-            })
-            // If the AppType doesn't exist, create a new entry
-            // const newApp = await prisma.appActiveInactive.create({
-            //   data: {
-            //     AppType: appType,
-            //     status,
-            //   },
-            // });
-      
-            return json({
-              message: 'App status created successfully',
-              newApp,
-            });
-          }
-       
-        }catch(err) {
-          console.log(err, 'errororhas');
-          return "nothing"
+      const response = await axios.post(
+        `https://${shop}/admin/api/2025-01/graphql.json`,
+        query,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": session?.accessToken,
+          },
         }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Activate Discount Error:", error);
+      return { error: "Failed to activate discount", id };
+    }
+  };
+  
+  const deactivateDiscount = async (id) => {
+    try {
+           const query = {
+            query: `mutation discountAutomaticDeactivate($id: ID!) {
+              discountAutomaticDeactivate(id: $id) {
+                automaticDiscountNode {
+                  automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+                }
+                userErrors { field message }
+              }
+            }`,
+            variables: { id },
+          };
+      const response = await axios.post(
+        `https://${shop}/admin/api/2025-01/graphql.json`,
+        query,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": session?.accessToken,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Deactivate Discount Error:", error);
+      return { error: "Failed to deactivate discount", id };
+    }
+  };
+  
+  try {
+    let responses;
+  
+    if (active === "Active") {
+      responses = await Promise.all(
+        discountId.map((id) => activateDiscount(id))
+      );
+    } else if (active === "Inactive") {
+      responses = await Promise.all(
+        discountId.map((id) => deactivateDiscount(id))
+      );
+    }
+  
+    console.log("Discount Responses:", responses);
+  
+    const existingApp = await prisma.appActiveInactive.findFirst({
+      where: { AppType: appType },
+    });
+  
+    if (existingApp) {
+      const updatedApp = await prisma.appActiveInactive.update({
+        where: { id: existingApp.id },
+        data: { status: active === "Active" ? 1 : 0 },
+      });
+  
+      return json({
+        message: "App status updated successfully",
+        data: updatedApp,
+        status: 200,
+        step: 6,
+      });
+    } else {
+      const newApp = await prisma.appActiveInactive.create({
+        data: {
+          AppType: appType,
+          status: active === "Active" ? 1 : 0,
+        },
+      });
+  
+      return json({
+        message: "App status created successfully",
+        data: newApp,
+        status: 200,
+        step: 6,
+      });
+    }
+  } catch (err) {
+    console.error("Main Function Error:", err);
+    return json({
+      message: "Something went wrong",
+      step: 6,
+      status: 500,
+    });
+  }
     }
   } else if (request.method === "DELETE") {
 
@@ -817,6 +856,7 @@ export default function VolumePage() {
   const actionResponse = useActionData();
   // const submit = useSubmit();
   const navigation = useNavigation();
+   const fetcher = useFetcher();
 
   console.log(allDiscountId, "allDiscountId");
 
@@ -1021,11 +1061,14 @@ export default function VolumePage() {
     }));
   };
 
-  const handleActive = (e,item) => {
+  const handleActive = (e, item) => {
     e.preventDefault();
     setActive(false);
     setActiveApp(item);
-      formRef.current.submit(); 
+    fetcher.submit(
+      { active: item, discountID: JSON.stringify(allDiscountId?.data), intent: "handleAllDiscount" },
+      { method: "POST",  }
+    );
   };
 
   const handleDesign = () => {
@@ -1260,12 +1303,6 @@ export default function VolumePage() {
   }, [actionResponse]);
 
 
-  // useEffect(() => {
-  //   if (activeApp) {
-  //     formRef.current.submit(); 
-  //   }
-  // }, [activeApp]);
-
   useEffect(() => {
     if (actionResponse?.step === 5) {
       if (actionResponse?.status === 200) {
@@ -1443,28 +1480,20 @@ export default function VolumePage() {
               </div>
             </div>
             {active && (
-              <Form method="POST" ref={formRef}>
-                <input type="hidden" name="active" value={activeApp} />
-                <input
-                  type="hidden"
-                  name="discountID"
-                  value={JSON.stringify(allDiscountId?.data)}
-                />
-                <input type="hidden" name="intent" value="handleAllDiscount" />
-
-                <ul className={styles.selectDropdown}>
-                  <li 
-                  onClick={(e) => handleActive(e,"Active")}
-                  >
-                    Active
-                    </li>
-                  <li 
-                  onClick={(e) => handleActive(e, "Inactive")}
-                  >
-                      Inactive
-                      </li>
-                </ul>
-              </Form>
+             <fetcher.Form method="POST">
+             <ul className={styles.selectDropdown}>
+               <li 
+               onClick={(e) => handleActive(e,"Active")}
+               >
+                 Active
+                 </li>
+               <li 
+               onClick={(e) => handleActive(e, "Inactive")}
+               >
+                 Inactive
+               </li>
+             </ul>
+           </fetcher.Form>
             )}
           </div>
         </div>

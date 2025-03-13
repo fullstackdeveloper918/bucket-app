@@ -43,8 +43,6 @@ export let getAllDiscountId = async (shop) => {
         discount_id: true,
       },
     });
-
-    console.log(discountList, 'discountList');
     if (discountList.length == 0) {
       return json({
         status: 200,

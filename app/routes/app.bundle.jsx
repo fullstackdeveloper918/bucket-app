@@ -7,17 +7,16 @@ import preview_mockup from "../routes/assets/preview_mockup.svg";
 import Productpreview from "../routes/assets/product_sample.png";
 import offerIcon from "../../app/routes/assets/offerIcon.svg";
 import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
-import downArrow from "../routes/assets/drop_downImg.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import styles from "../styles/main.module.css";
 import deletedIcon from "../routes/assets/deleted.svg";
 import collectedIcon from "../../app/routes/assets/collected_icon.png";
 import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
-import arrowIcon from "../../app/routes/assets/backarrow.png";
 import {
   Form,
   json,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
   useSubmit,
@@ -114,9 +113,6 @@ export async function action({ request }) {
     const displayLocation = formData.get("displayBundle");
     const method = formData.get("discount");
     const chooseAmount = formData.get("amount");
-
-   
-
 
     const title_section = {
       text: formData.get("titleSectionText"),
@@ -395,57 +391,56 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         status: 500,
       });
     }
-  } 
-  else if (intent === "deactivate") {
-    let data = JSON.stringify({
-      query:
-        "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
-      variables: {
-        id: "gid://shopify/DiscountAutomaticNode/1161176350799",
-      },
-    });
-    let config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: `https://${shop}/admin/api/2025-01/graphql.json`,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": session?.accessToken,
-        Cookie:
-          "_master_udr=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaEpJaWxrTlRaalptVTJNUzFqTURVd0xUUTVPR1F0WVRGaU9DMHlOelpoTWpOa016azRPVGNHT2daRlJnPT0iLCJleHAiOiIyMDI3LTAyLTEyVDA1OjM3OjU5Ljc0NVoiLCJwdXIiOiJjb29raWUuX21hc3Rlcl91ZHIifX0%3D--6a2ae39f942f1b36d2674a0bdaf23f7b38b88770; _secure_admin_session_id=efdc1b1f18ec43e79a4d28387c8a81cb; _secure_admin_session_id_csrf=efdc1b1f18ec43e79a4d28387c8a81cb",
-      },
-      data: data,
-    };
-    axios
-      .request(config)
-      .then((response) => {
-        console.log(JSON.stringify(response.data), "casefour");
-      })
-      .catch((error) => {
-        console.log(error, "errorfour");
-      });
+  
+   }
+  //   else if (intent === "deactivate") {
+  //   console.log("deactivate got hit")
+  //   let data = JSON.stringify({
+  //     query:
+  //       "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
+  //     variables: {
+  //       id: "gid://shopify/DiscountAutomaticNode/1161176350799",
+  //     },
+  //   });
+  //   let config = {
+  //     method: "post",
+  //     maxBodyLength: Infinity,
+  //     url: `https://${shop}/admin/api/2025-01/graphql.json`,
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       "X-Shopify-Access-Token": session?.accessToken,
+  //       Cookie:
+  //         "_master_udr=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaEpJaWxrTlRaalptVTJNUzFqTURVd0xUUTVPR1F0WVRGaU9DMHlOelpoTWpOa016azRPVGNHT2daRlJnPT0iLCJleHAiOiIyMDI3LTAyLTEyVDA1OjM3OjU5Ljc0NVoiLCJwdXIiOiJjb29raWUuX21hc3Rlcl91ZHIifX0%3D--6a2ae39f942f1b36d2674a0bdaf23f7b38b88770; _secure_admin_session_id=efdc1b1f18ec43e79a4d28387c8a81cb; _secure_admin_session_id_csrf=efdc1b1f18ec43e79a4d28387c8a81cb",
+  //     },
+  //     data: data,
+  //   };
+  //   axios
+  //     .request(config)
+  //     .then((response) => {
+  //       console.log(JSON.stringify(response.data), "casefour");
+  //     })
+  //     .catch((error) => {
+  //       console.log(error, "errorfour");
+  //     });
 
-    return undefined;
-  } 
+  //   return undefined;
+  // } 
   else if (intent === "handleAllDiscount") {
     const discountId = JSON.parse(formData.get("discountID"));
     const active = formData.get("active");
- 
-      // const deactivateDiscount = async (id) => {
-      //   const query = {
-      //     query: `mutation discountAutomaticDeactivate($id: ID!) {
-      //       discountAutomaticDeactivate(id: $id) {
-      //         automaticDiscountNode {
-      //           automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
-      //         }
-      //         userErrors { field message }
-      //       }
-      //     }`,
-      //     variables: { id },
-      //   };
+    const appType = "bundle";
 
-      const activateDiscount = async (id) => {
-        const query = {
+   if (discountId.length == 0) {
+     return json({
+       error: "No Discount Id present",
+       status: 500,
+       step: 6,
+     });
+    }
+
+const activateDiscount = async (id) => {
+  try {
+         const query = {
           query: `mutation discountAutomaticActivate($id: ID!) {
             discountAutomaticActivate(id: $id) {
               automaticDiscountNode {
@@ -456,66 +451,107 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           }`,
           variables: { id },
         };
-
-        return axios.post(
-          `https://${shop}/admin/api/2025-01/graphql.json`,
-          query,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "X-Shopify-Access-Token": session?.accessToken,
-            },
-          }
-        );
-      };
-
-
-      try {
-        const responses = await Promise.all(discountId.map((id) => activateDiscount(id)));
-        console.log(responses?.data?.data, 'hashkar');
-        const existingApp = await prisma.appActiveInactive.findFirst({
-          where: { AppType: appType },
-        });
-
-
-        
-    
-        if (existingApp) {
-          // If the AppType exists, update the status
-          const updatedApp = await prisma.appActiveInactive.update({
-            where: { id: existingApp.id },
-            data: { status },
-          });
-    
-          return json({
-            message: 'App status updated successfully',
-            updatedApp,
-          });
-        } else {
-          const newApp = await prisma.appActiveInactive.create({
-            data: {
-              AppType: appType,
-              status
-            }
-          });
-          // If the AppType doesn't exist, create a new entry
-          // const newApp = await prisma.appActiveInactive.create({
-          //   data: {
-          //     AppType: appType,
-          //     status,
-          //   },
-          // });
-    
-          return json({
-            message: 'App status created successfully',
-            newApp,
-          });
-        }
-     
-      }catch(err) {
-        console.log(err, 'errororhas');
-        return "nothing"
+    const response = await axios.post(
+      `https://${shop}/admin/api/2025-01/graphql.json`,
+      query,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
       }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Activate Discount Error:", error);
+    return { error: "Failed to activate discount", id };
+  }
+};
+
+const deactivateDiscount = async (id) => {
+  try {
+         const query = {
+          query: `mutation discountAutomaticDeactivate($id: ID!) {
+            discountAutomaticDeactivate(id: $id) {
+              automaticDiscountNode {
+                automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+              }
+              userErrors { field message }
+            }
+          }`,
+          variables: { id },
+        };
+    const response = await axios.post(
+      `https://${shop}/admin/api/2025-01/graphql.json`,
+      query,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Deactivate Discount Error:", error);
+    return { error: "Failed to deactivate discount", id };
+  }
+};
+
+try {
+  let responses;
+
+  if (active === "Active") {
+    responses = await Promise.all(
+      discountId.map((id) => activateDiscount(id))
+    );
+  } else if (active === "Inactive") {
+    responses = await Promise.all(
+      discountId.map((id) => deactivateDiscount(id))
+    );
+  }
+
+  console.log("Discount Responses:", responses);
+
+  const existingApp = await prisma.appActiveInactive.findFirst({
+    where: { AppType: appType },
+  });
+
+  if (existingApp) {
+    const updatedApp = await prisma.appActiveInactive.update({
+      where: { id: existingApp.id },
+      data: { status: active === "Active" ? 1 : 0 },
+    });
+
+    return json({
+      message: "App status updated successfully",
+      data: updatedApp,
+      status: 200,
+      step: 6,
+    });
+  } else {
+    const newApp = await prisma.appActiveInactive.create({
+      data: {
+        AppType: appType,
+        status: active === "Active" ? 1 : 0,
+      },
+    });
+
+    return json({
+      message: "App status created successfully",
+      data: newApp,
+      status: 200,
+      step: 6,
+    });
+  }
+} catch (err) {
+  console.error("Main Function Error:", err);
+  return json({
+    message: "Something went wrong",
+    step: 6,
+    status: 500,
+  });
+}
   }
  } else if (request.method === "DELETE") {
   try {
@@ -653,10 +689,13 @@ const svgs = [
 export default function PlansPage() {
   const { products, totalBundle, sales, allDiscountId } = useLoaderData();
   const submit = useSubmit();
+  const fetcher = useFetcher();
 
   const actionResponse = useActionData();
+
+  console.log(actionResponse, 'actonnfdd')
+
   const navigation = useNavigation();
-  const formRef = useRef(null);
   const [discountId, setDiscountId] = useState("");
   const [productId, setProductId] = useState(null);
   const [activeTab, setActiveTab] = useState("Home");
@@ -912,12 +951,19 @@ export default function PlansPage() {
     setShowPage("first");
   };
 
-  const handleActive = (e,item) => {
+  const handleActive = (e, item) => {
     e.preventDefault();
     setActive(false);
     setActiveApp(item);
-    formRef.current.submit(); 
+    fetcher.submit(
+      { active: item, discountID: JSON.stringify(allDiscountId?.data), intent: "handleAllDiscount" },
+      { method: "POST",  }
+    );
   };
+
+ 
+
+  console.log(activeApp, 'check active or not')
 
   const handleShowStatus = (item) => {
     setShowStatus((prev) => ({
@@ -928,8 +974,6 @@ export default function PlansPage() {
 
 
   const handleBack = () => {
-    console.log('handleback clicked', showPage);
-  
     if(activeTab === "Products") {
       if(showPage == "second") {
         setShowPage("first");
@@ -987,6 +1031,34 @@ export default function PlansPage() {
       }
     }
   };
+
+
+  useEffect(() => {
+    if(actionResponse) {
+
+      if(actionResponse?.status === 200) {
+        if (actionResponse?.step === 6) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+      }
+      }else if(actionResponse?.status === 500) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+      }
+   
+  }
+
+  },[actionResponse])
 
   useEffect(() => {
     if (actionResponse?.status === 200) {
@@ -1266,15 +1338,7 @@ export default function PlansPage() {
               </div>
             </div>
             {active && (
-              <Form method="POST" ref={formRef}>
-              <input type="hidden" name="active" value={activeApp} />
-              <input
-                type="hidden"
-                name="discountID"
-                value={JSON.stringify(allDiscountId?.data)}
-              />
-              <input type="hidden" name="intent" value="handleAllDiscount" />
-
+              <fetcher.Form method="POST">
               <ul className={styles.selectDropdown}>
                 <li 
                 onClick={(e) => handleActive(e,"Active")}
@@ -1284,10 +1348,10 @@ export default function PlansPage() {
                 <li 
                 onClick={(e) => handleActive(e, "Inactive")}
                 >
-                    Inactive
-                    </li>
+                  Inactive
+                </li>
               </ul>
-            </Form>
+            </fetcher.Form>
             )}
           </div>
         </div>

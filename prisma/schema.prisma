@@ -206,5 +206,4 @@ model AppActiveInactive {
   AppType  String
   status   Int 
    createdAt  DateTime @default(now())
-
 }
