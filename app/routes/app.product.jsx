@@ -1,17 +1,19 @@
-import { Layout, Text, BlockStack, InlineStack } from "@shopify/polaris";
+import { Layout, BlockStack } from "@shopify/polaris";
 import {
-  isRouteErrorResponse,
   useActionData,
+  useFetcher,
   useNavigation,
-  useRouteError,
+  
 } from "@remix-run/react";
 import { TitleBar } from "@shopify/app-bridge-react";
+// import * as Papa from 'papaparse'
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { Form } from "@remix-run/react";
 import { promiseHash } from "remix-utils/promise";
 import Search from "../components/Search/Search";
 import searchImg from "../routes/assets/searchImg@.svg";
 import edit_icon from "../routes/assets/edit_icon.svg";
+import activeEdit from "../routes/assets/activeEdit.png";
 import ImportIcon from "../routes/assets/import.svg";
 import stars from "../routes/assets/star_svg.svg";
 import pllaceholderImg from "../routes/assets/images_place.svg";
@@ -20,10 +22,8 @@ import AddGradient from "../routes/assets/AddGradient.png";
 import infoImage from "../routes/assets/infoImage.png";
 import check_svg from "../routes/assets/circle-check-solid.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
-
 import CardSkeleton from "../components/skeletons/CardSkeleton/CardSkeleton";
 import { Toaster, toast as notify } from "sonner";
-
 import styles from "../styles/main.module.css";
 
 import {
@@ -37,12 +37,15 @@ import { useLoaderData } from "@remix-run/react";
 
 import { authenticate } from "../shopify.server";
 import Loader from "../components/Loader/Loader";
+import DeletePopup from "../components/DeletePopup/Deletepopup";
+// import CSVUpload from "../components/CSVUpload/CSVUpload";
 
 const ReviewsCard = lazy(() => import("../components/ReviewsCard/ReviewsCard"));
 
 export async function loader(request) {
   const checkTotal = await db.review.findMany();
-  console.log(checkTotal, "checkTotal");
+  const single = getSingleReviews(request);
+  console.log('hanjisingle', single)
   return json(
     await promiseHash({
       productReviews: getProductInfo(),
@@ -107,31 +110,151 @@ export async function action({ request }) {
             status: 500,
             step: 3,
           },
-          {},
+        
         );
+      }
+    } else if (intent === "UploadCSV") {
+      // try {
+      //   const formData = await request.formData();
+      //   const file = formData.get("file");
+
+      //   if (!file) {
+      //     return json({ error: "No file uploaded" }, { status: 400 });
+      //   }
+
+      //   const csvData = await file.text();
+      //   const result = Papa.parse(csvData, {
+      //     header: true,
+      //     skipEmptyLines: true,
+      //     dynamicTyping: { rating: true },
+      //   });
+
+      //   if (result.errors.length > 0) {
+      //     console.error("CSV Parsing Errors:", result.errors);
+      //     return json({ error: "Invalid CSV format" }, { status: 400 });
+      //   }
+
+      //   const { productId, productName, shopDomain } = result.data[0];
+
+      //   if (!productId || !productName || !shopDomain) {
+      //     return json(
+      //       { error: "productId, productName, and shopDomain are required" },
+      //       { status: 400 },
+      //     );
+      //   }
+
+      //   const reviews = result.data.map((row) => ({
+      //     shopDomain: row.shopDomain?.trim(),
+      //     productId: row.productId?.trim(),
+      //     productName: row.productName?.trim(),
+      //     userName: row.userName?.trim(),
+      //     userEmail: row.userEmail?.trim() || null,
+      //     rating: typeof row.rating === "number" ? row.rating : 0,
+      //     comment: row.comment?.trim() || null,
+      //     isPublic: String(row.isPublic).toLowerCase() === "true",
+      //   }));
+
+      //   for (const review of reviews) {
+      //     if (
+      //       review.shopDomain !== shopDomain ||
+      //       review.productId !== productId ||
+      //       review.productName !== productName ||
+      //       !review.userName ||
+      //       review.rating === null
+      //     ) {
+      //       return json(
+      //         {
+      //           error:
+      //             "All rows must have the same shopDomain, productId, and productName. Also, userName and rating are required.",
+      //         },
+      //         { status: 400 },
+      //       );
+      //     }
+      //   }
+      //   await db.review.createMany({ data: reviews });
+
+      //   return json(
+      //     {
+      //       message:
+      //         "Reviews uploaded successfully for the given product and domain",
+      //     },
+      //     { status: 200 },
+      //   );
+      // } catch (error) {
+      //   console.error("Error processing file:", error);
+      //   return json({ error: "Failed to process file" }, { status: 500 });
+      // }
+    } else if(intent === "handleActive") {
+      const active = formData.get("active");
+      console.log(active, 'checkactive')
+      const appType = "review";
+      try {
+     
+      
+        const existingApp = await prisma.appActiveInactive.findFirst({
+          where: { AppType: appType },
+        });
+      
+        if (existingApp) {
+          const updatedApp = await prisma.appActiveInactive.update({
+            where: { id: existingApp.id },
+            data: { status: active === "Active" ? 1 : 0 },
+          });
+      
+          return json({
+            message: "App status updated successfully",
+            data: updatedApp,
+            status: 200,
+            step: 6,
+          });
+        } else {
+          const newApp = await prisma.appActiveInactive.create({
+            data: {
+              AppType: appType,
+              status: active === "Active" ? 1 : 0,
+            },
+          });
+      
+          return json({
+            message: "App status created successfully",
+            data: newApp,
+            status: 200,
+            step: 6,
+          });
+        }
+      } catch (err) {
+        console.error("Main Function Error:", err);
+        return json({
+          message: "Something went wrong",
+          step: 6,
+          status: 500,
+        });
       }
     }
   } else if (request.method === "DELETE") {
-    const formData = await request.formData();
     const reviewId = formData.get("reviewId");
     try {
-      if (!reviewId || typeof reviewId !== "string") {
-        return json(
-          { message: "Valid Review ID is required" },
-          { status: 400 },
-        );
-      }
       const deletedReview = await db.review.delete({
         where: { id: reviewId },
       });
-
-      notify.success("Review deleted successfully");
+      return json({
+        message: "Review successfully deleted",
+        status: 200,
+        method: "delete",
+        step: 5,
+      });
     } catch (error) {
       console.error("Error deleting review:", error);
-      return json({ message: "Failed to delete review" }, { status: 500 });
+      return json({
+        message: "Failed to delete review",
+        error: error.message,
+        status: 500,
+        method: "delete",
+        step: 5,
+      });
     }
   } else {
-    return null;
+    return undefined;
   }
 }
 
@@ -140,13 +263,17 @@ export default function AppsPage() {
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
+  const fetcher = useFetcher();
+
   const [activeTab, setActiveTab] = useState("Reviews");
   const [activeApp, setActiveApp] = useState("Active");
+  const [active, setActive] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const [importSource, setImportSource] = useState("Aliexpress");
   const [dropDown, setDropDown] = useState(false);
   const [activeEnable, setActiveEnable] = useState("Enable");
   const [activeSelect, setActiveSelect] = useState("Newest");
-  const [active, setActive] = useState(false);
+  const [reviewId, setReviewId] = useState(null)
   const [sort, setSort] = useState(false);
   const [edit, setEdit] = useState(false);
 
@@ -169,7 +296,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
   });
 
   const [state, setStates] = useState({
-    text: "Customer Reviews",
+    text: "Customer Review",
     textSize: 5,
     textColor: "#000000",
     starsColor: "#F7C34A",
@@ -185,10 +312,29 @@ We’re all about making our customers’ lives better with [Product Name], and 
   const [position, setPosition] = useState("Below Section");
   const [section, setSection] = useState("Buy Buttons");
 
-  const handleActive = (item) => {
-    setActiveApp(item);
+  const handleActive = (e,item) => {
+    e.preventDefault();
     setActive(false);
+    setActiveApp(item);
+    fetcher.submit(
+      { active: item, intent: "handleActive" },
+      { method: "POST",  }
+    );
   };
+
+
+  const handleEditClick = (productId) => {
+    setEdit(!edit);
+    const data = fetcher.load(`?productId=${productId}`);
+  };
+
+
+  const handleDeleteReview = (item) => {
+    console.log(item, 'check hello')
+    setShowPopup(true);
+    setReviewId(item?.id)
+  };
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -210,6 +356,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
     }));
   };
 
+
+
   useEffect(() => {
     if (actionResponse?.step === 3) {
       if (actionResponse?.status === 200) {
@@ -225,6 +373,49 @@ We’re all about making our customers’ lives better with [Product Name], and 
           position: "top-center",
           style: {
             background: "green",
+            color: "white",
+          },
+        });
+      }
+    }
+    //  else if(actionResponse?.step === 6) {
+    //   if (actionResponse?.status === 200) {
+    //     notify.success(actionResponse?.message, {
+    //       position: "top-center",
+    //       style: {
+    //         background: "green",
+    //         color: "white",
+    //       },
+    //     });
+    //     console.log(actionResponse, 'henceActive')
+    //   } else if (actionResponse?.status === 500) {
+    //     notify.success(actionResponse?.message, {
+    //       position: "top-center",
+    //       style: {
+    //         background: "green",
+    //         color: "white",
+    //       },
+    //     });
+    //   }
+    // }
+  }, [actionResponse]);
+
+  useEffect(() => {
+    if (actionResponse?.step === 5) {
+      if (actionResponse?.status === 200) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
+        setShowPopup(false)
+      } else if (actionResponse?.status === 500) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "red",
             color: "white",
           },
         });
@@ -285,21 +476,21 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </div>
                 </div>
                 {active && (
-                  <ul className={styles.selectDropdown}>
-                    <li
-                      data-value="option1"
-                      onClick={() => handleActive("Active")}
-                    >
-                      Active
-                    </li>
-                    <li
-                      data-value="option2"
-                      onClick={() => handleActive("Inactive")}
-                    >
-                      Inactive
-                    </li>
-                  </ul>
-                )}
+              <fetcher.Form method="POST">
+              <ul className={styles.selectDropdown}>
+                <li 
+                onClick={(e) => handleActive(e,"Active")}
+                >
+                  Active
+                  </li>
+                <li 
+                onClick={(e) => handleActive(e, "Inactive")}
+                >
+                  Inactive
+                </li>
+              </ul>
+            </fetcher.Form>
+            )}
               </div>
             </div>
 
@@ -427,10 +618,11 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </tr>
                 </thead>
                 <tbody>
+
                   {edit
                     ? fetcher?.data?.singleReviews?.reviews.map((item) => (
                         <React.Fragment>
-                          {console.log(item, "item")}
+                          {console.log(item, "hence")}
                           <tr>
                             <td>
                               <img
@@ -449,16 +641,16 @@ We’re all about making our customers’ lives better with [Product Name], and 
                                 </label>
 
                                 <Form method="DELETE">
+                                <input
+                            type="hidden"
+                            name="reviewId"
+                            value={reviewId}
+                          />
                                   <button
-                                    name="reviewId"
-                                    value={item?.id}
+                                    type="button"
+                                    onClick={() => handleDeleteReview(item)}
                                     className={styles.deletedBtn}
                                   >
-                                    {/* <img
-                                    src={deletedIcon}
-                                    width={20}
-                                    height={20}
-                                  /> */}
                                     <svg
                                       width="16"
                                       height="18"
@@ -467,14 +659,21 @@ We’re all about making our customers’ lives better with [Product Name], and 
                                       xmlns="http://www.w3.org/2000/svg"
                                     >
                                       <path
-                                        fill-rule="evenodd"
-                                        clip-rule="evenodd"
+                                        fillRule="evenodd"
+                                        clipRule="evenodd"
                                         d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
                                         fill="#F24747"
                                       />
                                     </svg>
                                   </button>
+                                  {showPopup && (
+                            <DeletePopup
+                              setShowPopup={setShowPopup}
+                              state={navigation.state}
+                            />
+                          )}
                                 </Form>
+                             
                               </div>
                             </td>
 
@@ -525,6 +724,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                       ))
                     : productReviews.map((item, index) => (
                         <React.Fragment key={index}>
+                          {console.log(item, 'check item')}
                           <tr>
                             <td>
                               <img
@@ -1012,7 +1212,6 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 <div className={styles.timing_after}>
                   <div>
                     <label htmlFor="">Layout</label>
-
                     <div className={styles.flexcolumn}>
                       <div className={`${styles.layoutBox} ${styles.selected}`}>
                         <svg
@@ -1378,7 +1577,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
             />
             <div className={styles.previewFirstapp}>
               <div className={styles.Preview_bundle}>
-                <div className={styles.customer_review}>Customer review</div>
+                <div className={styles.customer_review}>{state.text}</div>
                 <h3 className={styles.reviewTotal}>4.3</h3>
                 <div className={styles.text_center_img}>
                   <img
@@ -1440,7 +1639,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </div>
                   <span className={styles.rating_label}>5 Stars</span>
                 </div>
-                <button className={styles.AddBtn}>Add A Review</button>
+                <button className={styles.AddBtn}>{state.addReviewBtnText}</button>
               </div>
               <div className={styles.reviewTestimonial}>
                 <div className={styles.Preview_bundle}>
@@ -1521,14 +1720,14 @@ We’re all about making our customers’ lives better with [Product Name], and 
               <span>Necklace 14k</span>
             </div>
             <div className={styles.gridBox}>
-            {importSource !== "CSV" && (
-              <div className={styles.timing_after}>
-                <div className={styles.input_labelCustomize}>
-                  <label htmlFor="">Product URL</label>
-                  <input type="text" placeholder="Insert URL" />
+              {importSource !== "CSV" && (
+                <div className={styles.timing_after}>
+                  <div className={styles.input_labelCustomize}>
+                    <label htmlFor="">Product URL</label>
+                    <input type="text" placeholder="Insert URL" />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
               <div className={styles.timing_after}>
                 <div>
                   <label>Import From</label>
@@ -1569,62 +1768,89 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 </div>
               )}
 
-{importSource !== "CSV" && (
-              <div className={styles.timing_after}>
-                <div>
-                  <label>Content Types</label>
-                  <select className={styles.select_box}>
-                    <option value="1" selected>
-                      All reviews
-                    </option>
-                    <option value="2">Photo Reviews only</option>
-                    <option value="3">Text Reviews only</option>
-                  </select>
+              {importSource !== "CSV" && (
+                <div className={styles.timing_after}>
+                  <div>
+                    <label>Content Types</label>
+                    <select className={styles.select_box}>
+                      <option value="1" selected>
+                        All reviews
+                      </option>
+                      <option value="2">Photo Reviews only</option>
+                      <option value="3">Text Reviews only</option>
+                    </select>
+                  </div>
                 </div>
-              </div>)}
-
-              {importSource == "CSV" && (
-                <div className={styles.input_labelCustomize}>
-                <label htmlFor="">Import File</label>
-                <input type="file" placeholder="Insert URL" />
-              </div>
               )}
 
-             {importSource !== "CSV" && ( <div className={styles.timing_after}>
-                <div>
-                  <label>Status</label>
-                  <select className={styles.select_box}>
-                    <option value="1" selected>
-                      Published
-                    </option>
-                    <option value="2">Unpublished</option>
-                  </select>
-                </div>
-              </div>)}
 
-              {importSource !== "CSV" && (<div className={styles.timing_after}>
-                <div>
-                  <label htmlFor="">Reviewer Country</label>
-                  <select className={styles.select_box}>
-                    <option value="1" selected>
-                      All
-                    </option>
-                    {/* <option value="2">Unpublished</option> */}
-                  </select>
+              {/* {
+                importSource === "CSV" && (
+                  <div>
+                     <CSVUpload />
+                    </div>
+              
+                )
+              } */}
+
+              {/* {importSource === "CSV" && (
+                <div className={styles.input_labelCustomize}>
+                  <label htmlFor="csvUpload">Import File</label>
+                  <input
+                    type="file"
+                    id="csvUpload"
+                    accept=".csv"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file && file.type !== "text/csv") {
+                        alert("Only CSV files are allowed!");
+                        e.target.value = ""; // Clear the input field
+                      }
+                    }}
+                  />
                 </div>
-              </div>)}
+              )} */}
+
+              {importSource !== "CSV" && (
+                <div className={styles.timing_after}>
+                  <div>
+                    <label>Status</label>
+                    <select className={styles.select_box}>
+                      <option value="1" selected>
+                        Published
+                      </option>
+                      <option value="2">Unpublished</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {importSource !== "CSV" && (
+                <div className={styles.timing_after}>
+                  <div>
+                    <label htmlFor="">Reviewer Country</label>
+                    <select className={styles.select_box}>
+                      <option value="1" selected>
+                        All
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
-           { importSource !== "CSV" && (<div className={styles.timing_after}>
-              <div className={styles.formGroup}>
-                <input type="checkbox" id="html" />
-                <label for="html">
-                  {" "}
-                  I confirm that I either own the imported reviews or have
-                  permission to use them
-                </label>
+            {importSource !== "CSV" && (
+              <div className={styles.timing_after}>
+                <div className={styles.formGroup}>
+                  <input type="checkbox" id="html" />
+                  <label for="html">
+                    {" "}
+                    I confirm that I either own the imported reviews or have
+                    permission to use them
+                  </label>
+                </div>
               </div>
-            </div>)}
+            )}
             <div className={`${styles.addBtn} ${styles.textEnd}`}>
               <button
                 className={styles.Backbtn}
@@ -1632,18 +1858,25 @@ We’re all about making our customers’ lives better with [Product Name], and 
               >
                 Cancel
               </button>
-             {importSource !== "CSV" && <button
-                onClick={() => setShowImportPopup(2)}
-                className={styles.NextBtn}
-              >
-                Launch
-              </button>}
-              {importSource == "CSV" && <button
-                onClick={() => setShowImportPopup(2)}
-                className={styles.NextBtn}
-              >
-                Import
-              </button>}
+              {importSource !== "CSV" && (
+                <button
+                  onClick={() => setShowImportPopup(2)}
+                  className={styles.NextBtn}
+                >
+                  Launch
+                </button>
+              )}
+              {importSource == "CSV" && (
+                <button
+                  type="submit"
+                  // onClick={() => setShowImportPopup(2)}
+                  name="intent"
+                  value="UploadCSV"
+                  className={styles.NextBtn}
+                >
+                  Import
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -63,7 +63,6 @@ export const action = async ({ request }) => {
     const deletedReview = await db.review.delete({
       where: { id: reviewId }, // Pass reviewId as a string
     });
-
     return json({
       message: "Review deleted successfully",
       deletedReview,
@@ -95,8 +94,6 @@ export const getSingleReviews = async ({ request }) => {
     if (reviews.length === 0) {
       return { message: "No reviews found for this product" }, { status: 404 };
     }
-
-    // Calculate average rating and count star ratings
     let totalRating = 0;
     let fiveStarCount = 0;
     let oneStarCount = 0;
@@ -105,10 +102,9 @@ export const getSingleReviews = async ({ request }) => {
     let fourStarCount = 0;
 
     reviews.forEach((review) => {
-      const rating = review.rating; // Assuming the review object has a 'rating' field
+      const rating = review.rating; 
       totalRating += rating;
 
-      // Count how many reviews have each star rating
       switch (rating) {
         case 5:
           fiveStarCount++;
@@ -212,3 +208,7 @@ export let launchBundle = async (values) => {
     return { message: "Failed to save bundle information" }, { status: 500 };
   }
 };
+
+
+
+

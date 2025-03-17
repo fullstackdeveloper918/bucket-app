@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://wherever-bleeding-essex-lf.trycloudflare.com"
+application_url = "https://linked-accessed-strings-highest.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products write_discounts read_discounts"
 
 [auth]
 redirect_urls = [
-  "https://wherever-bleeding-essex-lf.trycloudflare.com/auth/callback",
-  "https://wherever-bleeding-essex-lf.trycloudflare.com/auth/shopify/callback",
-  "https://wherever-bleeding-essex-lf.trycloudflare.com/api/auth/callback"
+  "https://linked-accessed-strings-highest.trycloudflare.com/auth/callback",
+  "https://linked-accessed-strings-highest.trycloudflare.com/auth/shopify/callback",
+  "https://linked-accessed-strings-highest.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
