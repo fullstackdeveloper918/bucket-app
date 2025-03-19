@@ -1,4 +1,5 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+
 import styles from "../styles/main.module.css";
 import arrowIcon from "../../app/routes/assets/backarrow.png";
 import db from "../db.server";
@@ -9,7 +10,6 @@ import collectedIcon from "../../app/routes/assets/collected_icon.png";
 import replay from "../../app/routes/assets/replay.png";
 import NoProduct from "../../app/routes/assets/暂无消息.svg";
 import playlistIcon from "../../app/routes/assets/playlistIcon.png";
-import videoImgplayer from "../../app/routes/assets/videoImgplayer.png";
 import forward from "../../app/routes/assets/forward.png";
 import pause from "../../app/routes/assets/pause.png";
 import nextPlay from "../../app/routes/assets/nextPlay.png";
@@ -79,14 +79,13 @@ const format = (seconds) => {
 export default function ProfitsPage() {
   const data = useLoaderData();
   const videoRef = useRef(null);
-  const playPromise = useRef();
 
   const [isProduct, setIsProduct] = useState(false);
   const [shareReward, setShareReward] = useState(false);
   const [component, setComponent] = useState("first");
   const [show, setShow] = useState("visitor");
   const [duration, setDuration] = useState(0);
-  
+
   const [videoUrl, setVideoUrl] = useState(null);
   const [playVideo, setPlayVideo] = useState(false);
   const [details, setDetails] = useState({});
@@ -133,8 +132,8 @@ export default function ProfitsPage() {
   };
 
   const handleDuration = (duration) => {
-    console.log(duration, 'checkdura');
-  
+    console.log(duration, "checkdura");
+
     // Check if duration is a valid number and not Infinity
     if (duration !== Infinity && !isNaN(duration)) {
       setDuration(duration);
@@ -161,26 +160,11 @@ export default function ProfitsPage() {
     videoRef.current.seekTo(videoRef.current.getCurrentTime() + 2);
   };
 
- 
-
   const currentTime =
     videoRef && videoRef.current ? videoRef.current.getCurrentTime() : "00:00";
 
-    const elapsedTime = format(currentTime);
-const totalDuration = format(duration);
-
-   console.log(elapsedTime, "elapsedTime");
-   console.log(totalDuration, "totalDuration");
-
-  // const duration =
-  //   videoRef && videoRef.current ? videoRef.current.getDuration() : "00:00";
-  // const elapsedTime = format(currentTime);
-
-  // const totalDuration = format(duration);
-
-  // console.log(elapsedTime, "elapsedTime");
-
-
+  const elapsedTime = format(currentTime);
+  const totalDuration = format(duration);
   return (
     <>
       <div className={styles.containerDiv}>
@@ -462,6 +446,8 @@ const totalDuration = format(duration);
                       <h6 className={styles.date_list}>07 Mar, 13:50</h6>
                       <p className={styles.time_list}>0:58</p>
 
+                      {console.log(details, "details")}
+
                       <img
                         src={playlistIcon}
                         width={20}
@@ -518,7 +504,7 @@ const totalDuration = format(duration);
                       <ReactPlayer
                         ref={videoRef}
                         className={styles.videoPlayerImg}
-                        url={`https://patents-indicates-physically-occasional.trycloudflare.com/${details.videoURL}`}
+                        url={`https://insights-thumbnail-frontier-treatment.trycloudflare.com/${details.videoURL}`}
                         pip={pip}
                         playing={playing}
                         controls={true}
@@ -529,7 +515,6 @@ const totalDuration = format(duration);
                         muted={muted}
                         onProgress={handleProgress}
                         onDuration={handleDuration}
-                        
                         config={{
                           file: {
                             attributes: {
@@ -538,16 +523,6 @@ const totalDuration = format(duration);
                           },
                         }}
                       />
-
-                      {/* <video
-                        ref={videoRef}
-                        src={`https://patents-indicates-physically-occasional.trycloudflare.com/${details.videoURL}`}
-                        autoPlay
-                        controls
-                        onClick={togglePlayHandler}
-                        className={styles.videoPlayerImg}
-                      ></video>
-                      */}
                     </div>
                   </div>
 

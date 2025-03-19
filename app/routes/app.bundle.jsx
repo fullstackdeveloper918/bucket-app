@@ -23,7 +23,11 @@ import {
 } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
-import { fetchSalesData, getAllBundle, getAllDiscountId } from "../api/bundle.server";
+import {
+  fetchSalesData,
+  getAllBundle,
+  getAllDiscountId,
+} from "../api/bundle.server";
 import DeletePopup from "../components/DeletePopup/Deletepopup";
 import AddProduct from "../components/BundleModal/AddProduct";
 import axios from "axios";
@@ -101,106 +105,102 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-
   if (request.method === "POST") {
-  if (intent === "stepThird") {
-    const bundle_id = formData.get("bundle_id");
-    const name = formData.get("bundle_name");
-    const products = formData.get("selectProducts");
-    const selectProducts = JSON.parse(products);
-    const position = formData.get("position");
-    const section = formData.get("section");
-    const displayLocation = formData.get("displayBundle");
-    const method = formData.get("discount");
-    const chooseAmount = formData.get("amount");
+    if (intent === "stepThird") {
+      const bundle_id = formData.get("bundle_id");
+      const name = formData.get("bundle_name");
+      const products = formData.get("selectProducts");
+      const selectProducts = JSON.parse(products);
+      const position = formData.get("position");
+      const section = formData.get("section");
+      const displayLocation = formData.get("displayBundle");
+      const method = formData.get("discount");
+      const chooseAmount = formData.get("amount");
 
-    const title_section = {
-      text: formData.get("titleSectionText"),
-      size: formData.get("titleSectionSize"),
-      color: formData.get("titleSectionColor"),
-    };
-    const title = {
-      text: formData.get("titleText"),
-      size: formData.get("titleSize"),
-      color: formData.get("titleColor"),
-    };
-    const product = {
-      size: formData.get("productSize"),
-      color: formData.get("productColor"),
-    };
-
-    const bundle_cost = {
-      size: formData.get("bundleCostSize"),
-      color: formData.get("bundleCostColor"),
-      comparedPrice: formData.get("bundleCostComparedPrice"),
-      save: formData.get("bundleCostSave"),
-    };
-    const call_to_action_button = {
-      text: formData.get("ctaText"),
-      size: formData.get("ctaSize"),
-      color: formData.get("ctaColor"),
-      cart: formData.get("cart"),
-    };
-
-    const text_below_cta = {
-      text: formData.get("tbText"),
-      size: formData.get("tbSize"),
-      color: formData.get("tbColor"),
-    };
-
-    const backgroud = {
-      color: formData.get("backgroundColor"),
-      shadow: formData.get("backgroundShadow"),
-    };
-
-    const result = [];
-    selectProducts.forEach((product) => {
-      product.variants.forEach((variantId) => {
-        result.push({
-          option1: variantId,
-          price: "3.05",
-          compare_at_price: "5.02",
-        });
-      });
-    });
-
-    try {
-      let productData = JSON.stringify({
-        product: {
-          title:  name,
-          body_html: "<strong>Good snowboard!</strong>",
-          vendor: "Burton",
-          product_type: "Snowboard",
-          status: "active",
-          tags: "dddfdfs",
-          variants: result,
-        },
-      });
-      
-      console.log("shoptest",shop)
-      let config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: `https://${shop}/admin/api/2024-10/products.json`,
-        headers: {
-          "X-Shopify-Access-Token": session?.accessToken,
-          "Content-Type": "application/json",
-        },
-        data: productData,
+      const title_section = {
+        text: formData.get("titleSectionText"),
+        size: formData.get("titleSectionSize"),
+        color: formData.get("titleSectionColor"),
+      };
+      const title = {
+        text: formData.get("titleText"),
+        size: formData.get("titleSize"),
+        color: formData.get("titleColor"),
+      };
+      const product = {
+        size: formData.get("productSize"),
+        color: formData.get("productColor"),
       };
 
-      let productResponse = await axios.request(config);
-      console.log(
-        productResponse?.data?.product?.admin_graphql_api_id,
-        "hence productResponse",
-      );
-      let data;
+      const bundle_cost = {
+        size: formData.get("bundleCostSize"),
+        color: formData.get("bundleCostColor"),
+        comparedPrice: formData.get("bundleCostComparedPrice"),
+        save: formData.get("bundleCostSave"),
+      };
+      const call_to_action_button = {
+        text: formData.get("ctaText"),
+        size: formData.get("ctaSize"),
+        color: formData.get("ctaColor"),
+        cart: formData.get("cart"),
+      };
 
+      const text_below_cta = {
+        text: formData.get("tbText"),
+        size: formData.get("tbSize"),
+        color: formData.get("tbColor"),
+      };
 
+      const backgroud = {
+        color: formData.get("backgroundColor"),
+        shadow: formData.get("backgroundShadow"),
+      };
 
-      if (method === "Percentage") {
-        data = JSON.stringify({
-          query: `mutation CreateVolumeDiscount($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+      const result = [];
+      selectProducts.forEach((product) => {
+        product.variants.forEach((variantId) => {
+          result.push({
+            option1: variantId,
+            price: "3.05",
+            compare_at_price: "5.02",
+          });
+        });
+      });
+
+      try {
+        let productData = JSON.stringify({
+          product: {
+            title: name,
+            body_html: "<strong>Good snowboard!</strong>",
+            vendor: "Burton",
+            product_type: "Snowboard",
+            status: "active",
+            tags: "dddfdfs",
+            variants: result,
+          },
+        });
+
+        let config = {
+          method: "post",
+          maxBodyLength: Infinity,
+          url: `https://${shop}/admin/api/2024-10/products.json`,
+          headers: {
+            "X-Shopify-Access-Token": session?.accessToken,
+            "Content-Type": "application/json",
+          },
+          data: productData,
+        };
+
+        let productResponse = await axios.request(config);
+        console.log(
+          productResponse?.data?.product?.admin_graphql_api_id,
+          "hence productResponse",
+        );
+        let data;
+
+        if (method === "Percentage") {
+          data = JSON.stringify({
+            query: `mutation CreateVolumeDiscount($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
 discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
   automaticDiscountNode {
     id
@@ -236,36 +236,37 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
   }
 }
 }`,
-          variables: {
-            automaticBasicDiscount: {
-              title: name,
-              startsAt: "2025-01-07T01:28:55-05:00",
-              minimumRequirement: {
-                subtotal: {
-                  greaterThanOrEqualToSubtotal: 1,
-                },
-              },
-              customerGets: {
-                value: {
-                  percentage: parseFloat(chooseAmount)/ 100,
-                },
-                items: {
-                  products: {
-                    productsToAdd: productResponse?.data?.product?.admin_graphql_api_id,
+            variables: {
+              automaticBasicDiscount: {
+                title: name,
+                startsAt: "2025-01-07T01:28:55-05:00",
+                minimumRequirement: {
+                  subtotal: {
+                    greaterThanOrEqualToSubtotal: 1,
                   },
                 },
-              },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: true,
-                orderDiscounts: true,
+                customerGets: {
+                  value: {
+                    percentage: parseFloat(chooseAmount) / 100,
+                  },
+                  items: {
+                    products: {
+                      productsToAdd:
+                        productResponse?.data?.product?.admin_graphql_api_id,
+                    },
+                  },
+                },
+                combinesWith: {
+                  productDiscounts: true,
+                  shippingDiscounts: true,
+                  orderDiscounts: true,
+                },
               },
             },
-          },
-        });
-      } else if(method === "Fixed Amount") {
-        data = JSON.stringify({
-          query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
+          });
+        } else if (method === "Fixed Amount") {
+          data = JSON.stringify({
+            query: `mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) {
             discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
               automaticDiscountNode {
                 id
@@ -285,66 +286,282 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
               userErrors { field code message }
             }
           }`,
-          variables: {
-            automaticBasicDiscount: {
-              title: name,
-              startsAt: "2025-01-07T01:28:55-05:00",
-              minimumRequirement: {
-                quantity: {
-                  greaterThanOrEqualToQuantity: "1",
-                },
-              },
-              customerGets: {
-                value: {
-                  discountAmount: {
-                    amount:parseFloat(chooseAmount),
-                    appliesOnEachItem: false,
+            variables: {
+              automaticBasicDiscount: {
+                title: name,
+                startsAt: "2025-01-07T01:28:55-05:00",
+                minimumRequirement: {
+                  quantity: {
+                    greaterThanOrEqualToQuantity: "1",
                   },
                 },
-                items: {
-                  products: {
-                    productsToAdd: productResponse?.data?.product?.admin_graphql_api_id,
+                customerGets: {
+                  value: {
+                    discountAmount: {
+                      amount: parseFloat(chooseAmount),
+                      appliesOnEachItem: false,
+                    },
+                  },
+                  items: {
+                    products: {
+                      productsToAdd:
+                        productResponse?.data?.product?.admin_graphql_api_id,
+                    },
                   },
                 },
-              },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: true,
-                orderDiscounts: true,
+                combinesWith: {
+                  productDiscounts: true,
+                  shippingDiscounts: true,
+                  orderDiscounts: true,
+                },
               },
             },
+          });
+        }
+        let discountconfig = {
+          method: "post",
+          maxBodyLength: Infinity,
+          url: `https://${shop}/admin/api/2025-01/graphql.json`,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": session?.accessToken,
           },
+          data: data,
+        };
+
+        const discountResponse = await axios.request(discountconfig);
+        const discount_id =
+          discountResponse?.data?.data?.discountAutomaticBasicCreate
+            ?.automaticDiscountNode?.id;
+        const discount_info =
+          discountResponse?.data?.data?.discountAutomaticBasicCreate;
+
+        const bundleData = {
+          name,
+          displayLocation,
+          method,
+          discount_id: discount_id,
+          discount_info: discount_info,
+          chooseAmount: parseFloat(chooseAmount),
+          products: selectProducts,
+          position,
+          section,
+          title_section,
+          title,
+          product,
+          bundle_cost,
+          call_to_action_button,
+          text_below_cta,
+          backgroud,
+          domainName: shop,
+        };
+
+        if (bundle_id) {
+          const updatedDiscount = await db.bundle.update({
+            where: { id: parseInt(bundle_id) },
+            data: bundleData,
+          });
+
+          return json({
+            message: "Bundle updated successfully",
+            data: updatedDiscount,
+            status: 200,
+            step: 4,
+            activeTab: "Return",
+          });
+        }
+
+        const savedDiscount = await db.bundle.create({
+          data: bundleData,
+        });
+
+        return json({
+          message: "Bundle created successfully",
+          data: savedDiscount,
+          status: 200,
+          step: 4,
+          activeTab: "Return",
+        });
+      } catch (error) {
+        console.log("Error encountered:", error);
+        return json({
+          message: "Failed to process the request",
+          error: error.message,
+          status: 500,
         });
       }
-
-      
-
-      let discountconfig = {
+    }  else if (intent === "deactivate") {
+      const active = formData.get("active");
+      let data = JSON.stringify({
+        query:
+          "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
+        variables: {
+          id: bundle_id,
+        },
+      });
+      let config = {
         method: "post",
         maxBodyLength: Infinity,
         url: `https://${shop}/admin/api/2025-01/graphql.json`,
         headers: {
           "Content-Type": "application/json",
           "X-Shopify-Access-Token": session?.accessToken,
+          Cookie:
+            "_master_udr=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaEpJaWxrTlRaalptVTJNUzFqTURVd0xUUTVPR1F0WVRGaU9DMHlOelpoTWpOa016azRPVGNHT2daRlJnPT0iLCJleHAiOiIyMDI3LTAyLTEyVDA1OjM3OjU5Ljc0NVoiLCJwdXIiOiJjb29raWUuX21hc3Rlcl91ZHIifX0%3D--6a2ae39f942f1b36d2674a0bdaf23f7b38b88770; _secure_admin_session_id=efdc1b1f18ec43e79a4d28387c8a81cb; _secure_admin_session_id_csrf=efdc1b1f18ec43e79a4d28387c8a81cb",
         },
         data: data,
       };
 
-        const discountResponse = await axios.request(discountconfig);
+      try {
+        const deactivateResponse = await axios.request(config);
+        console.log(
+          deactivateResponse?.data?.data?.discountAutomaticDeactivate,
+          "deactivateResponse",
+        );
+        return { error: "Bundle Deactivated Successfully" };
+      } catch (err) {
+        console.log(err, "check err");
+        return { error: "Failed to deactivate bundle" };
+      }
+    } else if (intent === "handleAllDiscount") {
+      const discountId = JSON.parse(formData.get("discountID"));
+      const active = formData.get("active");
+      const appType = "bundle";
 
-        console.log(discountResponse?.data?.errors, 'discountResponse')
-        const discount_id = discountResponse?.data?.data?.discountAutomaticBasicCreate?.automaticDiscountNode?.id ;
-        const discount_info = discountResponse?.data?.data?.discountAutomaticBasicCreate ;
-    
+      if (discountId.length == 0) {
+        return json({
+          error: "No Discount Id present",
+          status: 500,
+          step: 6,
+        });
+      }
 
-      const bundleData = {
+      const activateDiscount = async (id) => {
+        try {
+          const query = {
+            query: `mutation discountAutomaticActivate($id: ID!) {
+            discountAutomaticActivate(id: $id) {
+              automaticDiscountNode {
+                automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+              }
+              userErrors { field message }
+            }
+          }`,
+            variables: { id },
+          };
+          const response = await axios.post(
+            `https://${shop}/admin/api/2025-01/graphql.json`,
+            query,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": session?.accessToken,
+              },
+            },
+          );
+          return response.data;
+        } catch (error) {
+          console.error("Activate Discount Error:", error);
+          return { error: "Failed to activate discount", id };
+        }
+      };
+
+      const deactivateDiscount = async (id) => {
+        try {
+          const query = {
+            query: `mutation discountAutomaticDeactivate($id: ID!) {
+            discountAutomaticDeactivate(id: $id) {
+              automaticDiscountNode {
+                automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
+              }
+              userErrors { field message }
+            }
+          }`,
+            variables: { id },
+          };
+          const response = await axios.post(
+            `https://${shop}/admin/api/2025-01/graphql.json`,
+            query,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": session?.accessToken,
+              },
+            },
+          );
+          return response.data;
+        } catch (error) {
+          console.error("Deactivate Discount Error:", error);
+          return { error: "Failed to deactivate discount", id };
+        }
+      };
+
+      try {
+        let responses;
+
+        if (active === "Active") {
+          responses = await Promise.all(
+            discountId.map((id) => activateDiscount(id)),
+          );
+        } else if (active === "Inactive") {
+          responses = await Promise.all(
+            discountId.map((id) => deactivateDiscount(id)),
+          );
+        }
+
+        console.log("Discount Responses:", responses);
+
+        const existingApp = await prisma.appActiveInactive.findFirst({
+          where: { AppType: appType },
+        });
+
+        if (existingApp) {
+          const updatedApp = await prisma.appActiveInactive.update({
+            where: { id: existingApp.id },
+            data: { status: active === "Active" ? 1 : 0 },
+          });
+
+          return json({
+            message: "App status updated successfully",
+            data: updatedApp,
+            status: 200,
+            step: 6,
+          });
+        } else {
+          const newApp = await prisma.appActiveInactive.create({
+            data: {
+              AppType: appType,
+              status: active === "Active" ? 1 : 0,
+            },
+          });
+
+          return json({
+            message: "App status created successfully",
+            data: newApp,
+            status: 200,
+            step: 6,
+          });
+        }
+      } catch (err) {
+        console.error("Main Function Error:", err);
+        return json({
+          message: "Something went wrong",
+          step: 6,
+          status: 500,
+        });
+      }
+    }
+    else if (intent === "handleCopy") {
+      console.log('HandleCopy block');
+      try {
+      const card = JSON.parse(formData.get("card"));
+      const {
+        isActive,
         name,
         displayLocation,
         method,
-        discount_id: discount_id,
-        discount_info: discount_info,
-        chooseAmount: parseFloat(chooseAmount),
-        products: selectProducts,
+        chooseAmount,
+        products,
         position,
         section,
         title_section,
@@ -354,213 +571,58 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         call_to_action_button,
         text_below_cta,
         backgroud,
-        domainName: shop,
-      };
+      } = card;
 
-      if (bundle_id) {
-        const updatedDiscount = await db.bundle.update({
-          where: { id: parseInt(bundle_id) },
+     
+        const bundleData = {
+          name: name+' copy',
+          isActive: isActive,
+          displayLocation: displayLocation,
+          method: method,
+          chooseAmount: parseFloat(chooseAmount),
+          products: products,
+          position: position,
+          section: section,
+          title_section: title_section,
+          title: title,
+          product: product,
+          bundle_cost: bundle_cost,
+          call_to_action_button: call_to_action_button,
+          text_below_cta: text_below_cta,
+          backgroud: backgroud,
+          domainName: shop,
+        };
+
+        const savedDiscount = await db.bundle.create({
           data: bundleData,
         });
 
+        console.log(savedDiscount, 'savedDiscount')
         return json({
-          message: "Bundle updated successfully",
-          data: updatedDiscount,
-          status: 200,
-          step: 4,
-          activeTab: "Return",
+            message: "Bundle copied successfully",
+            data: savedDiscount,
+            status: 200,
+            step: 7,
+          });
+        
+      } catch (error) {
+        console.log(error, 'check error')
+        return json({
+          message: "Failed to process the request",
+          error: error.message,
+          status: 500,
+          step: 7
         });
       }
-
-      const savedDiscount = await db.bundle.create({
-        data: bundleData,
-      });
-
-      return json({
-        message: "Bundle created successfully",
-        data: savedDiscount,
-        status: 200,
-        step: 4,
-        activeTab: "Return",
-      });
-    } catch (error) {
-      console.log("Error encountered:", error);
-      return json({
-        message: "Failed to process the request",
-        error: error.message,
-        status: 500,
-      });
     }
-  
-   }
-  //   else if (intent === "deactivate") {
-  //   console.log("deactivate got hit")
-  //   let data = JSON.stringify({
-  //     query:
-  //       "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
-  //     variables: {
-  //       id: "gid://shopify/DiscountAutomaticNode/1161176350799",
-  //     },
-  //   });
-  //   let config = {
-  //     method: "post",
-  //     maxBodyLength: Infinity,
-  //     url: `https://${shop}/admin/api/2025-01/graphql.json`,
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       "X-Shopify-Access-Token": session?.accessToken,
-  //       Cookie:
-  //         "_master_udr=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaEpJaWxrTlRaalptVTJNUzFqTURVd0xUUTVPR1F0WVRGaU9DMHlOelpoTWpOa016azRPVGNHT2daRlJnPT0iLCJleHAiOiIyMDI3LTAyLTEyVDA1OjM3OjU5Ljc0NVoiLCJwdXIiOiJjb29raWUuX21hc3Rlcl91ZHIifX0%3D--6a2ae39f942f1b36d2674a0bdaf23f7b38b88770; _secure_admin_session_id=efdc1b1f18ec43e79a4d28387c8a81cb; _secure_admin_session_id_csrf=efdc1b1f18ec43e79a4d28387c8a81cb",
-  //     },
-  //     data: data,
-  //   };
-  //   axios
-  //     .request(config)
-  //     .then((response) => {
-  //       console.log(JSON.stringify(response.data), "casefour");
-  //     })
-  //     .catch((error) => {
-  //       console.log(error, "errorfour");
-  //     });
+  } else if (request.method === "DELETE") {
+    try {
+      const productId = formData.get("product_id");
+      const discount_id = formData.get("discount_id");
 
-  //   return undefined;
-  // } 
-  else if (intent === "handleAllDiscount") {
-    const discountId = JSON.parse(formData.get("discountID"));
-    const active = formData.get("active");
-    const appType = "bundle";
-
-   if (discountId.length == 0) {
-     return json({
-       error: "No Discount Id present",
-       status: 500,
-       step: 6,
-     });
-    }
-
-const activateDiscount = async (id) => {
-  try {
-         const query = {
-          query: `mutation discountAutomaticActivate($id: ID!) {
-            discountAutomaticActivate(id: $id) {
-              automaticDiscountNode {
-                automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
-              }
-              userErrors { field message }
-            }
-          }`,
-          variables: { id },
-        };
-    const response = await axios.post(
-      `https://${shop}/admin/api/2025-01/graphql.json`,
-      query,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Activate Discount Error:", error);
-    return { error: "Failed to activate discount", id };
-  }
-};
-
-const deactivateDiscount = async (id) => {
-  try {
-         const query = {
-          query: `mutation discountAutomaticDeactivate($id: ID!) {
-            discountAutomaticDeactivate(id: $id) {
-              automaticDiscountNode {
-                automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } }
-              }
-              userErrors { field message }
-            }
-          }`,
-          variables: { id },
-        };
-    const response = await axios.post(
-      `https://${shop}/admin/api/2025-01/graphql.json`,
-      query,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Deactivate Discount Error:", error);
-    return { error: "Failed to deactivate discount", id };
-  }
-};
-
-try {
-  let responses;
-
-  if (active === "Active") {
-    responses = await Promise.all(
-      discountId.map((id) => activateDiscount(id))
-    );
-  } else if (active === "Inactive") {
-    responses = await Promise.all(
-      discountId.map((id) => deactivateDiscount(id))
-    );
-  }
-
-  console.log("Discount Responses:", responses);
-
-  const existingApp = await prisma.appActiveInactive.findFirst({
-    where: { AppType: appType },
-  });
-
-  if (existingApp) {
-    const updatedApp = await prisma.appActiveInactive.update({
-      where: { id: existingApp.id },
-      data: { status: active === "Active" ? 1 : 0 },
-    });
-
-    return json({
-      message: "App status updated successfully",
-      data: updatedApp,
-      status: 200,
-      step: 6,
-    });
-  } else {
-    const newApp = await prisma.appActiveInactive.create({
-      data: {
-        AppType: appType,
-        status: active === "Active" ? 1 : 0,
-      },
-    });
-
-    return json({
-      message: "App status created successfully",
-      data: newApp,
-      status: 200,
-      step: 6,
-    });
-  }
-} catch (err) {
-  console.error("Main Function Error:", err);
-  return json({
-    message: "Something went wrong",
-    step: 6,
-    status: 500,
-  });
-}
-  }
- } else if (request.method === "DELETE") {
-  try {
-    const productId = formData.get("product_id");
-    const discount_id = formData.get("discount_id");
-
-    console.log(discount_id, 'discount_id');
-    const data = JSON.stringify({
-      query: `
+      if(discount_id) {
+      const data = JSON.stringify({
+        query: `
         mutation discountAutomaticDelete($id: ID!) {
           discountAutomaticDelete(id: $id) {
             deletedAutomaticDiscountId
@@ -572,69 +634,67 @@ try {
           }
         }
       `,
-      variables: {
-        id: discount_id,
-      },
-    });
-
-    // Configure Axios request
-    const config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: `https://${shop}/admin/api/2025-01/graphql.json`,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": session?.accessToken,
-      },
-      data: data,
-    };
-
-    // Make the request to Shopify
-    const response = await axios.request(config);
-    const responseData = response.data;
-
-
-    console.log(responseData?.data?.discountAutomaticDelete?.userErrors, 'responsh')
-
-    // Handle user errors from Shopify
-    if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-      return json({
-        message: "Failed to delete discount on Shopify",
-        errors: responseData.data.discountAutomaticDelete.userErrors,
-        status: 400,
+        variables: {
+          id: discount_id,
+        },
       });
+
+      // Configure Axios request
+      const config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2025-01/graphql.json`,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
+        },
+        data: data,
+      };
+
+      // Make the request to Shopify
+      const response = await axios.request(config);
+      const responseData = response.data;
+
+      // Handle user errors from Shopify
+      if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
+        return json({
+          message: "Failed to delete discount on Shopify",
+          errors: responseData.data.discountAutomaticDelete.userErrors,
+          status: 400,
+        });
+      }
     }
 
-    // Delete from your local database
-    const result = await db.bundle.deleteMany({
-      where: {
-        AND: [{ id: parseInt(productId) }, { domainName: shop }],
-      },
-    });
+      // Delete from your local database
+      const result = await db.bundle.deleteMany({
+        where: {
+          AND: [{ id: parseInt(productId) }, { domainName: shop }],
+        },
+      });
 
-    if (result.count === 0) {
+      if (result.count === 0) {
+        return json({
+          message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
+          status: 404,
+        });
+      }
+
       return json({
-        message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
-        status: 404,
+        message: "Bundle successfully deleted",
+        status: 200,
+        method: "delete",
+        step: 5,
+      });
+    } catch (error) {
+      console.error("Error in delete process:", error);
+      return json({
+        message: "Failed to delete discount",
+        error: error.message,
+        status: 500,
+        method: "delete",
+        step: 5,
       });
     }
-
-    return json({
-      message: "Bundle successfully deleted",
-      status: 200,
-      method: "delete",
-      step: 5,
-    });
-  } catch (error) {
-    console.error("Error in delete process:", error);
-    return json({
-      message: "Failed to delete discount",
-      error: error.message,
-      status: 500,
-      method: "delete",
-      step: 5,
-    });
-  }
   } else {
     return undefined;
   }
@@ -688,12 +748,11 @@ const svgs = [
 
 export default function PlansPage() {
   const { products, totalBundle, sales, allDiscountId } = useLoaderData();
-  const submit = useSubmit();
   const fetcher = useFetcher();
 
   const actionResponse = useActionData();
 
-  console.log(actionResponse, 'actonnfdd')
+  console.log(actionResponse, "actionResponse");
 
   const navigation = useNavigation();
   const [discountId, setDiscountId] = useState("");
@@ -720,25 +779,25 @@ export default function PlansPage() {
   const [id, setId] = useState(null);
   const [details, setDetails] = useState({});
 
-   const [showButton, setShowButton] = useState({
-      titleSection: "Show",
-      title: "Show",
-      productTitle: "Show",
-      bundleCost: "Show",
-      callAction: "Show",
-      textBelow: "Show",
-      background: "Show",
-    });
+  const [showButton, setShowButton] = useState({
+    titleSection: "Show",
+    title: "Show",
+    productTitle: "Show",
+    bundleCost: "Show",
+    callAction: "Show",
+    textBelow: "Show",
+    background: "Show",
+  });
 
-   const [showStatus, setShowStatus] = useState({
-    titleSection:false,
-    title:false,
-    productTitle:false,
-    bundleCost:false,
-    callAction:false,
-    textBelow:false,
-    background:false,
-      });
+  const [showStatus, setShowStatus] = useState({
+    titleSection: false,
+    title: false,
+    productTitle: false,
+    bundleCost: false,
+    callAction: false,
+    textBelow: false,
+    background: false,
+  });
 
   const [values, setValues] = useState({
     bundle_name: "Example Bundle 1",
@@ -755,11 +814,14 @@ export default function PlansPage() {
   };
 
   const handleOnChange = (e, card) => {
-    console.log(card, "card check hee");
-    setChecked(!checked);
     e.preventDefault();
+    console.log(card, "card");
+    setChecked(!checked);
     setCheckBoxId();
-    submit(e.target.form);
+    fetcher.submit(
+      { active: !checked, bundle_id: card?.discount_id, intent: "deactivate" },
+      { method: "POST" },
+    );
   };
 
   const [cards, setCards] = useState([
@@ -807,15 +869,14 @@ export default function PlansPage() {
     backgroundShadow: true,
   });
 
-
-  const handleBtn = (type,item) => {
+  const handleBtn = (type, item) => {
     setShowStatus((prev) => ({
       ...prev,
       [type]: !prev[type],
     }));
     setShowButton((prev) => ({
       ...prev,
-      [type]: item
+      [type]: item,
     }));
   };
 
@@ -900,16 +961,18 @@ export default function PlansPage() {
   };
 
   const addProductSection = () => {
-    console.log(productSections, "addProductSection");
     setProductSections((prevSections) => [
       ...prevSections,
       { id: prevSections.length + 1 },
     ]);
   };
 
-  const handleCopy = (id) => {
-    const newCard = { ...cards.find((card) => card.id === id), id: Date.now() };
-    setCards([...cards, newCard]);
+  const handleCopy = (e,card) => {
+    e.preventDefault()
+    fetcher.submit(
+      { card: JSON.stringify(card), intent: "handleCopy" },
+      { method: "POST" },
+    );
   };
 
   const handleDesign = () => {
@@ -956,14 +1019,14 @@ export default function PlansPage() {
     setActive(false);
     setActiveApp(item);
     fetcher.submit(
-      { active: item, discountID: JSON.stringify(allDiscountId?.data), intent: "handleAllDiscount" },
-      { method: "POST",  }
+      {
+        active: item,
+        discountID: JSON.stringify(allDiscountId?.data),
+        intent: "handleAllDiscount",
+      },
+      { method: "POST" },
     );
   };
-
- 
-
-  console.log(activeApp, 'check active or not')
 
   const handleShowStatus = (item) => {
     setShowStatus((prev) => ({
@@ -972,19 +1035,17 @@ export default function PlansPage() {
     }));
   };
 
-
   const handleBack = () => {
-    if(activeTab === "Products") {
-      if(showPage == "second") {
+    if (activeTab === "Products") {
+      if (showPage == "second") {
         setShowPage("first");
-      }else if(showPage == "third"){
+      } else if (showPage == "third") {
         setShowPage("second");
-      }else if(showPage == "first") {
-        setActiveTab('Home')
+      } else if (showPage == "first") {
+        setActiveTab("Home");
       }
     }
-  }
-
+  };
 
   const handleSecond = () => {
     if (values.discount === "Percentage") {
@@ -1032,21 +1093,19 @@ export default function PlansPage() {
     }
   };
 
-
   useEffect(() => {
-    if(actionResponse) {
-
-      if(actionResponse?.status === 200) {
+    if (actionResponse) {
+      if (actionResponse?.status === 200) {
         if (actionResponse?.step === 6) {
-        notify.success(actionResponse?.message, {
-          position: "top-center",
-          style: {
-            background: "green",
-            color: "white",
-          },
-        });
-      }
-      }else if(actionResponse?.status === 500) {
+          notify.success(actionResponse?.message, {
+            position: "top-center",
+            style: {
+              background: "green",
+              color: "white",
+            },
+          });
+        }
+      } else if (actionResponse?.status === 500) {
         notify.success(actionResponse?.message, {
           position: "top-center",
           style: {
@@ -1055,9 +1114,12 @@ export default function PlansPage() {
           },
         });
       }
-   
-  }
+    }
+  }, [actionResponse]);
 
+
+  useEffect(() => {
+   console.log(actionResponse, 'actionResponse')
   },[actionResponse])
 
   useEffect(() => {
@@ -1131,12 +1193,11 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
-
   useEffect(() => {
     if (showEdit) {
-      console.log(details, 'checlmine')
-      setSelectedPrducts(details?.products)
-       setId(details.id);
+      console.log(details, "checlmine");
+      setSelectedPrducts(details?.products);
+      setId(details.id);
       setValues((prev) => ({
         ...prev,
         bundle_name: details.name,
@@ -1145,14 +1206,14 @@ export default function PlansPage() {
         discount: details.method,
       }));
       setChecked(details.isActive === 1 ? true : false);
-      
+
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
         ...prev,
         titleSectionText: details?.title_section?.text,
         titleSectionSize: details?.title_section?.size,
-        titleSectionColor: details?.title_section?.color
+        titleSectionColor: details?.title_section?.color,
       }));
       seTitle((prev) => ({
         ...prev,
@@ -1293,22 +1354,28 @@ export default function PlansPage() {
         <TitleBar title="Bundles App"></TitleBar>
         <div className={styles.flexWrapper}>
           <div className={styles.headingFlex}>
-            <button type="button" className={styles.btn_Back} onClick={handleBack}>
-            <svg
-                width="14"
-                height="14"
-                viewBox="0 0 20 17"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            {activeTab !== "Home" && (
+              <button
+                type="button"
+                className={styles.btn_Back}
+                onClick={handleBack}
               >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M8.78033 0.21967C9.07322 0.512563 9.07322 0.987437 8.78033 1.28033L2.56066 7.5H18.75C19.1642 7.5 19.5 7.83579 19.5 8.25C19.5 8.66421 19.1642 9 18.75 9H2.56066L8.78033 15.2197C9.07322 15.5126 9.07322 15.9874 8.78033 16.2803C8.48744 16.5732 8.01256 16.5732 7.71967 16.2803L0.21967 8.78033C-0.0732233 8.48744 -0.0732233 8.01256 0.21967 7.71967L7.71967 0.21967C8.01256 -0.0732233 8.48744 -0.0732233 8.78033 0.21967Z"
-                  fill="#0F172A"
-                />
-              </svg>
-            </button>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 20 17"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M8.78033 0.21967C9.07322 0.512563 9.07322 0.987437 8.78033 1.28033L2.56066 7.5H18.75C19.1642 7.5 19.5 7.83579 19.5 8.25C19.5 8.66421 19.1642 9 18.75 9H2.56066L8.78033 15.2197C9.07322 15.5126 9.07322 15.9874 8.78033 16.2803C8.48744 16.5732 8.01256 16.5732 7.71967 16.2803L0.21967 8.78033C-0.0732233 8.48744 -0.0732233 8.01256 0.21967 7.71967L7.71967 0.21967C8.01256 -0.0732233 8.48744 -0.0732233 8.78033 0.21967Z"
+                    fill="#0F172A"
+                  />
+                </svg>
+              </button>
+            )}
 
             <h2>Product Bundles</h2>
           </div>
@@ -1339,19 +1406,11 @@ export default function PlansPage() {
             </div>
             {active && (
               <fetcher.Form method="POST">
-              <ul className={styles.selectDropdown}>
-                <li 
-                onClick={(e) => handleActive(e,"Active")}
-                >
-                  Active
-                  </li>
-                <li 
-                onClick={(e) => handleActive(e, "Inactive")}
-                >
-                  Inactive
-                </li>
-              </ul>
-            </fetcher.Form>
+                <ul className={styles.selectDropdown}>
+                  <li onClick={(e) => handleActive(e, "Active")}>Active</li>
+                  <li onClick={(e) => handleActive(e, "Inactive")}>Inactive</li>
+                </ul>
+              </fetcher.Form>
             )}
           </div>
         </div>
@@ -1483,16 +1542,10 @@ export default function PlansPage() {
                           <Form method="POST">
                             <label className={styles.switch}>
                               <input
-                                type="hidden"
-                                name="intent"
-                                value="deactivate"
-                              />
-                              <input type="hidden" name="checkboxId" />
-                              <input
                                 type="checkbox"
                                 name="checkbox"
                                 value={card?.isActive}
-                                checked={checked}
+                                checked={card?.isActive === 1 ? true : false}
                                 onChange={(e) => handleOnChange(e, card)}
                               />
                               <span className={styles.slider}></span>
@@ -1501,69 +1554,71 @@ export default function PlansPage() {
                           <h2 className={styles.cardHeading}>{card?.name}</h2>
                         </div>
                         <div className={styles.btnFlexWrapper}>
-                        <Form method="DELETE">
-                          <input
-                            type="hidden"
-                            name="product_id"
-                            value={productId}
-                          />
-
-                          <input
-                            type="hidden"
-                            name="discount_id"
-                            value={discountId}
-                          />
-
-                          <button
-                            className={styles.deletedBtn}
-                            type="button"
-                            onClick={() => handleDelete(card)}
-                          >
-                            <svg
-                              width="20"
-                              height="24"
-                              viewBox="0 0 18 20"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
-                                fill="#F24747"
-                              />
-                            </svg>
-                          </button>
-                          {showPopup && (
-                            <DeletePopup
-                              setShowPopup={setShowPopup}
-                              actionResponse={actionResponse}
-                              state={navigation.state}
+                          <Form method="DELETE">
+                            <input
+                              type="hidden"
+                              name="product_id"
+                              value={productId}
                             />
-                          )}
-                        </Form>
-                          <button
-                            className={styles.copyIcon}
-                            title="Duplicate"
-                            onClick={() => handleCopy(card.id)}
-                          >
-                            <svg
-                              width="22"
-                              height="22"
-                              viewBox="0 0 27 27"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+
+                            <input
+                              type="hidden"
+                              name="discount_id"
+                              value={discountId}
+                            />
+
+                            <button
+                              className={styles.deletedBtn}
+                              type="button"
+                              onClick={() => handleDelete(card)}
                             >
-                              <path
-                                d="M20.1675 4.43957C20.1675 1.98551 18.1781 -0.00390625 15.724 -0.00390625H4.61535C2.16129 -0.00390625 0.171875 1.98551 0.171875 4.43957V15.5483C0.171875 18.0023 2.16129 19.9917 4.61535 19.9917V11.1048C4.61535 7.42369 7.59947 4.43957 11.2806 4.43957H20.1675Z"
-                                fill="#005BEA"
+                              <svg
+                                width="20"
+                                height="24"
+                                viewBox="0 0 18 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  clipRule="evenodd"
+                                  d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
+                                  fill="#F24747"
+                                />
+                              </svg>
+                            </button>
+                            {showPopup && (
+                              <DeletePopup
+                                setShowPopup={setShowPopup}
+                                actionResponse={actionResponse}
+                                state={navigation.state}
                               />
-                              <path
-                                d="M22.3893 6.66131C24.8433 6.66131 26.8327 8.65072 26.8327 11.1048V22.2135C26.8327 24.6675 24.8433 26.657 22.3893 26.657H11.2806C8.82651 26.657 6.83709 24.6675 6.83709 22.2135V11.1048C6.83709 8.65072 8.82651 6.66131 11.2806 6.66131H22.3893Z"
-                                fill="#005BEA"
-                              />
-                            </svg>
-                          </button>
+                            )}
+                          </Form>
+                          <Form method="POST">
+                            <button
+                              className={styles.copyIcon}
+                              title="Duplicate"
+                              onClick={(e) => handleCopy(e,card)}
+                            >
+                              <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 27 27"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M20.1675 4.43957C20.1675 1.98551 18.1781 -0.00390625 15.724 -0.00390625H4.61535C2.16129 -0.00390625 0.171875 1.98551 0.171875 4.43957V15.5483C0.171875 18.0023 2.16129 19.9917 4.61535 19.9917V11.1048C4.61535 7.42369 7.59947 4.43957 11.2806 4.43957H20.1675Z"
+                                  fill="#005BEA"
+                                />
+                                <path
+                                  d="M22.3893 6.66131C24.8433 6.66131 26.8327 8.65072 26.8327 11.1048V22.2135C26.8327 24.6675 24.8433 26.657 22.3893 26.657H11.2806C8.82651 26.657 6.83709 24.6675 6.83709 22.2135V11.1048C6.83709 8.65072 8.82651 6.66131 11.2806 6.66131H22.3893Z"
+                                  fill="#005BEA"
+                                />
+                              </svg>
+                            </button>
+                          </Form>
                           <button
                             className={styles.edit_Btn}
                             title="Edit"
@@ -2197,111 +2252,116 @@ export default function PlansPage() {
                               >
                                 <h4>Above title section</h4>
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() =>
-                                        handleShowStatus("titleSection")
-                                      }
-                                      className={styles.butttonsTab}
+                                  <div
+                                    onClick={() =>
+                                      handleShowStatus("titleSection")
+                                    }
+                                    className={styles.butttonsTab}
+                                  >
+                                    {showButton.titleSection}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
                                     >
-                                      {showButton.titleSection}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.titleSection && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() =>
-                                              handleBtn("titleSection", "Show")
-                                            }
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() =>
-                                              handleBtn("titleSection", "Hide")
-                                            }
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
                                   </div>
-                              </div>
-                             
-                                 {showButton.titleSection === "Show" && (
-                              <>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="title_section_text">Text</label>
-                                <input
-                                  type="text"
-                                  id="title_section_text"
-                                  name="titleSectionText"
-                                  value={titleSection.titleSectionText}
-                                  onChange={handleTitleSection}
-                                  placeholder=""
-                                  className={styles.inputDiv}
-                                  />
-                              </div>
 
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="title_section_size">Size</label>
-
-                                <input
-                                  type="number"
-                                  id="title_section_size"
-                                  placeholder=""
-                                  name="titleSectionSize"
-                                  value={titleSection.titleSectionSize}
-                                  onChange={handleTitleSection}
-                                  />
-                              </div>
-
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="titleSectionColor">Color</label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor:
-                                      titleSection.titleSectionColor,
-                                    }}
-                                    >
-                                    <input
-                                      type="color"
-                                      id="titleSectionColor"
-                                      name="titleSectionColor"
-                                      value={titleSection.titleSectionColor}
-                                      onChange={handleTitleSection}
-                                      />
-                                  </span>
-
-                                  <input
-                                    type="text"
-                                    id="titleSectionColor"
-                                    name="titleSectionColor"
-                                    value={titleSection.titleSectionColor}
-                                    onChange={handleTitleSection}
-                                    />
+                                  {showStatus.titleSection && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("titleSection", "Show")
+                                          }
+                                        >
+                                          Show
+                                        </li>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("titleSection", "Hide")
+                                          }
+                                        >
+                                          Hide
+                                        </li>
+                                      </>
+                                    </ul>
+                                  )}
                                 </div>
                               </div>
-                                    </>
-                                 )}
 
+                              {showButton.titleSection === "Show" && (
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="title_section_text">
+                                      Text
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="title_section_text"
+                                      name="titleSectionText"
+                                      value={titleSection.titleSectionText}
+                                      onChange={handleTitleSection}
+                                      placeholder=""
+                                      className={styles.inputDiv}
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="title_section_size">
+                                      Size
+                                    </label>
+
+                                    <input
+                                      type="number"
+                                      id="title_section_size"
+                                      placeholder=""
+                                      name="titleSectionSize"
+                                      value={titleSection.titleSectionSize}
+                                      onChange={handleTitleSection}
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="titleSectionColor">
+                                      Color
+                                    </label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            titleSection.titleSectionColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="titleSectionColor"
+                                          name="titleSectionColor"
+                                          value={titleSection.titleSectionColor}
+                                          onChange={handleTitleSection}
+                                        />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="titleSectionColor"
+                                        name="titleSectionColor"
+                                        value={titleSection.titleSectionColor}
+                                        onChange={handleTitleSection}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -2310,101 +2370,105 @@ export default function PlansPage() {
                               >
                                 <h4>Title</h4>
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() => handleShowStatus("title")}
-                                      className={styles.butttonsTab}
+                                  <div
+                                    onClick={() => handleShowStatus("title")}
+                                    className={styles.butttonsTab}
+                                  >
+                                    {showButton.title}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
                                     >
-                                      {showButton.title}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.title && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() => handleBtn("title", "Show")}
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() => handleBtn("title", "Hide")}
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
                                   </div>
+
+                                  {showStatus.title && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("title", "Show")
+                                          }
+                                        >
+                                          Show
+                                        </li>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("title", "Hide")
+                                          }
+                                        >
+                                          Hide
+                                        </li>
+                                      </>
+                                    </ul>
+                                  )}
+                                </div>
                               </div>
 
                               {showButton.title === "Show" && (
-                              <>
-                              
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="title_text">Text</label>
-                                <input
-                                  type="text"
-                                  id="title_text"
-                                  name="titleText"
-                                  value={title.titleText}
-                                  onChange={handleTitle}
-                                  placeholder=""
-                                  className={styles.inputDiv}
-                                />
-                              </div>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="title_size">Size</label>
-
-                                <input
-                                  type="number"
-                                  id="title_size"
-                                  name="titleSize"
-                                  value={title.titleSize}
-                                  onChange={handleTitle}
-                                  placeholder=""
-                                />
-                              </div>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="titleColor">Color</label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor: title.titleColor,
-                                    }}
-                                  >
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="title_text">Text</label>
                                     <input
-                                      type="color"
-                                      id="titleColor"
-                                      name="titleColor"
-                                      value={title.titleColor}
+                                      type="text"
+                                      id="title_text"
+                                      name="titleText"
+                                      value={title.titleText}
                                       onChange={handleTitle}
+                                      placeholder=""
+                                      className={styles.inputDiv}
                                     />
-                                  </span>
+                                  </div>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="title_size">Size</label>
 
-                                  <input
-                                    type="text"
-                                    id="titleColor"
-                                    name="titleColor"
-                                    value={title.titleColor}
-                                    onChange={handleTitle}
-                                  />
-                                </div>
-                              </div>
-                              </>)}
+                                    <input
+                                      type="number"
+                                      id="title_size"
+                                      name="titleSize"
+                                      value={title.titleSize}
+                                      onChange={handleTitle}
+                                      placeholder=""
+                                    />
+                                  </div>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="titleColor">Color</label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor: title.titleColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="titleColor"
+                                          name="titleColor"
+                                          value={title.titleColor}
+                                          onChange={handleTitle}
+                                        />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="titleColor"
+                                        name="titleColor"
+                                        value={title.titleColor}
+                                        onChange={handleTitle}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -2413,90 +2477,94 @@ export default function PlansPage() {
                               >
                                 <h4>Product Title</h4>
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() => handleShowStatus("productTitle")}
-                                      className={styles.butttonsTab}
+                                  <div
+                                    onClick={() =>
+                                      handleShowStatus("productTitle")
+                                    }
+                                    className={styles.butttonsTab}
+                                  >
+                                    {showButton.productTitle}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
                                     >
-                                      {showButton.productTitle}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.productTitle && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() => handleBtn("productTitle", "Show")}
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() => handleBtn("productTitle", "Hide")}
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
                                   </div>
+
+                                  {showStatus.productTitle && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("productTitle", "Show")
+                                          }
+                                        >
+                                          Show
+                                        </li>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("productTitle", "Hide")
+                                          }
+                                        >
+                                          Hide
+                                        </li>
+                                      </>
+                                    </ul>
+                                  )}
+                                </div>
                               </div>
 
                               {showButton.productTitle === "Show" && (
-                                
-                             
-                              <>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="productSize">Size</label>
-                                <input
-                                  type="number"
-                                  id="productSize"
-                                  name="productSize"
-                                  value={productTitle.productSize}
-                                  onChange={handleProductTitle}
-                                  />
-                              </div>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="productColor">Color</label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor:
-                                        productTitle.productColor,
-                                    }}
-                                    >
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="productSize">Size</label>
                                     <input
-                                      type="color"
-                                      id="productColor"
-                                      name="productColor"
-                                      value={productTitle.productColor}
+                                      type="number"
+                                      id="productSize"
+                                      name="productSize"
+                                      value={productTitle.productSize}
                                       onChange={handleProductTitle}
-                                      />
-                                  </span>
-
-                                  <input
-                                    type="text"
-                                    id="productColor"
-                                    name="productColor"
-                                    value={productTitle.productColor}
-                                    onChange={handleProductTitle}
                                     />
-                                </div>
-                              </div>
-                                    </> )}
+                                  </div>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="productColor">Color</label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            productTitle.productColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="productColor"
+                                          name="productColor"
+                                          value={productTitle.productColor}
+                                          onChange={handleProductTitle}
+                                        />
+                                      </span>
 
+                                      <input
+                                        type="text"
+                                        id="productColor"
+                                        name="productColor"
+                                        value={productTitle.productColor}
+                                        onChange={handleProductTitle}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -2505,120 +2573,133 @@ export default function PlansPage() {
                               >
                                 <h4>Bundle Cost</h4>
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() => handleShowStatus("bundleCost")}
-                                      className={styles.butttonsTab}
+                                  <div
+                                    onClick={() =>
+                                      handleShowStatus("bundleCost")
+                                    }
+                                    className={styles.butttonsTab}
+                                  >
+                                    {showButton.bundleCost}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
                                     >
-                                      {showButton.bundleCost}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.bundleCost && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() => handleBtn("bundleCost", "Show")}
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() => handleBtn("bundleCost", "Hide")}
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
                                   </div>
+
+                                  {showStatus.bundleCost && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("bundleCost", "Show")
+                                          }
+                                        >
+                                          Show
+                                        </li>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("bundleCost", "Hide")
+                                          }
+                                        >
+                                          Hide
+                                        </li>
+                                      </>
+                                    </ul>
+                                  )}
+                                </div>
                               </div>
 
                               {showButton.bundleCost === "Show" && (
-                              <>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="bundleCostSize">Size</label>
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="bundleCostSize">Size</label>
 
-                                <input
-                                  type="number"
-                                  id="bundleCostSize"
-                                  name="bundleCostSize"
-                                  value={bundleCost.bundleCostSize}
-                                  onChange={handleBundleCost}
-                                />
-                              </div>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="bundleCostColor">Color</label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor:
-                                        bundleCost.bundleCostColor,
-                                    }}
-                                  >
                                     <input
-                                      type="color"
-                                      id="bundleCostColor"
-                                      name="bundleCostColor"
-                                      value={bundleCost.bundleCostColor}
+                                      type="number"
+                                      id="bundleCostSize"
+                                      name="bundleCostSize"
+                                      value={bundleCost.bundleCostSize}
                                       onChange={handleBundleCost}
                                     />
-                                  </span>
+                                  </div>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="bundleCostColor">
+                                      Color
+                                    </label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            bundleCost.bundleCostColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="bundleCostColor"
+                                          name="bundleCostColor"
+                                          value={bundleCost.bundleCostColor}
+                                          onChange={handleBundleCost}
+                                        />
+                                      </span>
 
-                                  <input
-                                    type="text"
-                                    id="bundleCostColor"
-                                    name="bundleCostColor"
-                                    value={bundleCost.bundleCostColor}
-                                    onChange={handleBundleCost}
-                                  />
-                                </div>
-                              </div>
-                              <div className={styles.trigerCheck}>
-                                <div className={styles.input_labelCustomize}>
-                                  <div className={styles.formGroup}>
-                                    <input
-                                      type="checkbox"
-                                      id="compared"
-                                      name="bundleCostComparedPrice"
-                                      checked={
-                                        bundleCost.bundleCostComparedPrice
-                                      }
-                                      onChange={handleBundleCost}
-                                    />
-                                    <label htmlFor="compared">
-                                      Display Compared-At Price
-                                    </label>
+                                      <input
+                                        type="text"
+                                        id="bundleCostColor"
+                                        name="bundleCostColor"
+                                        value={bundleCost.bundleCostColor}
+                                        onChange={handleBundleCost}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                                <div className={styles.input_labelCustomize}>
-                                  <div className={styles.formGroup}>
-                                    <input
-                                      type="checkbox"
-                                      id="save"
-                                      name="bundleCostSave"
-                                      checked={bundleCost.bundleCostSave}
-                                      onChange={handleBundleCost}
-                                    />
-                                    <label htmlFor="save">
-                                      Display “Save” Badge
-                                    </label>
+                                  <div className={styles.trigerCheck}>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <div className={styles.formGroup}>
+                                        <input
+                                          type="checkbox"
+                                          id="compared"
+                                          name="bundleCostComparedPrice"
+                                          checked={
+                                            bundleCost.bundleCostComparedPrice
+                                          }
+                                          onChange={handleBundleCost}
+                                        />
+                                        <label htmlFor="compared">
+                                          Display Compared-At Price
+                                        </label>
+                                      </div>
+                                    </div>
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                    >
+                                      <div className={styles.formGroup}>
+                                        <input
+                                          type="checkbox"
+                                          id="save"
+                                          name="bundleCostSave"
+                                          checked={bundleCost.bundleCostSave}
+                                          onChange={handleBundleCost}
+                                        />
+                                        <label htmlFor="save">
+                                          Display “Save” Badge
+                                        </label>
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                              </div>
-                              </>)}
+                                </>
+                              )}
                             </div>
 
                             <div className={styles.divideDiv}>
@@ -2627,346 +2708,377 @@ export default function PlansPage() {
                               >
                                 <h4>Call To Action Button</h4>
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() => handleShowStatus("callAction")}
-                                      className={styles.butttonsTab}
-                                    >
-                                      {showButton.callAction}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.callAction && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() => handleBtn("callAction", "Show")}
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() => handleBtn("callAction", "Hide")}
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
-                                  </div>
-                              </div>
-                              {
-                                showButton.callAction === "Show" && (
-                             
-                              <>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="call_action_text">Text</label>
-                                <input
-                                  type="text"
-                                  id="call_action_text"
-                                  name="ctaText"
-                                  value={callAction.ctaText}
-                                  onChange={handleCallToAction}
-                                  className={styles.inputDiv}
-                                />
-                              </div>
-
-                            
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="title_section_size">Size</label>
-
-                                <input
-                                  type="number"
-                                  id="title_section_size"
-                                  name="ctaSize"
-                                  value={callAction.ctaSize}
-                                  onChange={handleCallToAction}
-                                />
-                              </div>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="">Redirect To</label>
-
-                                <div
-                                  className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
-                                  onClick={() => setShowCart(!showCart)}
-                                >
                                   <div
-                                    className={` ${styles.customSelect} ${styles.customTabsec} `}
-                                    id="second"
+                                    onClick={() =>
+                                      handleShowStatus("callAction")
+                                    }
+                                    className={styles.butttonsTab}
                                   >
-                                    <div className={styles.selectBox}>
-                                      <span className={styles.selected}>
-                                        {cart}
-                                      </span>
-                                      <div className={styles.arrow}>
-                                        <img
-                                          src={DorpDownIcon}
-                                          width={20}
-                                          height={16}
-                                        />
-                                      </div>
-                                    </div>
-                                    {showCart && (
-                                      <ul
-                                        className={`${styles.selectDropdown} ${styles.newAppdeop} `}
-                                      >
-                                        <li onClick={() => setCart("Cart")}>
-                                          Cart
-                                        </li>
-                                        <li onClick={() => setCart("Checkout")}>
-                                          Checkout
+                                    {showButton.callAction}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
+                                  </div>
+
+                                  {showStatus.callAction && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("callAction", "Show")
+                                          }
+                                        >
+                                          Show
                                         </li>
                                         <li
                                           onClick={() =>
-                                            setCart(
-                                              "Don't redirect (only add to cart)",
-                                            )
+                                            handleBtn("callAction", "Hide")
                                           }
                                         >
-                                          Don't redirect (only add to cart)
+                                          Hide
                                         </li>
-                                      </ul>
-                                    )}
+                                      </>
+                                    </ul>
+                                  )}
+                                </div>
+                              </div>
+                              {showButton.callAction === "Show" && (
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="call_action_text">
+                                      Text
+                                    </label>
                                     <input
-                                      type="hidden"
-                                      name="cart"
-                                      value={cart}
+                                      type="text"
+                                      id="call_action_text"
+                                      name="ctaText"
+                                      value={callAction.ctaText}
+                                      onChange={handleCallToAction}
+                                      className={styles.inputDiv}
                                     />
                                   </div>
-                                </div>
-                              </div>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="title_section_color">
-                                  Color
-                                </label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor: callAction.ctaColor,
-                                    }}
-                                  >
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="title_section_size">
+                                      Size
+                                    </label>
+
                                     <input
-                                      type="color"
-                                      id="ctaColor"
-                                      name="ctaColor"
-                                      value={callAction.ctaColor}
+                                      type="number"
+                                      id="title_section_size"
+                                      name="ctaSize"
+                                      value={callAction.ctaSize}
                                       onChange={handleCallToAction}
                                     />
-                                  </span>
+                                  </div>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="">Redirect To</label>
 
-                                  <input
-                                    type="text"
-                                    id="ctaColor"
-                                    name="ctaColor"
-                                    value={callAction.ctaColor}
-                                    onChange={handleCallToAction}
-                                  />
-                                </div>
-                              </div>
-                              </>)}
+                                    <div
+                                      className={` ${styles.bundle_product} ${styles.bundleNewApp} `}
+                                      onClick={() => setShowCart(!showCart)}
+                                    >
+                                      <div
+                                        className={` ${styles.customSelect} ${styles.customTabsec} `}
+                                        id="second"
+                                      >
+                                        <div className={styles.selectBox}>
+                                          <span className={styles.selected}>
+                                            {cart}
+                                          </span>
+                                          <div className={styles.arrow}>
+                                            <img
+                                              src={DorpDownIcon}
+                                              width={20}
+                                              height={16}
+                                            />
+                                          </div>
+                                        </div>
+                                        {showCart && (
+                                          <ul
+                                            className={`${styles.selectDropdown} ${styles.newAppdeop} `}
+                                          >
+                                            <li onClick={() => setCart("Cart")}>
+                                              Cart
+                                            </li>
+                                            <li
+                                              onClick={() =>
+                                                setCart("Checkout")
+                                              }
+                                            >
+                                              Checkout
+                                            </li>
+                                            <li
+                                              onClick={() =>
+                                                setCart(
+                                                  "Don't redirect (only add to cart)",
+                                                )
+                                              }
+                                            >
+                                              Don't redirect (only add to cart)
+                                            </li>
+                                          </ul>
+                                        )}
+                                        <input
+                                          type="hidden"
+                                          name="cart"
+                                          value={cart}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="title_section_color">
+                                      Color
+                                    </label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor: callAction.ctaColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="ctaColor"
+                                          name="ctaColor"
+                                          value={callAction.ctaColor}
+                                          onChange={handleCallToAction}
+                                        />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="ctaColor"
+                                        name="ctaColor"
+                                        value={callAction.ctaColor}
+                                        onChange={handleCallToAction}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
 
                             <div className={styles.divideDiv}>
                               <div className={styles.heading_img}>
                                 <h3>Text Below CTA</h3>{" "}
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() => handleShowStatus("textBelow")}
-                                      className={styles.butttonsTab}
-                                    >
-                                      {showButton.textBelow}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.textBelow && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() => handleBtn("textBelow", "Show")}
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() => handleBtn("textBelow", "Hide")}
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
-                                  </div>
-                              </div>
-
-                              {
-                                showButton.textBelow === "Show" && (
-                              <>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="text_below_text">Text</label>
-                                <input
-                                  type="text"
-                                  id="text_below_text"
-                                  name="tbText"
-                                  value={textBelow.tbText}
-                                  onChange={handleTextBelow}
-                                  className={styles.inputDiv}
-                                />
-                              </div>
-
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="text_below_size">Size</label>
-
-                                <input
-                                  type="number"
-                                  id="text_below_size"
-                                  name="tbSize"
-                                  value={textBelow.tbSize}
-                                  onChange={handleTextBelow}
-                                  className={styles.inputDiv}
-                                />
-                              </div>
-
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="tbColor"> Color</label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor: textBelow.tbColor,
-                                    }}
+                                  <div
+                                    onClick={() =>
+                                      handleShowStatus("textBelow")
+                                    }
+                                    className={styles.butttonsTab}
                                   >
-                                    <input
-                                      type="color"
-                                      id="tbColor"
-                                      name="tbColor"
-                                      value={textBelow.tbColor}
-                                      onChange={handleTextBelow}
-                                    />
-                                  </span>
+                                    {showButton.textBelow}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
+                                  </div>
 
-                                  <input
-                                    type="text"
-                                    id="tbColor"
-                                    name="tbColor"
-                                    value={textBelow.tbColor}
-                                    onChange={handleTextBelow}
-                                  />
+                                  {showStatus.textBelow && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("textBelow", "Show")
+                                          }
+                                        >
+                                          Show
+                                        </li>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("textBelow", "Hide")
+                                          }
+                                        >
+                                          Hide
+                                        </li>
+                                      </>
+                                    </ul>
+                                  )}
                                 </div>
                               </div>
-                              </>)}
+
+                              {showButton.textBelow === "Show" && (
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="text_below_text">
+                                      Text
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="text_below_text"
+                                      name="tbText"
+                                      value={textBelow.tbText}
+                                      onChange={handleTextBelow}
+                                      className={styles.inputDiv}
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="text_below_size">
+                                      Size
+                                    </label>
+
+                                    <input
+                                      type="number"
+                                      id="text_below_size"
+                                      name="tbSize"
+                                      value={textBelow.tbSize}
+                                      onChange={handleTextBelow}
+                                      className={styles.inputDiv}
+                                    />
+                                  </div>
+
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="tbColor"> Color</label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor: textBelow.tbColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="tbColor"
+                                          name="tbColor"
+                                          value={textBelow.tbColor}
+                                          onChange={handleTextBelow}
+                                        />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="tbColor"
+                                        name="tbColor"
+                                        value={textBelow.tbColor}
+                                        onChange={handleTextBelow}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
 
                             <div className={styles.divideDiv}>
                               <div className={styles.heading_img}>
                                 <h3>Background</h3>{" "}
                                 <div type="button" class={styles.btn_one}>
-                                    <div
-                                      onClick={() => handleShowStatus("background")}
-                                      className={styles.butttonsTab}
-                                    >
-                                      {showButton.background}
-                                      <svg
-                                        width="15"
-                                        height="8"
-                                        viewBox="0 0 22 12"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          fill-rule="evenodd"
-                                          clip-rule="evenodd"
-                                          d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
-                                          fill="#00AC4F"
-                                        ></path>
-                                      </svg>
-                                    </div>
-
-                                    {showStatus.background && (
-                                      <ul className={styles.selectDropdown}>
-                                        <>
-                                          <li
-                                            onClick={() => handleBtn("background", "Show")}
-                                          >
-                                            Show
-                                          </li>
-                                          <li
-                                            onClick={() => handleBtn("background", "Hide")}
-                                          >
-                                            Hide
-                                          </li>
-                                        </>
-                                      </ul>
-                                    )}
-                                  </div>
-                              </div>
-
-
-
-                               { showButton.background === "Show" && (
-                              <>
-                              <div className={styles.input_labelCustomize}>
-                                <label htmlFor="backgroundColor">Color</label>
-                                <div className={styles.color_styles}>
-                                  <span
-                                    className={styles.color_pilate}
-                                    style={{
-                                      backgroundColor:
-                                        background.backgroundColor,
-                                    }}
+                                  <div
+                                    onClick={() =>
+                                      handleShowStatus("background")
+                                    }
+                                    className={styles.butttonsTab}
                                   >
-                                    <input
-                                      type="color"
-                                      id="backgroundColor"
-                                      name="backgroundColor"
-                                      value={background.backgroundColor}
-                                      onChange={handleBackground}
-                                    />
-                                  </span>
+                                    {showButton.background}
+                                    <svg
+                                      width="15"
+                                      height="8"
+                                      viewBox="0 0 22 12"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M11.441 11.441C11.0594 11.8227 10.4406 11.8227 10.059 11.441L0.286236 1.66831C-0.0954121 1.28666 -0.0954121 0.667886 0.286236 0.286238C0.667886 -0.0954117 1.28666 -0.0954117 1.66831 0.286238L10.75 9.36793L19.8317 0.286237C20.2133 -0.0954123 20.8321 -0.0954124 21.2138 0.286237C21.5954 0.667885 21.5954 1.28666 21.2138 1.66831L11.441 11.441Z"
+                                        fill="#00AC4F"
+                                      ></path>
+                                    </svg>
+                                  </div>
 
-                                  <input
-                                    type="text"
-                                    id="backgroundColor"
-                                    name="backgroundColor"
-                                    value={background.backgroundColor}
-                                    onChange={handleBackground}
-                                  />
+                                  {showStatus.background && (
+                                    <ul className={styles.selectDropdown}>
+                                      <>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("background", "Show")
+                                          }
+                                        >
+                                          Show
+                                        </li>
+                                        <li
+                                          onClick={() =>
+                                            handleBtn("background", "Hide")
+                                          }
+                                        >
+                                          Hide
+                                        </li>
+                                      </>
+                                    </ul>
+                                  )}
                                 </div>
                               </div>
-                              <div className={styles.formGroup}>
-                                <input
-                                  type="checkbox"
-                                  id="shadow"
-                                  name="backgroundShadow"
-                                  checked={background.backgroundShadow}
-                                  onChange={handleBackground}
-                                />
-                                <label htmlFor="shadow">Display Shadow</label>
-                              </div>
-                              </>)}
+
+                              {showButton.background === "Show" && (
+                                <>
+                                  <div className={styles.input_labelCustomize}>
+                                    <label htmlFor="backgroundColor">
+                                      Color
+                                    </label>
+                                    <div className={styles.color_styles}>
+                                      <span
+                                        className={styles.color_pilate}
+                                        style={{
+                                          backgroundColor:
+                                            background.backgroundColor,
+                                        }}
+                                      >
+                                        <input
+                                          type="color"
+                                          id="backgroundColor"
+                                          name="backgroundColor"
+                                          value={background.backgroundColor}
+                                          onChange={handleBackground}
+                                        />
+                                      </span>
+
+                                      <input
+                                        type="text"
+                                        id="backgroundColor"
+                                        name="backgroundColor"
+                                        value={background.backgroundColor}
+                                        onChange={handleBackground}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className={styles.formGroup}>
+                                    <input
+                                      type="checkbox"
+                                      id="shadow"
+                                      name="backgroundShadow"
+                                      checked={background.backgroundShadow}
+                                      onChange={handleBackground}
+                                    />
+                                    <label htmlFor="shadow">
+                                      Display Shadow
+                                    </label>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </>
 

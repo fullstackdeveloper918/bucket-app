@@ -166,7 +166,6 @@ export async function action({ request }) {
           });
         }
       }
-
       let data;
 
       if (product === "All Products") {
@@ -567,23 +566,22 @@ export async function action({ request }) {
           step: 6,
         });
       }
-    } 
-    else if (intent === "handleAllDiscount") {
+    } else if (intent === "handleAllDiscount") {
       const discountId = JSON.parse(formData.get("discountID"));
       const active = formData.get("active");
       const appType = "volumeDiscount";
-  
-     if (discountId.length == 0) {
-       return json({
-         error: "No Discount Id present",
-         status: 500,
-         step: 6,
-       });
+
+      if (discountId.length == 0) {
+        return json({
+          error: "No Discount Id present",
+          status: 500,
+          step: 6,
+        });
       }
-  
-  const activateDiscount = async (id) => {
-    try {
-           const query = {
+
+      const activateDiscount = async (id) => {
+        try {
+          const query = {
             query: `mutation discountAutomaticActivate($id: ID!) {
               discountAutomaticActivate(id: $id) {
                 automaticDiscountNode {
@@ -594,26 +592,26 @@ export async function action({ request }) {
             }`,
             variables: { id },
           };
-      const response = await axios.post(
-        `https://${shop}/admin/api/2025-01/graphql.json`,
-        query,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": session?.accessToken,
-          },
+          const response = await axios.post(
+            `https://${shop}/admin/api/2025-01/graphql.json`,
+            query,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": session?.accessToken,
+              },
+            },
+          );
+          return response.data;
+        } catch (error) {
+          console.error("Activate Discount Error:", error);
+          return { error: "Failed to activate discount", id };
         }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Activate Discount Error:", error);
-      return { error: "Failed to activate discount", id };
-    }
-  };
-  
-  const deactivateDiscount = async (id) => {
-    try {
-           const query = {
+      };
+
+      const deactivateDiscount = async (id) => {
+        try {
+          const query = {
             query: `mutation discountAutomaticDeactivate($id: ID!) {
               discountAutomaticDeactivate(id: $id) {
                 automaticDiscountNode {
@@ -624,86 +622,147 @@ export async function action({ request }) {
             }`,
             variables: { id },
           };
-      const response = await axios.post(
-        `https://${shop}/admin/api/2025-01/graphql.json`,
-        query,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": session?.accessToken,
-          },
+          const response = await axios.post(
+            `https://${shop}/admin/api/2025-01/graphql.json`,
+            query,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Access-Token": session?.accessToken,
+              },
+            },
+          );
+          return response.data;
+        } catch (error) {
+          console.error("Deactivate Discount Error:", error);
+          return { error: "Failed to deactivate discount", id };
         }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Deactivate Discount Error:", error);
-      return { error: "Failed to deactivate discount", id };
-    }
-  };
-  
-  try {
-    let responses;
-  
-    if (active === "Active") {
-      responses = await Promise.all(
-        discountId.map((id) => activateDiscount(id))
-      );
-    } else if (active === "Inactive") {
-      responses = await Promise.all(
-        discountId.map((id) => deactivateDiscount(id))
-      );
-    }
-  
-    console.log("Discount Responses:", responses);
-  
-    const existingApp = await prisma.appActiveInactive.findFirst({
-      where: { AppType: appType },
-    });
-  
-    if (existingApp) {
-      const updatedApp = await prisma.appActiveInactive.update({
-        where: { id: existingApp.id },
-        data: { status: active === "Active" ? 1 : 0 },
-      });
-  
-      return json({
-        message: "App status updated successfully",
-        data: updatedApp,
-        status: 200,
-        step: 6,
-      });
-    } else {
-      const newApp = await prisma.appActiveInactive.create({
-        data: {
-          AppType: appType,
-          status: active === "Active" ? 1 : 0,
-        },
-      });
-  
-      return json({
-        message: "App status created successfully",
-        data: newApp,
-        status: 200,
-        step: 6,
-      });
-    }
-  } catch (err) {
-    console.error("Main Function Error:", err);
-    return json({
-      message: "Something went wrong",
-      step: 6,
-      status: 500,
-    });
-  }
+      };
+
+      try {
+        let responses;
+
+        if (active === "Active") {
+          responses = await Promise.all(
+            discountId.map((id) => activateDiscount(id)),
+          );
+        } else if (active === "Inactive") {
+          responses = await Promise.all(
+            discountId.map((id) => deactivateDiscount(id)),
+          );
+        }
+
+        console.log("Discount Responses:", responses);
+
+        const existingApp = await prisma.appActiveInactive.findFirst({
+          where: { AppType: appType },
+        });
+
+        if (existingApp) {
+          const updatedApp = await prisma.appActiveInactive.update({
+            where: { id: existingApp.id },
+            data: { status: active === "Active" ? 1 : 0 },
+          });
+
+          return json({
+            message: "App status updated successfully",
+            data: updatedApp,
+            status: 200,
+            step: 6,
+          });
+        } else {
+          const newApp = await prisma.appActiveInactive.create({
+            data: {
+              AppType: appType,
+              status: active === "Active" ? 1 : 0,
+            },
+          });
+
+          return json({
+            message: "App status created successfully",
+            data: newApp,
+            status: 200,
+            step: 6,
+          });
+        }
+      } catch (err) {
+        console.error("Main Function Error:", err);
+        return json({
+          message: "Something went wrong",
+          step: 6,
+          status: 500,
+        });
+      }
+    } else if (intent === "handleCopy") {
+      try {
+        const card = JSON.parse(formData.get("card"));
+        console.log(card, "volume card");
+        const {
+          isActive,
+          bundle_name,
+          product_all,
+          select_product_volume_discount,
+          discount_method,
+          tier,
+          position,
+          section,
+          above_title_section,
+          title,
+          Tiers,
+          product,
+          call_to_action_button,
+          text_below_cta,
+          background,
+        } = card;
+
+        const volumeData = {
+          bundle_name: bundle_name+ ' copy',
+          position:position,
+          call_to_action_button:call_to_action_button,
+          section:section,
+          select_product_volume_discount,
+          product_all:product_all,
+          discount_method:discount_method,
+          tier:tier,
+          above_title_section:above_title_section,
+          text_below_cta:text_below_cta,
+          title:title,
+          Tiers:Tiers,
+          product: product,
+          background:background,
+          isActive:isActive,
+          domainName: shop,
+        };
+
+        const savedDiscount = await db.volumeDiscount.create({
+          data: volumeData,
+        });
+
+        return json({
+          message: "Bundle copied successfully",
+          data: savedDiscount,
+          status: 200,
+          step: 7,
+        });
+      } catch (error) {
+        console.log(error, "check error");
+        return json({
+          message: "Failed to process the request",
+          error: error.message,
+          status: 500,
+          step: 7,
+        });
+      }
     }
   } else if (request.method === "DELETE") {
-
-    console.log('delete method hit')
+    console.log("delete method hit");
     try {
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
+ 
+      if(discount_id) {
 
-      console.log(discount_id, 'discount_id');
+     
       const data = JSON.stringify({
         query: `
           mutation discountAutomaticDelete($id: ID!) {
@@ -738,8 +797,7 @@ export async function action({ request }) {
       const response = await axios.request(config);
       const responseData = response.data;
 
-
-      console.log(responseData?.data?.discountAutomaticDelete?.userErrors, 'responsh')
+    
 
       // Handle user errors from Shopify
       if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
@@ -749,6 +807,8 @@ export async function action({ request }) {
           status: 400,
         });
       }
+
+    }
 
       // Delete from your local database
       const result = await db.volumeDiscount.deleteMany({
@@ -856,7 +916,7 @@ export default function VolumePage() {
   const actionResponse = useActionData();
   // const submit = useSubmit();
   const navigation = useNavigation();
-   const fetcher = useFetcher();
+  const fetcher = useFetcher();
 
   console.log(allDiscountId, "allDiscountId");
 
@@ -892,7 +952,7 @@ export default function VolumePage() {
     callAction: false,
     background: false,
   });
-  
+
   const [discountId, setDiscountId] = useState("");
   const [showPosition, setShowPosition] = useState(false);
   const [details, setDetails] = useState({});
@@ -954,14 +1014,14 @@ export default function VolumePage() {
     backgroundShadow: true,
   });
 
-  const handleBtn = (type,item) => {
+  const handleBtn = (type, item) => {
     setShowStatus((prev) => ({
       ...prev,
       [type]: !prev[type],
     }));
     setShowButton((prev) => ({
       ...prev,
-      [type]: item
+      [type]: item,
     }));
   };
 
@@ -981,18 +1041,18 @@ export default function VolumePage() {
   };
 
   const handleBack = () => {
-    console.log('handleback clicked', showPage);
-  
-    if(activeTab === "Products") {
-      if(showPage == "second") {
+    console.log("handleback clicked", showPage);
+
+    if (activeTab === "Products") {
+      if (showPage == "second") {
         setShowPage("first");
-      }else if(showPage == "third"){
+      } else if (showPage == "third") {
         setShowPage("second");
-      }else if(showPage == "first") {
-        setActiveTab('Home')
+      } else if (showPage == "first") {
+        setActiveTab("Home");
       }
     }
-  }
+  };
 
   const handleTitle = (e) => {
     const { name, value } = e.target;
@@ -1066,8 +1126,12 @@ export default function VolumePage() {
     setActive(false);
     setActiveApp(item);
     fetcher.submit(
-      { active: item, discountID: JSON.stringify(allDiscountId?.data), intent: "handleAllDiscount" },
-      { method: "POST",  }
+      {
+        active: item,
+        discountID: JSON.stringify(allDiscountId?.data),
+        intent: "handleAllDiscount",
+      },
+      { method: "POST" },
     );
   };
 
@@ -1204,6 +1268,14 @@ export default function VolumePage() {
     submit(e.target.form);
   };
 
+  const handleCopy = (e, card) => {
+    e.preventDefault();
+    fetcher.submit(
+      { card: JSON.stringify(card), intent: "handleCopy" },
+      { method: "POST" },
+    );
+  };
+
   useEffect(() => {
     if (actionResponse?.status == 6) {
       if (actionResponse?.status === 200) {
@@ -1301,7 +1373,6 @@ export default function VolumePage() {
       });
     }
   }, [actionResponse]);
-
 
   useEffect(() => {
     if (actionResponse?.step === 5) {
@@ -1437,22 +1508,28 @@ export default function VolumePage() {
         <TitleBar title="Volume Bundles"></TitleBar>
         <div className={styles.flexWrapper}>
           <div className={styles.headingFlex}>
-            <button type="button" className={styles.btn_Back} onClick={handleBack}>
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 20 17"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            {activeTab !== "Home" && (
+              <button
+                type="button"
+                className={styles.btn_Back}
+                onClick={handleBack}
               >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M8.78033 0.21967C9.07322 0.512563 9.07322 0.987437 8.78033 1.28033L2.56066 7.5H18.75C19.1642 7.5 19.5 7.83579 19.5 8.25C19.5 8.66421 19.1642 9 18.75 9H2.56066L8.78033 15.2197C9.07322 15.5126 9.07322 15.9874 8.78033 16.2803C8.48744 16.5732 8.01256 16.5732 7.71967 16.2803L0.21967 8.78033C-0.0732233 8.48744 -0.0732233 8.01256 0.21967 7.71967L7.71967 0.21967C8.01256 -0.0732233 8.48744 -0.0732233 8.78033 0.21967Z"
-                  fill="#0F172A"
-                />
-              </svg>
-            </button>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 20 17"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M8.78033 0.21967C9.07322 0.512563 9.07322 0.987437 8.78033 1.28033L2.56066 7.5H18.75C19.1642 7.5 19.5 7.83579 19.5 8.25C19.5 8.66421 19.1642 9 18.75 9H2.56066L8.78033 15.2197C9.07322 15.5126 9.07322 15.9874 8.78033 16.2803C8.48744 16.5732 8.01256 16.5732 7.71967 16.2803L0.21967 8.78033C-0.0732233 8.48744 -0.0732233 8.01256 0.21967 7.71967L7.71967 0.21967C8.01256 -0.0732233 8.48744 -0.0732233 8.78033 0.21967Z"
+                    fill="#0F172A"
+                  />
+                </svg>
+              </button>
+            )}
             <h2>Volume Discount</h2>
           </div>
           <div
@@ -1480,20 +1557,12 @@ export default function VolumePage() {
               </div>
             </div>
             {active && (
-             <fetcher.Form method="POST">
-             <ul className={styles.selectDropdown}>
-               <li 
-               onClick={(e) => handleActive(e,"Active")}
-               >
-                 Active
-                 </li>
-               <li 
-               onClick={(e) => handleActive(e, "Inactive")}
-               >
-                 Inactive
-               </li>
-             </ul>
-           </fetcher.Form>
+              <fetcher.Form method="POST">
+                <ul className={styles.selectDropdown}>
+                  <li onClick={(e) => handleActive(e, "Active")}>Active</li>
+                  <li onClick={(e) => handleActive(e, "Inactive")}>Inactive</li>
+                </ul>
+              </fetcher.Form>
             )}
           </div>
         </div>
@@ -1677,9 +1746,30 @@ export default function VolumePage() {
                             />
                           )}
                         </Form>
-                        <button className={styles.copyIcon}>
-                          <img src={copy_icon} width={20} height={20} />
-                        </button>
+                        <Form method="POST">
+                          <button
+                            className={styles.copyIcon}
+                            title="Duplicate"
+                            onClick={(e) => handleCopy(e, card)}
+                          >
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 27 27"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M20.1675 4.43957C20.1675 1.98551 18.1781 -0.00390625 15.724 -0.00390625H4.61535C2.16129 -0.00390625 0.171875 1.98551 0.171875 4.43957V15.5483C0.171875 18.0023 2.16129 19.9917 4.61535 19.9917V11.1048C4.61535 7.42369 7.59947 4.43957 11.2806 4.43957H20.1675Z"
+                                fill="#005BEA"
+                              />
+                              <path
+                                d="M22.3893 6.66131C24.8433 6.66131 26.8327 8.65072 26.8327 11.1048V22.2135C26.8327 24.6675 24.8433 26.657 22.3893 26.657H11.2806C8.82651 26.657 6.83709 24.6675 6.83709 22.2135V11.1048C6.83709 8.65072 8.82651 6.66131 11.2806 6.66131H22.3893Z"
+                                fill="#005BEA"
+                              />
+                            </svg>
+                          </button>
+                        </Form>
                         <button
                           className={styles.edit_Btn}
                           onClick={() => handleEdit(card)}
@@ -2498,12 +2588,16 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                            onClick={() => handleBtn("title", "Show")}
+                                            onClick={() =>
+                                              handleBtn("title", "Show")
+                                            }
                                           >
                                             Show
                                           </li>
                                           <li
-                                            onClick={() => handleBtn("title", "Hide")}
+                                            onClick={() =>
+                                              handleBtn("title", "Hide")
+                                            }
                                           >
                                             Hide
                                           </li>
@@ -2599,14 +2693,16 @@ export default function VolumePage() {
                                       <ul className={styles.selectDropdown}>
                                         <>
                                           <li
-                                           
-                                            onClick={() => handleBtn("tiers", "Show")}
+                                            onClick={() =>
+                                              handleBtn("tiers", "Show")
+                                            }
                                           >
                                             Show
                                           </li>
                                           <li
-                                           
-                                            onClick={() => handleBtn("tiers", "Hide")}
+                                            onClick={() =>
+                                              handleBtn("tiers", "Hide")
+                                            }
                                           >
                                             Hide
                                           </li>
