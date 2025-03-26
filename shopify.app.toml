@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://colleges-designation-manufacture-dome.trycloudflare.com"
+application_url = "https://harrison-computed-sustainable-pdt.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products write_discounts read_discounts"
 
 [auth]
 redirect_urls = [
-  "https://colleges-designation-manufacture-dome.trycloudflare.com/auth/callback",
-  "https://colleges-designation-manufacture-dome.trycloudflare.com/auth/shopify/callback",
-  "https://colleges-designation-manufacture-dome.trycloudflare.com/api/auth/callback"
+  "https://harrison-computed-sustainable-pdt.trycloudflare.com/auth/callback",
+  "https://harrison-computed-sustainable-pdt.trycloudflare.com/auth/shopify/callback",
+  "https://harrison-computed-sustainable-pdt.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

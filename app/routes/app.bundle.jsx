@@ -509,7 +509,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           );
         }
 
-        console.log("Discount Responses:", responses);
+
 
         const existingApp = await prisma.appActiveInactive.findFirst({
           where: { AppType: appType },
@@ -767,6 +767,7 @@ export default function PlansPage() {
   const [checked, setChecked] = useState(true);
   const [showPage, setShowPage] = useState(null);
   const [productSections, setProductSections] = useState([{ id: 1 }]);
+  const [productIndex,setProductIndex] = useState(null);
   const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [cart, setCart] = useState("Cart");
@@ -830,23 +831,23 @@ export default function PlansPage() {
 
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
-    titleSectionSize: "5",
+    titleSectionSize: "12",
     titleSectionColor: "#000000",
   });
 
   const [title, seTitle] = useState({
     titleText: "Add Bundle And Save 10%!",
-    titleSize: "5",
+    titleSize: "12",
     titleColor: "#000000",
   });
 
   const [productTitle, setProductTitle] = useState({
-    productSize: "5",
+    productSize: "12",
     productColor: "#000000",
   });
 
   const [bundleCost, setBundleCost] = useState({
-    bundleCostSize: "5",
+    bundleCostSize: "12",
     bundleCostColor: "#000000",
     bundleCostComparedPrice: true,
     bundleCostSave: true,
@@ -854,13 +855,13 @@ export default function PlansPage() {
 
   const [callAction, setCallAction] = useState({
     ctaText: "👉 Add To Cart",
-    ctaSize: "5",
-    ctaColor: "#000000",
+    ctaSize: "12",
+    ctaColor: "#FFFFFF",
   });
 
   const [textBelow, setTextBelow] = useState({
     tbText: "Lifetime warranty & Free Returns",
-    tbSize: "5",
+    tbSize: "12",
     tbColor: "#555555",
   });
 
@@ -1117,11 +1118,6 @@ export default function PlansPage() {
     }
   }, [actionResponse]);
 
-
-  useEffect(() => {
-   console.log(actionResponse, 'actionResponse')
-  },[actionResponse])
-
   useEffect(() => {
     if (actionResponse?.status === 200) {
       if (actionResponse?.step === 4) {
@@ -1195,7 +1191,6 @@ export default function PlansPage() {
 
   useEffect(() => {
     if (showEdit) {
-      console.log(details, "checlmine");
       setSelectedPrducts(details?.products);
       setId(details.id);
       setValues((prev) => ({
@@ -1281,7 +1276,9 @@ export default function PlansPage() {
 
   const handleAdd = (index) => {
     setIsProduct(true);
-    console.log(selectProducts);
+    console.log('check my index', index);
+    setProductIndex(index);
+    
   };
 
   const handleDelete = (item) => {
@@ -3280,6 +3277,7 @@ export default function PlansPage() {
         <AddProduct
           onClose={handleClose}
           products={products}
+          productIndex={productIndex}
           handleSave={handleSave}
           selectProduct={selectProducts}
           setSelectedPrducts={setSelectedPrducts}

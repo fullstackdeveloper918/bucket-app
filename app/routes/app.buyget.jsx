@@ -784,23 +784,23 @@ export default function BuyGetPage() {
 
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
-    titleSectionSize: 5,
+    titleSectionSize: 12,
     titleSectionColor: "#000000",
   });
 
   const [title, seTitle] = useState({
     titleText: "Add Product and save 10%!",
-    titleSize: 5,
+    titleSize: 12,
     titleColor: "#000000",
   });
 
   const [productTitle, setProductTitle] = useState({
-    productSize: 5,
+    productSize: 12,
     productColor: "#000000",
   });
 
   const [bundleCost, setBundleCost] = useState({
-    bundleCostSize: 5,
+    bundleCostSize: 12,
     bundleCostColor: "#000000",
     bundleCostComparedPrice: true,
     bundleCostSave: true,
@@ -808,13 +808,13 @@ export default function BuyGetPage() {
 
   const [callAction, setCallAction] = useState({
     ctaText: "Add to Cart",
-    ctaSize: 5,
-    ctaColor: "#000000",
+    ctaSize: 12,
+    ctaColor: "#FFFFFF",
   });
 
   const [textBelow, setTextBelow] = useState({
     tbText: "Lifetime warranty & Free Returns",
-    tbSize: 5,
+    tbSize: 12,
     tbColor: "#555555",
   });
 
