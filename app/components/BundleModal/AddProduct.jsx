@@ -17,7 +17,7 @@ const AddProduct = ({
     return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-
+// New bucket testing app
   const isAllVariantsSelected = (productId, variants) => {
     const selectedProduct = selectProduct.find(
       (selected) => selected.productId === productId
