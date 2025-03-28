@@ -3456,12 +3456,12 @@ export default function BuyGetPage() {
       <Toaster />
       {isProduct && (
         <AddProduct
-          onClose={handleClose}
-          products={products}
-          // selectProduct={activeSelection === "Buy" ? sectionBuyProduct : sectionGetProduct}
-          // setSelectedPrducts={
-          //   activeSelection === "Buy" ?  : 
-          // }
+        onClose={closeModal}
+        products={products}
+        currentIndex={activeSelection === "Buy" ? currentBuyIndex : currentGetIndex}
+        sectionProduct={activeSelection === "Buy" ? sectionBuyProduct : sectionGetProduct}
+        setSectionProduct={activeSelection === "Buy" ? setSectionBuyProduct : setSectionGetProduct}
+          
         />
       )}
     </>
