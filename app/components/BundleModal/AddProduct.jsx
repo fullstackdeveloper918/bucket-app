@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import styles from "../../styles/main.module.css";
 import searchImg from "../../routes/assets/searchImg@.svg";
@@ -6,10 +5,9 @@ import searchImg from "../../routes/assets/searchImg@.svg";
 const AddProduct = ({
   onClose,
   products,
-  productIndex,
-  selectProduct,
-  setSelectedPrducts,
-  handleSave,
+  currentIndex,
+  sectionProduct,
+  setSectionProduct,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -17,70 +15,63 @@ const AddProduct = ({
     return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-// New bucket testing app dnckdsndsk
-  const isAllVariantsSelected = (productId, variants) => {
-    const selectedProduct = selectProduct.find(
-      (selected) => selected.productId === productId
-    );
-    const selectedVariants = selectedProduct ? selectedProduct.variants : [];
-    return variants.every((variant) => selectedVariants.includes(variant.node.id));
-  };
+  // const isAllVariantsSelected = (productId, variants) => {
+  //   // const selectedProduct = selectProduct.find(
+  //   //   (selected) => selected.productId === productId
+  //   // );
+  //   // const selectedVariants = selectedProduct ? selectedProduct.variants : [];
+  //   // return variants.every((variant) => selectedVariants.includes(variant.node.id));
+  // };
 
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
     const productId = product.node.id;
-  
-    setSelectedPrducts((prev) => {
-      const isAlreadySelected = prev.some((item) => item.productId === productId);
-  
+
+    setSectionProduct((prev) => {
+      const updatedProducts = { ...prev };
+
       if (isSelected) {
-        if (!isAlreadySelected) {
-          return [
-            ...prev,
-            {
-              productId,
-              variants: variants.map((v) => v.node.id), 
-            },
-          ];
-        }
+        updatedProducts[currentIndex] = {
+          productId,
+          variants: variants.map((v) => v.node.id),
+        };
       } else {
-        return prev.filter((item) => item.productId !== productId);
+        delete updatedProducts[currentIndex];
       }
-  
-      return prev;
+
+      console.log(updatedProducts, "updatedProducts");
+      return updatedProducts;
     });
   };
-  
 
   const handleChildCheckBox = (e, productId, variantId) => {
     const isSelected = e.target.checked;
-  
-    setSelectedPrducts((prev) => {
-      const updatedProducts = [...prev];
-      const productIndex = updatedProducts.findIndex(
-        (p) => p.productId === productId
-      );
-  
-      if (productIndex > -1) {
-        const product = updatedProducts[productIndex];
-  
-        if (isSelected) {
-          // Add the variant to the product if it is selected
-          if (!product.variants.includes(variantId)) {
-            product.variants.push(variantId);
-          }
-        } else {
-          // Remove the variant from the product if it is unselected
-          product.variants = product.variants.filter((id) => id !== variantId);
-          // If no variants are left for this product, remove it from the list
-          if (product.variants.length === 0) {
-            updatedProducts.splice(productIndex, 1);
-          }
-        }
-      } else if (isSelected) {
-        updatedProducts.push({ productId, variants: [variantId] });
+
+    setSectionProduct((prev) => {
+      const updatedProducts = { ...prev };
+
+      if (!updatedProducts[currentIndex]) {
+        updatedProducts[currentIndex] = { productId, variants: [] };
       }
-  
+
+      if (isSelected) {
+        if (!updatedProducts[currentIndex].variants.includes(variantId)) {
+          updatedProducts[currentIndex] = {
+            ...updatedProducts[currentIndex],
+            variants: [...updatedProducts[currentIndex].variants, variantId],
+          };
+        }
+      } else {
+        updatedProducts[currentIndex].variants = updatedProducts[
+          currentIndex
+        ].variants.filter((id) => id !== variantId);
+
+        if (updatedProducts[currentIndex].variants.length === 0) {
+          delete updatedProducts[currentIndex];
+        }
+      }
+
+      console.log(updatedProducts, "updatedProducts");
       return updatedProducts;
     });
   };
@@ -119,7 +110,7 @@ const AddProduct = ({
                         id={item.node.id}
                         name="Parent"
                         value={productId}
-                        checked={isAllVariantsSelected(productId, variants)}
+                        // checked={isAllVariantsSelected(productId, variants)}
                         onChange={(e) =>
                           handleParentCheckBox(e, item, variants)
                         }
@@ -139,6 +130,7 @@ const AddProduct = ({
                   <div className={styles.productbyx}>
                     {variants.map((variant, photoIndex) => {
                       const variantId = variant.node.id;
+
                       return (
                         <React.Fragment key={photoIndex}>
                           <div className={styles.formGroup}>
@@ -147,9 +139,11 @@ const AddProduct = ({
                               name={`Child-${productId}`}
                               id={variantId}
                               value={variantId}
-                              checked={selectProduct
-                                .find((item) => item.productId === productId)
-                                ?.variants.includes(variantId) || false}
+                              checked={
+                                sectionProduct[currentIndex]?.variants.includes(
+                                  variantId,
+                                ) || false
+                              }
                               onChange={(e) =>
                                 handleChildCheckBox(e, productId, variantId)
                               }
@@ -173,7 +167,7 @@ const AddProduct = ({
           <button type="button" onClick={onClose} className={styles.Backbtn}>
             Cancel
           </button>
-          <button type="button" onClick={handleSave} className={styles.NextBtn}>
+          <button type="button" className={styles.NextBtn}>
             Save
           </button>
         </div>

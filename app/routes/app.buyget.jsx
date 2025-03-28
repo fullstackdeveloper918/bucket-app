@@ -300,19 +300,6 @@ export async function action({ request }) {
             ?.automaticDiscountNode?.id;
         discount_info = response?.data?.data;
 
-        console.log(bundle_name, "checkmybundlename");
-
-        // const existingBundle = await db.bogoxy.findUnique({
-        //   where: { bundle_name: bundle_name},
-        // });
-
-        // if (existingBundle) {
-        //   return json({
-        //     error: "Bundle name is already in use. Please choose a different name.",
-        //     status: 500,
-        //   });
-        // }
-
         if (bundle_id) {
           const updatedDiscount = await db.bogoxy.update({
             where: { id: parseInt(bundle_id) },
@@ -718,9 +705,6 @@ export default function BuyGetPage() {
   const navigation = useNavigation();
   const fetcher = useFetcher();
 
-  console.log(allDiscountId, "allDiscountId");
-
-  console.log(actionResponse, "actionResponse");
   const formRef = useRef(null);
   const [id, setId] = useState(null);
   const [values, setValues] = useState({
@@ -730,7 +714,17 @@ export default function BuyGetPage() {
     amount: "",
   });
   const [activeSelection, setActiveSelection] = useState("Buy");
-  const [buyProducts, setBuyProducts] = useState([]);
+  
+
+
+  const [buySections, setBuySections] = useState([1]);
+  const [sectionBuyProduct, setSectionBuyProduct] = useState({});
+  const [currentBuyIndex, setCurrentBuyIndex] = useState(null);
+
+
+  const [getSections, setGetSections] = useState([1]);
+  const [sectionGetProduct, setSectionGetProduct] = useState({});
+  const [currentGetIndex, setCurrentGetIndex] = useState(null);
 
   const [showComponent, setShowComponent] = useState(0);
   const [showEdit, setShowEdit] = useState(false);
@@ -740,7 +734,6 @@ export default function BuyGetPage() {
   const [discountId, setDiscountId] = useState("");
   const [isMonth, setIsMonth] = useState(false);
   const [month, setMonth] = useState("This Month");
-  const [getProducts, setGetProducts] = useState([]);
   const [activeApp, setActiveApp] = useState("Active");
   const [loading, setLoading] = useState(false);
   const [cart, setCart] = useState("Cart");
@@ -888,6 +881,7 @@ export default function BuyGetPage() {
 
   const handleClose = () => {
     setIsProduct(false);
+
   };
 
   const handleBundleCost = (e) => {
@@ -922,27 +916,27 @@ export default function BuyGetPage() {
     }));
   };
 
-  const handleSave = () => {
-    if (buyProducts.length > 1) {
-      notify.error("Please select only one product", {
-        position: "top-center",
-        style: {
-          background: "red",
-          color: "white",
-        },
-      });
-    } else if (getProducts.length > 1) {
-      notify.error("Please select only one product", {
-        position: "top-center",
-        style: {
-          background: "red",
-          color: "white",
-        },
-      });
-    } else {
-      setIsProduct(false);
-    }
-  };
+  // const handleSave = () => {
+  //   if (Object.keys(sectionBuyProduct).length > 1) {
+  //     notify.error("Please select only one product", {
+  //       position: "top-center",
+  //       style: {
+  //         background: "red",
+  //         color: "white",
+  //       },
+  //     });
+  //   } else if (Object.keys(sectionGetProduct).length > 1) {
+  //     notify.error("Please select only one product", {
+  //       position: "top-center",
+  //       style: {
+  //         background: "red",
+  //         color: "white",
+  //       },
+  //     });
+  //   } else {
+  //     setIsProduct(false);
+  //   }
+  // };
 
   const handleDesign = () => {
     setActiveTab("Home");
@@ -958,7 +952,7 @@ export default function BuyGetPage() {
   };
 
   const handleBack = () => {
-    console.log("handleback clicked", showPage);
+   
 
     if (activeTab === "Products") {
       if (showPage == "second") {
@@ -989,7 +983,7 @@ export default function BuyGetPage() {
           color: "white",
         },
       });
-    } else if (buyProducts.length == 0) {
+    } else if (Object.keys(sectionBuyProduct).length == 0) {
       notify.success("Please select Buy Product", {
         position: "top-center",
         style: {
@@ -997,7 +991,7 @@ export default function BuyGetPage() {
           color: "white",
         },
       });
-    } else if (getProducts.length == 0) {
+    } else if (Object.keys(sectionGetProduct).length == 0) {
       notify.success("Please select Get Product", {
         position: "top-center",
         style: {
@@ -1090,6 +1084,16 @@ export default function BuyGetPage() {
     setShowPage("first");
   };
 
+
+  const addProductSection = (type) => {
+    if(type === "Buy") {
+      setBuySections([...buySections, buySections.length + 1])
+    }else if(type === "Get"){
+      console.log(type)
+      setGetSections([...getSections, getSections.length + 1])
+    }
+  }
+
   const handleDelete = (item) => {
     setShowPopup(true);
     setProductId(item.id);
@@ -1114,8 +1118,8 @@ export default function BuyGetPage() {
         discount_method: "Percentage",
         amount: "",
       });
-      setBuyProducts([]);
-      setGetProducts([]);
+      // setBuyProducts([]);
+      // setGetProducts([]);
       setPosition("Below Section");
       setSection("Buy Buttons");
       seTitleSection({
@@ -1177,8 +1181,8 @@ export default function BuyGetPage() {
         discount_method: details.discount_method,
         amount: details.amount,
       }));
-      setBuyProducts(JSON.parse(JSON.stringify(details.buysx)));
-      setGetProducts(JSON.parse(JSON.stringify(details.gety)));
+      // setBuyProducts(JSON.parse(JSON.stringify(details.buysx)));
+      // setGetProducts(JSON.parse(JSON.stringify(details.gety)));
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
@@ -1251,15 +1255,15 @@ export default function BuyGetPage() {
   }, [actionResponse]);
 
   const handlePreviewDelete = (type, item) => {
-    if (type === "BUY") {
-      setBuyProducts((prev) =>
-        prev.filter((value) => value.productId !== item),
-      );
-    } else if (type === "GET") {
-      setGetProducts((prev) =>
-        prev.filter((value) => value.productId !== item),
-      );
-    }
+    // if (type === "BUY") {
+    //   setBuyProducts((prev) =>
+    //     prev.filter((value) => value.productId !== item),
+    //   );
+    // } else if (type === "GET") {
+    //   setGetProducts((prev) =>
+    //     prev.filter((value) => value.productId !== item),
+    //   );
+    // }
   };
 
   const handleShowStatus = (item) => {
@@ -1271,12 +1275,9 @@ export default function BuyGetPage() {
 
   const getFilteredBundles = () => {
     if (!totalBundle) return [];
-
     const currentDate = new Date();
-    console.log(currentDate, "check currentDate");
     return totalBundle.filter((card) => {
       const bundleDate = new Date(card.createdAt);
-      console.log(bundleDate, "check bundleDate");
 
       switch (month) {
         case "Today":
@@ -1747,208 +1748,165 @@ export default function BuyGetPage() {
                               />
                             </div>
                             <div className={styles.addProductdiv}>
-                              {buysXSections.map((section, index) => (
-                                <React.Fragment key={index}>
-                                  <div
-                                    key={section.id}
-                                    className={styles.input_labelCustomize}
-                                  >
-                                    <label htmlFor="">
-                                      Customer Buys X {index + 1}
-                                    </label>
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                      onClick={() => handleProduct("Buy")}
+                            {buySections.map((section, index) => (
+                              <div
+                                className={styles.input_labelCustomize}
+                                key={section.id}
+                              >
+                                <label htmlFor="">
+                                  Customer Buys {index + 1}
+                                </label>
+                                <div className={styles.input_labelCustomize}>
+                                  {!sectionBuyProduct[section] ? (
+                                    <label
+                                      htmlFor="file-upload"
+                                      style={{
+                                        cursor: "pointer",
+                                        color: "blue",
+                                      }}
+                                      className={styles.inputUpload}
+                                      onClick={() => openModal(section)}
                                     >
-                                      {buyProducts.length > 0 ? (
-                                        products
-                                          .filter((item) =>
-                                            buyProducts.some(
-                                              (buy) =>
-                                                buy.productId ===
-                                                item?.node?.id,
-                                            ),
-                                          )
-                                          .map((item, idx) => (
-                                            <React.Fragment key={idx}>
-                                              <div
-                                                className={styles.images_upload}
-                                              >
-                                                <img
-                                                  src={
-                                                    item?.node?.images?.edges[0]
-                                                      ?.node?.src
-                                                  }
-                                                  alt={item?.node?.title}
-                                                  style={{
-                                                    width: "100px",
-                                                    height: "100px",
-                                                    maxHeight: "100px",
-                                                    maxWidth: "100px",
-                                                    objectFit: "cover",
-                                                    borderRadius: "15px",
-                                                  }}
-                                                />
-                                                <div
-                                                  className={styles.image_name}
-                                                >
-                                                  <h4>{item?.node?.title}</h4>
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handlePreviewDelete(
-                                                        "BUY",
-                                                        buyProducts[index]
-                                                          .productId,
-                                                      );
-                                                    }}
-                                                    className={
-                                                      styles.deletedBtn
-                                                    }
-                                                  >
-                                                    <img
-                                                      src={deletedIcon}
-                                                      width={20}
-                                                      height={20}
-                                                      alt="Delete"
-                                                    />
-                                                    Delete
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            </React.Fragment>
-                                          ))
-                                      ) : (
-                                        <label
+                                      <span>+</span>Add Product
+                                    </label>
+                                  ) : (
+                                    <div className={styles.images_upload}>
+                                      {
+                                        products.filter((item) => item.node.id === sectionBuyProduct[section].productId).map((product) => (
+                                          <>
+                                          
+                                          <img
+                                          src={product.node.images.edges[0].node.src}
+                                          alt="Preview"
                                           style={{
-                                            cursor: "pointer",
-                                            color: "blue",
+                                            width: "100px",
+                                            height: "100px",
+                                            maxHeight: "100px",
+                                            maxWidth: "100px",
+                                            objectFit: "cover",
+                                            borderRadius: "15px",
                                           }}
-                                          className={styles.inputUpload}
-                                        >
-                                          <span>+</span>Add Product
-                                        </label>
-                                      )}
-                                    </div>
-                                  </div>
-                                </React.Fragment>
-                              ))}
-                            </div>
-
-                            <div className={styles.Addanotherdiv}>
-                              <label
-                                style={{ cursor: "pointer", color: "blue" }}
-                                onClick={addBuysXSection}
-                              >
-                                <span>+</span>Add Another Product
-                              </label>
-                            </div>
-
-                            <div className={styles.addProductdiv}>
-                              {GetYSections.map((section, index) => (
-                                <div
-                                  key={section.id}
-                                  className={styles.input_labelCustomize}
-                                >
-                                  <label htmlFor="">
-                                    Customer Gets Y {index + 1}
-                                  </label>
-                                  <div
-                                    className={styles.input_labelCustomize}
-                                    onClick={() => handleProduct("Get")}
-                                  >
-                                    {getProducts.length > 0 ? (
-                                      products
-                                        .filter((item) =>
-                                          getProducts.some(
-                                            (buy) =>
-                                              buy.productId === item?.node?.id,
-                                          ),
-                                        )
-                                        .map((item, idx) => (
-                                          <React.Fragment key={idx}>
-                                            <div
-                                              className={styles.images_upload}
-                                            >
-                                              <img
-                                                src={
-                                                  item?.node?.images?.edges[0]
-                                                    ?.node?.src
-                                                }
-                                                alt={item?.node?.title}
-                                                style={{
-                                                  width: "100px",
-                                                  height: "100px",
-                                                  maxHeight: "100px",
-                                                  maxWidth: "100px",
-                                                  objectFit: "cover",
-                                                  borderRadius: "15px",
-                                                }}
+                                        />
+                                        <div className={styles.image_name}>
+                                          <h4>14K Gold Necklace</h4>
+                                          <button
+                                            type="button"
+                                            className={styles.deletedBtn}
+                                          >
+                                            <img
+                                              src={deletedIcon}
+                                              width={20}
+                                              height={20}
                                               />
-                                              <div
-                                                className={styles.image_name}
-                                              >
-                                                <h4>{item?.node?.title}</h4>
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handlePreviewDelete(
-                                                      "GET",
-                                                      getProducts[index]
-                                                        .productId,
-                                                    );
-                                                  }}
-                                                  className={styles.deletedBtn}
-                                                >
-                                                  <img
-                                                    src={deletedIcon}
-                                                    width={20}
-                                                    height={20}
-                                                    alt="Delete"
-                                                  />
-                                                  Delete
-                                                </button>
-                                              </div>
-                                            </div>
-                                          </React.Fragment>
+                                            Delete
+                                          </button>
+                                        </div>
+                                              </>
                                         ))
-                                    ) : (
-                                      <label
-                                        style={{
-                                          cursor: "pointer",
-                                          color: "blue",
-                                        }}
-                                        className={styles.inputUpload}
-                                      >
-                                        <span>+</span>Add Product
-                                      </label>
-                                    )}
-                                  </div>
+                                      }
+                                     
+                                    </div>
+                                  )}
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            ))}
+                          </div>
 
-                            <div className={styles.Addanotherdiv}>
-                              <label
-                                style={{ cursor: "pointer", color: "blue" }}
-                                onClick={addGetYSection}
+                          <div className={styles.Addanotherdiv}>
+                            <label
+                              onClick={() => addProductSection('Buy')}
+                              htmlFor="addProduct"
+                              style={{ cursor: "pointer", color: "blue" }}
+                            >
+                              <span>+</span>Add Another Product
+                            </label>
+                          </div>
+
+                          <div className={styles.addProductdiv}>
+                            {getSections.map((section, index) => (
+                              <div
+                                className={styles.input_labelCustomize}
+                                key={section.id}
                               >
-                                <span>+</span>Add Another Product
-                              </label>
-                            </div>
+                                <label htmlFor="">
+                                  Customer Gets {index + 1}
+                                </label>
+                                <div className={styles.input_labelCustomize}>
+                                  {!sectionGetProduct[section] ? (
+                                    <label
+                                      htmlFor="file-upload"
+                                      style={{
+                                        cursor: "pointer",
+                                        color: "blue",
+                                      }}
+                                      className={styles.inputUpload}
+                                      onClick={() => openModal(section)}
+                                    >
+                                      <span>+</span>Add Product
+                                    </label>
+                                  ) : (
+                                    <div className={styles.images_upload}>
+                                      {
+                                        products.filter((item) => item.node.id === sectionBuyProduct[section].productId).map((product) => (
+                                          <>
+                                          
+                                          <img
+                                          src={product.node.images.edges[0].node.src}
+                                          alt="Preview"
+                                          style={{
+                                            width: "100px",
+                                            height: "100px",
+                                            maxHeight: "100px",
+                                            maxWidth: "100px",
+                                            objectFit: "cover",
+                                            borderRadius: "15px",
+                                          }}
+                                        />
+                                        <div className={styles.image_name}>
+                                          <h4>14K Gold Necklace</h4>
+                                          <button
+                                            type="button"
+                                            className={styles.deletedBtn}
+                                          >
+                                            <img
+                                              src={deletedIcon}
+                                              width={20}
+                                              height={20}
+                                              />
+                                            Delete
+                                          </button>
+                                        </div>
+                                              </>
+                                        ))
+                                      }
+                                     
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
 
-                            <input
+                          <div className={styles.Addanotherdiv}>
+                            <label
+                              onClick={() => addProductSection('Get')}
+                              htmlFor="addProduct"
+                              style={{ cursor: "pointer", color: "blue" }}
+                            >
+                              <span>+</span>Add Another Product
+                            </label>
+                          </div>
+
+                            {/* <input
                               type="hidden"
                               name="buyProduct"
                               value={buyProducts}
-                            />
-                            <input
+                            /> */}
+                            {/* <input
                               type="hidden"
                               name="getProduct"
                               value={getProducts}
-                            />
+                            /> */}
 
                             <div className={styles.input_labelCustomize}>
                               <label htmlFor="">Where to display bundle</label>
@@ -2141,16 +2099,16 @@ export default function BuyGetPage() {
                             value={values.amount}
                           />
 
-                          <input
+                          {/* <input
                             type="hidden"
                             name="buyProducts"
                             value={JSON.stringify(buyProducts)}
-                          />
-                          <input
+                          /> */}
+                          {/* <input
                             type="hidden"
                             name="getProducts"
                             value={JSON.stringify(getProducts)}
-                          />
+                          /> */}
                           <div className={styles.table_content}>
                             <div className={styles.leftContent}>
                               <>
@@ -3232,10 +3190,10 @@ export default function BuyGetPage() {
                       )}
 
                       {showComponent <= 3 &&
-                        (buyProducts.length > 0 ? (
+                        (sectionBuyProduct.length > 0 ? (
                           products
                             .filter((item) =>
-                              buyProducts.some(
+                              sectionBuyProduct.some(
                                 (buy) => buy.productId === item?.node?.id,
                               ),
                             )
@@ -3500,11 +3458,10 @@ export default function BuyGetPage() {
         <AddProduct
           onClose={handleClose}
           products={products}
-          handleSave={handleSave}
-          selectProduct={activeSelection === "Buy" ? buyProducts : getProducts}
-          setSelectedPrducts={
-            activeSelection === "Buy" ? setBuyProducts : setGetProducts
-          }
+          // selectProduct={activeSelection === "Buy" ? sectionBuyProduct : sectionGetProduct}
+          // setSelectedPrducts={
+          //   activeSelection === "Buy" ?  : 
+          // }
         />
       )}
     </>

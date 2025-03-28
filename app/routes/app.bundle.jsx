@@ -111,6 +111,7 @@ export async function action({ request }) {
       const name = formData.get("bundle_name");
       const products = formData.get("selectProducts");
       const selectProducts = JSON.parse(products);
+      console.log(selectProducts, 'selectProducts')
       const position = formData.get("position");
       const section = formData.get("section");
       const displayLocation = formData.get("displayBundle");
@@ -157,7 +158,8 @@ export async function action({ request }) {
       };
 
       const result = [];
-      selectProducts.forEach((product) => {
+      const sectionProductArray = Object.values(selectProducts);
+      sectionProductArray.forEach((product) => {
         product.variants.forEach((variantId) => {
           result.push({
             option1: variantId,
@@ -166,6 +168,8 @@ export async function action({ request }) {
           });
         });
       });
+
+      console.log(result, 'hence my result would be')
 
       try {
         let productData = JSON.stringify({
@@ -390,7 +394,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           status: 500,
         });
       }
-    }  else if (intent === "deactivate") {
+    } else if (intent === "deactivate") {
       const active = formData.get("active");
       let data = JSON.stringify({
         query:
@@ -495,7 +499,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           return { error: "Failed to deactivate discount", id };
         }
       };
-
       try {
         let responses;
 
@@ -508,8 +511,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             discountId.map((id) => deactivateDiscount(id)),
           );
         }
-
-
 
         const existingApp = await prisma.appActiveInactive.findFirst({
           where: { AppType: appType },
@@ -550,32 +551,30 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           status: 500,
         });
       }
-    }
-    else if (intent === "handleCopy") {
-      console.log('HandleCopy block');
+    } else if (intent === "handleCopy") {
+      console.log("HandleCopy block");
       try {
-      const card = JSON.parse(formData.get("card"));
-      const {
-        isActive,
-        name,
-        displayLocation,
-        method,
-        chooseAmount,
-        products,
-        position,
-        section,
-        title_section,
-        title,
-        product,
-        bundle_cost,
-        call_to_action_button,
-        text_below_cta,
-        backgroud,
-      } = card;
+        const card = JSON.parse(formData.get("card"));
+        const {
+          isActive,
+          name,
+          displayLocation,
+          method,
+          chooseAmount,
+          products,
+          position,
+          section,
+          title_section,
+          title,
+          product,
+          bundle_cost,
+          call_to_action_button,
+          text_below_cta,
+          backgroud,
+        } = card;
 
-     
         const bundleData = {
-          name: name+' copy',
+          name: name + " copy",
           isActive: isActive,
           displayLocation: displayLocation,
           method: method,
@@ -597,21 +596,20 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           data: bundleData,
         });
 
-        console.log(savedDiscount, 'savedDiscount')
+        console.log(savedDiscount, "savedDiscount");
         return json({
-            message: "Bundle copied successfully",
-            data: savedDiscount,
-            status: 200,
-            step: 7,
-          });
-        
+          message: "Bundle copied successfully",
+          data: savedDiscount,
+          status: 200,
+          step: 7,
+        });
       } catch (error) {
-        console.log(error, 'check error')
+        console.log(error, "check error");
         return json({
           message: "Failed to process the request",
           error: error.message,
           status: 500,
-          step: 7
+          step: 7,
         });
       }
     }
@@ -620,9 +618,9 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
 
-      if(discount_id) {
-      const data = JSON.stringify({
-        query: `
+      if (discount_id) {
+        const data = JSON.stringify({
+          query: `
         mutation discountAutomaticDelete($id: ID!) {
           discountAutomaticDelete(id: $id) {
             deletedAutomaticDiscountId
@@ -634,36 +632,36 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           }
         }
       `,
-        variables: {
-          id: discount_id,
-        },
-      });
-
-      // Configure Axios request
-      const config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: `https://${shop}/admin/api/2025-01/graphql.json`,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-        },
-        data: data,
-      };
-
-      // Make the request to Shopify
-      const response = await axios.request(config);
-      const responseData = response.data;
-
-      // Handle user errors from Shopify
-      if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-        return json({
-          message: "Failed to delete discount on Shopify",
-          errors: responseData.data.discountAutomaticDelete.userErrors,
-          status: 400,
+          variables: {
+            id: discount_id,
+          },
         });
+
+        // Configure Axios request
+        const config = {
+          method: "post",
+          maxBodyLength: Infinity,
+          url: `https://${shop}/admin/api/2025-01/graphql.json`,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": session?.accessToken,
+          },
+          data: data,
+        };
+
+        // Make the request to Shopify
+        const response = await axios.request(config);
+        const responseData = response.data;
+
+        // Handle user errors from Shopify
+        if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
+          return json({
+            message: "Failed to delete discount on Shopify",
+            errors: responseData.data.discountAutomaticDelete.userErrors,
+            status: 400,
+          });
+        }
       }
-    }
 
       // Delete from your local database
       const result = await db.bundle.deleteMany({
@@ -766,8 +764,11 @@ export default function PlansPage() {
   const [showComponent, setShowComponent] = useState(1);
   const [checked, setChecked] = useState(true);
   const [showPage, setShowPage] = useState(null);
-  const [productSections, setProductSections] = useState([{ id: 1 }]);
-  const [productIndex,setProductIndex] = useState(null);
+
+  const [sections, setSections] = useState([1]);
+  const [sectionProduct, setSectionProduct] = useState({});
+  const [currentIndex, setCurrentIndex] = useState(null);
+
   const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [cart, setCart] = useState("Cart");
@@ -870,6 +871,16 @@ export default function PlansPage() {
     backgroundShadow: true,
   });
 
+  const openModal = (section) => {
+    setCurrentIndex(section);
+    setIsProduct(true);
+  };
+
+  const closeModal = () => {
+    setCurrentIndex(null);
+    setIsProduct(false);
+  };
+
   const handleBtn = (type, item) => {
     setShowStatus((prev) => ({
       ...prev,
@@ -962,14 +973,11 @@ export default function PlansPage() {
   };
 
   const addProductSection = () => {
-    setProductSections((prevSections) => [
-      ...prevSections,
-      { id: prevSections.length + 1 },
-    ]);
+    setSections([...sections, sections.length + 1]);
   };
 
-  const handleCopy = (e,card) => {
-    e.preventDefault()
+  const handleCopy = (e, card) => {
+    e.preventDefault();
     fetcher.submit(
       { card: JSON.stringify(card), intent: "handleCopy" },
       { method: "POST" },
@@ -991,7 +999,7 @@ export default function PlansPage() {
           color: "white",
         },
       });
-    } else if (selectProducts.length == 0) {
+    } else if (Object.keys(sectionProduct).length == 0) {
       notify.error("Please select at least one product", {
         position: "top-center",
         style: {
@@ -1273,13 +1281,6 @@ export default function PlansPage() {
       }
     }
   }, [actionResponse]);
-
-  const handleAdd = (index) => {
-    setIsProduct(true);
-    console.log('check my index', index);
-    setProductIndex(index);
-    
-  };
 
   const handleDelete = (item) => {
     setShowPopup(true);
@@ -1596,7 +1597,7 @@ export default function PlansPage() {
                             <button
                               className={styles.copyIcon}
                               title="Duplicate"
-                              onClick={(e) => handleCopy(e,card)}
+                              onClick={(e) => handleCopy(e, card)}
                             >
                               <svg
                                 width="22"
@@ -1813,7 +1814,7 @@ export default function PlansPage() {
                           </div>
 
                           <div className={styles.addProductdiv}>
-                            {productSections.map((section, index) => (
+                            {sections.map((section, index) => (
                               <div
                                 className={styles.input_labelCustomize}
                                 key={section.id}
@@ -1822,71 +1823,57 @@ export default function PlansPage() {
                                   Select Product {index + 1}
                                 </label>
                                 <div className={styles.input_labelCustomize}>
-                                  {selectProducts.length > 0 ? (
-                                    products
-                                      .filter((item) =>
-                                        selectProducts.some(
-                                          (buy) =>
-                                            buy.productId === item?.node?.id,
-                                        ),
-                                      )
-                                      .map((item, index) => (
-                                        <>
-                                          <div
-                                            className={styles.images_upload}
-                                            key={index}
+                                  {!sectionProduct[section] ? (
+                                    <label
+                                      htmlFor="file-upload"
+                                      style={{
+                                        cursor: "pointer",
+                                        color: "blue",
+                                      }}
+                                      className={styles.inputUpload}
+                                      onClick={() => openModal(section)}
+                                    >
+                                      <span>+</span>Add Product
+                                    </label>
+                                  ) : (
+                                    <div className={styles.images_upload}>
+                                      {
+                                        products.filter((item) => item.node.id === sectionProduct[section].productId).map((product) => (
+                                          <>
+                                          {console.log(product, 'chekor')}
+                                          <img
+                                          src={product.node.images.edges[0].node.src}
+                                          alt="Preview"
+                                          style={{
+                                            width: "100px",
+                                            height: "100px",
+                                            maxHeight: "100px",
+                                            maxWidth: "100px",
+                                            objectFit: "cover",
+                                            borderRadius: "15px",
+                                          }}
+                                        />
+                                        <div className={styles.image_name}>
+                                          <h4>14K Gold Necklace</h4>
+                                          <button
+                                            type="button"
+                                            className={styles.deletedBtn}
                                           >
                                             <img
-                                              src={
-                                                item?.node?.images?.edges[0]
-                                                  ?.node?.src
-                                              }
-                                              alt="Preview"
-                                              style={{
-                                                width: "100px",
-                                                height: "100px",
-                                                maxHeight: "100px",
-                                                maxWidth: "100px",
-                                                objectFit: "cover",
-                                                borderRadius: "15px",
-                                              }}
-                                            />
-                                            <div className={styles.image_name}>
-                                              <h4>14K Gold Necklace</h4>
-                                              <button
-                                                type="button"
-                                                onClick={
-                                                  () =>
-                                                    handleDeleteProducts(item)
-                                                  // setSelectedPrducts([])
-                                                }
-                                                className={styles.deletedBtn}
-                                              >
-                                                <img
-                                                  src={deletedIcon}
-                                                  width={20}
-                                                  height={20}
-                                                />
-                                                Delete
-                                              </button>
-                                            </div>
-                                          </div>
-                                        </>
-                                      ))
-                                  ) : (
-                                    <>
-                                      <label
-                                        htmlFor="file-upload"
-                                        style={{
-                                          cursor: "pointer",
-                                          color: "blue",
-                                        }}
-                                        className={styles.inputUpload}
-                                        onClick={() => handleAdd(index)}
-                                      >
-                                        <span>+</span>Add Product
-                                      </label>
-                                    </>
+                                              src={deletedIcon}
+                                              width={20}
+                                              height={20}
+                                              />
+                                            Delete
+                                          </button>
+                                        </div>
+                                              </>
+                                        ))
+                                      }
+                                      {console.log(sectionProduct[section].productId, 'kese hote hai')}
+                                      
+                                     
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -1895,11 +1882,11 @@ export default function PlansPage() {
 
                           <div className={styles.Addanotherdiv}>
                             <label
+                              onClick={addProductSection}
                               htmlFor="addProduct"
                               style={{ cursor: "pointer", color: "blue" }}
                             >
-                              <span onClick={addProductSection}>+</span>Add
-                              Product
+                              <span>+</span>Add Another Product
                             </label>
                           </div>
 
@@ -2108,7 +2095,7 @@ export default function PlansPage() {
                         <input
                           type="hidden"
                           name="selectProducts"
-                          value={JSON.stringify(selectProducts)}
+                          value={JSON.stringify(sectionProduct)}
                         />
                         <div className={styles.leftContent}>
                           <>
@@ -3134,11 +3121,12 @@ export default function PlansPage() {
                             </h4>
 
                             <div className={styles.both_product}>
-                              {selectProducts.length > 0 ? (
+                              {Object.keys(sectionProduct).length > 0 ? (
                                 products
                                   .filter((item) =>
-                                    selectProducts.some(
-                                      (buy) => buy.productId === item?.node?.id,
+                                    Object.values(sectionProduct).some(
+                                      (selected) =>
+                                        selected.productId === item.node.id,
                                     ),
                                   )
                                   .map((item) => (
@@ -3275,12 +3263,11 @@ export default function PlansPage() {
       <Toaster />
       {isProduct && (
         <AddProduct
-          onClose={handleClose}
+          onClose={closeModal}
           products={products}
-          productIndex={productIndex}
-          handleSave={handleSave}
-          selectProduct={selectProducts}
-          setSelectedPrducts={setSelectedPrducts}
+          currentIndex={currentIndex}
+          sectionProduct={sectionProduct}
+          setSectionProduct={setSectionProduct}
         />
       )}
     </>
