@@ -11,17 +11,16 @@ const AddProduct = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
+
+  console.log(currentIndex, 'currentIndex');
+  console.log(sectionProduct, 'sectionProduct');
+  console.log(setSectionProduct, 'setSectionProduct');
+
   const filteredProducts = products?.filter((item) => {
     return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // const isAllVariantsSelected = (productId, variants) => {
-  //   // const selectedProduct = selectProduct.find(
-  //   //   (selected) => selected.productId === productId
-  //   // );
-  //   // const selectedVariants = selectedProduct ? selectedProduct.variants : [];
-  //   // return variants.every((variant) => selectedVariants.includes(variant.node.id));
-  // };
+
 
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
@@ -47,34 +46,33 @@ const AddProduct = ({
   const handleChildCheckBox = (e, productId, variantId) => {
     const isSelected = e.target.checked;
 
+  
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
-
       if (!updatedProducts[currentIndex]) {
         updatedProducts[currentIndex] = { productId, variants: [] };
       }
-
       if (isSelected) {
         if (!updatedProducts[currentIndex].variants.includes(variantId)) {
-          updatedProducts[currentIndex] = {
-            ...updatedProducts[currentIndex],
-            variants: [...updatedProducts[currentIndex].variants, variantId],
-          };
+          updatedProducts[currentIndex].variants = [
+            ...updatedProducts[currentIndex].variants,
+            variantId,
+          ];
         }
       } else {
         updatedProducts[currentIndex].variants = updatedProducts[
           currentIndex
         ].variants.filter((id) => id !== variantId);
-
+  
         if (updatedProducts[currentIndex].variants.length === 0) {
           delete updatedProducts[currentIndex];
         }
       }
-
-      console.log(updatedProducts, "updatedProducts");
+      
       return updatedProducts;
     });
   };
+  
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);

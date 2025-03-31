@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://automotive-enhancement-spoken-cheapest.trycloudflare.com"
+application_url = "https://gaming-liberty-lesser-demonstrated.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products write_discounts read_discounts"
 
 [auth]
 redirect_urls = [
-  "https://automotive-enhancement-spoken-cheapest.trycloudflare.com/auth/callback",
-  "https://automotive-enhancement-spoken-cheapest.trycloudflare.com/auth/shopify/callback",
-  "https://automotive-enhancement-spoken-cheapest.trycloudflare.com/api/auth/callback"
+  "https://gaming-liberty-lesser-demonstrated.trycloudflare.com/auth/callback",
+  "https://gaming-liberty-lesser-demonstrated.trycloudflare.com/auth/shopify/callback",
+  "https://gaming-liberty-lesser-demonstrated.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

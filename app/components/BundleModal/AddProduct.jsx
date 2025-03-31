@@ -70,8 +70,6 @@ const AddProduct = ({
           delete updatedProducts[currentIndex];
         }
       }
-
-      console.log(updatedProducts, "updatedProducts");
       return updatedProducts;
     });
   };
@@ -96,7 +94,7 @@ const AddProduct = ({
           </div>
         </div>
         <ul className={styles.addProductlist}>
-          {filteredProducts?.map((item, index) => {
+          {filteredProducts && filteredProducts?.map((item, index) => {
             const productId = item.node.id;
             const variants = item.node.variants.edges;
 
@@ -110,7 +108,6 @@ const AddProduct = ({
                         id={item.node.id}
                         name="Parent"
                         value={productId}
-                        // checked={isAllVariantsSelected(productId, variants)}
                         onChange={(e) =>
                           handleParentCheckBox(e, item, variants)
                         }
@@ -128,7 +125,7 @@ const AddProduct = ({
                     </div>
                   </div>
                   <div className={styles.productbyx}>
-                    {variants.map((variant, photoIndex) => {
+                    {variants && variants.map((variant, photoIndex) => {
                       const variantId = variant.node.id;
 
                       return (

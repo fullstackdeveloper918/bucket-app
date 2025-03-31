@@ -714,9 +714,6 @@ export default function BuyGetPage() {
     amount: "",
   });
   const [activeSelection, setActiveSelection] = useState("Buy");
-  
-
-
   const [buySections, setBuySections] = useState([1]);
   const [sectionBuyProduct, setSectionBuyProduct] = useState({});
   const [currentBuyIndex, setCurrentBuyIndex] = useState(null);
@@ -745,9 +742,6 @@ export default function BuyGetPage() {
   const [cards, setCards] = useState([
     { id: 1, title: "Example Bundle 1", reviews: 280 },
   ]);
-
-  const [buysXSections, setBuysXSections] = useState([{ id: 1 }]);
-  const [GetYSections, setGetYSections] = useState([{ id: 1 }]);
 
   const [showPosition, setShowPosition] = useState(false);
   const [details, setDetails] = useState({});
@@ -832,20 +826,6 @@ export default function BuyGetPage() {
     setMonth(item);
   };
 
-  const addBuysXSection = () => {
-    setBuysXSections((prevSections) => [
-      ...prevSections,
-      { id: prevSections.length + 1 },
-    ]);
-  };
-
-  const addGetYSection = () => {
-    setGetYSections((prevSections) => [
-      ...prevSections,
-      { id: prevSections.length + 1 },
-    ]);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -879,9 +859,13 @@ export default function BuyGetPage() {
     }));
   };
 
-  const handleClose = () => {
+  const closeModal = () => {
+    if(activeSelection === "BUY") {
+      setCurrentBuyIndex(null);
+    }else if(activeSelection === "GET") {
+      setCurrentGetIndex(null);
+    }
     setIsProduct(false);
-
   };
 
   const handleBundleCost = (e) => {
@@ -916,27 +900,7 @@ export default function BuyGetPage() {
     }));
   };
 
-  // const handleSave = () => {
-  //   if (Object.keys(sectionBuyProduct).length > 1) {
-  //     notify.error("Please select only one product", {
-  //       position: "top-center",
-  //       style: {
-  //         background: "red",
-  //         color: "white",
-  //       },
-  //     });
-  //   } else if (Object.keys(sectionGetProduct).length > 1) {
-  //     notify.error("Please select only one product", {
-  //       position: "top-center",
-  //       style: {
-  //         background: "red",
-  //         color: "white",
-  //       },
-  //     });
-  //   } else {
-  //     setIsProduct(false);
-  //   }
-  // };
+ 
 
   const handleDesign = () => {
     setActiveTab("Home");
@@ -965,14 +929,6 @@ export default function BuyGetPage() {
     }
   };
 
-  const handleProduct = (btn) => {
-    if (btn === "Buy") {
-      setActiveSelection("Buy");
-    } else {
-      setActiveSelection("Get");
-    }
-    setIsProduct(true);
-  };
 
   const handleFirst = () => {
     if (values.bundle_name === "") {
@@ -1118,8 +1074,6 @@ export default function BuyGetPage() {
         discount_method: "Percentage",
         amount: "",
       });
-      // setBuyProducts([]);
-      // setGetProducts([]);
       setPosition("Below Section");
       setSection("Buy Buttons");
       seTitleSection({
@@ -1181,8 +1135,6 @@ export default function BuyGetPage() {
         discount_method: details.discount_method,
         amount: details.amount,
       }));
-      // setBuyProducts(JSON.parse(JSON.stringify(details.buysx)));
-      // setGetProducts(JSON.parse(JSON.stringify(details.gety)));
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
@@ -1254,17 +1206,22 @@ export default function BuyGetPage() {
     }
   }, [actionResponse]);
 
-  const handlePreviewDelete = (type, item) => {
-    // if (type === "BUY") {
-    //   setBuyProducts((prev) =>
-    //     prev.filter((value) => value.productId !== item),
-    //   );
-    // } else if (type === "GET") {
-    //   setGetProducts((prev) =>
-    //     prev.filter((value) => value.productId !== item),
-    //   );
-    // }
+    const openModal = (section, type) => {
+      setActiveSelection(type)
+      if(type === "BUY") {
+        console.log(section, 'section BUY dekho')
+        setCurrentBuyIndex(section);
+        setCurrentGetIndex(null);
+      }else if(type === "GET") {
+        console.log(section, 'section GET dekho')
+        setCurrentGetIndex(section);
+        setCurrentBuyIndex(null)
+      }
+    setIsProduct(true);
   };
+
+
+  console.log(currentBuyIndex, 'currentBuyIndex')
 
   const handleShowStatus = (item) => {
     setShowStatus((prev) => ({
@@ -1318,6 +1275,10 @@ export default function BuyGetPage() {
   };
 
   const filteredBundles = getFilteredBundles();
+
+  console.log(sectionBuyProduct, 'sectionBuyProduct')
+  console.log(sectionGetProduct, 'sectionGetProduct')
+  console.log(activeSelection, 'activeSelection')
 
   return (
     <>
@@ -1765,7 +1726,7 @@ export default function BuyGetPage() {
                                         color: "blue",
                                       }}
                                       className={styles.inputUpload}
-                                      onClick={() => openModal(section)}
+                                      onClick={() => openModal(section, "BUY")}
                                     >
                                       <span>+</span>Add Product
                                     </label>
@@ -1840,7 +1801,7 @@ export default function BuyGetPage() {
                                         color: "blue",
                                       }}
                                       className={styles.inputUpload}
-                                      onClick={() => openModal(section)}
+                                      onClick={() => openModal(section, "GET")}
                                     >
                                       <span>+</span>Add Product
                                     </label>
@@ -3458,7 +3419,7 @@ export default function BuyGetPage() {
         <AddProduct
         onClose={closeModal}
         products={products}
-        currentIndex={activeSelection === "Buy" ? currentBuyIndex : currentGetIndex}
+        currentIndex={ activeSelection === "BUY" ? currentBuyIndex : currentGetIndex}
         sectionProduct={activeSelection === "Buy" ? sectionBuyProduct : sectionGetProduct}
         setSectionProduct={activeSelection === "Buy" ? setSectionBuyProduct : setSectionGetProduct}
           

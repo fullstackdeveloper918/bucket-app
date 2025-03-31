@@ -1232,6 +1232,8 @@
   margin: 0px auto;
   top: 50%;
   transform: translateY(-50%);
+  overflow-y: auto;
+  height: 90vh;
 }
 
 .live_preview img {
