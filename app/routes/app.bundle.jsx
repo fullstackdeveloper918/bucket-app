@@ -169,7 +169,7 @@ export async function action({ request }) {
         });
       });
 
-      console.log(result, 'hence my result would be')
+     
 
       try {
         let productData = JSON.stringify({
@@ -196,10 +196,7 @@ export async function action({ request }) {
         };
 
         let productResponse = await axios.request(config);
-        console.log(
-          productResponse?.data?.product?.admin_graphql_api_id,
-          "hence productResponse",
-        );
+        
         let data;
 
         if (method === "Percentage") {
@@ -246,7 +243,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
                 startsAt: "2025-01-07T01:28:55-05:00",
                 minimumRequirement: {
                   subtotal: {
-                    greaterThanOrEqualToSubtotal: 1,
+                    greaterThanOrEqualToQuantity: 1,
                   },
                 },
                 customerGets: {

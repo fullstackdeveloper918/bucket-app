@@ -11,24 +11,21 @@ const AddProduct = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
-
-  console.log(currentIndex, 'currentIndex');
-  console.log(sectionProduct, 'sectionProduct');
-  console.log(setSectionProduct, 'setSectionProduct');
-
   const filteredProducts = products?.filter((item) => {
     return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
 
-
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
     const productId = product.node.id;
-
+  
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
-
+      if (!updatedProducts[currentIndex]) {
+        updatedProducts[currentIndex] = { productId: null, variants: [] };
+      }
+  
       if (isSelected) {
         updatedProducts[currentIndex] = {
           productId,
@@ -37,42 +34,46 @@ const AddProduct = ({
       } else {
         delete updatedProducts[currentIndex];
       }
-
-      console.log(updatedProducts, "updatedProducts");
+  
       return updatedProducts;
     });
   };
 
   const handleChildCheckBox = (e, productId, variantId) => {
     const isSelected = e.target.checked;
-
   
+    console.log(productId, 'productId');
+
+
+
+
+
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
       if (!updatedProducts[currentIndex]) {
         updatedProducts[currentIndex] = { productId, variants: [] };
       }
+  
       if (isSelected) {
         if (!updatedProducts[currentIndex].variants.includes(variantId)) {
-          updatedProducts[currentIndex].variants = [
-            ...updatedProducts[currentIndex].variants,
-            variantId,
-          ];
+          updatedProducts[currentIndex] = {
+            ...updatedProducts[currentIndex],
+            variants: [...updatedProducts[currentIndex].variants, variantId],
+          };
         }
       } else {
-        updatedProducts[currentIndex].variants = updatedProducts[
-          currentIndex
-        ].variants.filter((id) => id !== variantId);
-  
+        updatedProducts[currentIndex].variants = updatedProducts[currentIndex].variants.filter(
+          (id) => id !== variantId
+        );
         if (updatedProducts[currentIndex].variants.length === 0) {
           delete updatedProducts[currentIndex];
         }
       }
-      
+  
       return updatedProducts;
     });
   };
-  
+
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -94,7 +95,7 @@ const AddProduct = ({
           </div>
         </div>
         <ul className={styles.addProductlist}>
-          {filteredProducts?.map((item, index) => {
+          {filteredProducts && filteredProducts?.map((item, index) => {
             const productId = item.node.id;
             const variants = item.node.variants.edges;
 
@@ -108,7 +109,6 @@ const AddProduct = ({
                         id={item.node.id}
                         name="Parent"
                         value={productId}
-                        // checked={isAllVariantsSelected(productId, variants)}
                         onChange={(e) =>
                           handleParentCheckBox(e, item, variants)
                         }
@@ -126,7 +126,7 @@ const AddProduct = ({
                     </div>
                   </div>
                   <div className={styles.productbyx}>
-                    {variants.map((variant, photoIndex) => {
+                    {variants && variants.map((variant, photoIndex) => {
                       const variantId = variant.node.id;
 
                       return (

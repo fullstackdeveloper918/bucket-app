@@ -1206,22 +1206,24 @@ export default function BuyGetPage() {
     }
   }, [actionResponse]);
 
-    const openModal = (section, type) => {
-      setActiveSelection(type)
-      if(type === "BUY") {
-        console.log(section, 'section BUY dekho')
-        setCurrentBuyIndex(section);
-        setCurrentGetIndex(null);
-      }else if(type === "GET") {
-        console.log(section, 'section GET dekho')
-        setCurrentGetIndex(section);
-        setCurrentBuyIndex(null)
-      }
+  const openModal = (section, type) => {
+    setActiveSelection(type);
+    if (type === "BUY") {
+      setCurrentBuyIndex(section);
+      setCurrentGetIndex(null)
+    } else if (type === "GET") {
+      setCurrentGetIndex(section);
+      setCurrentBuyIndex(null)
+    }
     setIsProduct(true);
   };
 
 
-  console.log(currentBuyIndex, 'currentBuyIndex')
+
+
+  
+
+  console.log(activeSelection, 'activeSelection')
 
   const handleShowStatus = (item) => {
     setShowStatus((prev) => ({
@@ -3415,13 +3417,17 @@ export default function BuyGetPage() {
         )}
       </div>
       <Toaster />
+
+
+      {console.log(activeSelection, 'activeSelection')}
       {isProduct && (
         <AddProduct
         onClose={closeModal}
         products={products}
+        activeSelection = {activeSelection}
         currentIndex={ activeSelection === "BUY" ? currentBuyIndex : currentGetIndex}
-        sectionProduct={activeSelection === "Buy" ? sectionBuyProduct : sectionGetProduct}
-        setSectionProduct={activeSelection === "Buy" ? setSectionBuyProduct : setSectionGetProduct}
+        sectionProduct={activeSelection === "BUY" ? sectionBuyProduct : sectionGetProduct}
+        setSectionProduct={activeSelection === "BUY" ? setSectionBuyProduct : setSectionGetProduct}
           
         />
       )}
