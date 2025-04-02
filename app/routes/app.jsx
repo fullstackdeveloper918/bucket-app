@@ -27,6 +27,7 @@ export default function App() {
         <Link to="/app/volume">Volume App</Link>
         <Link to="/app/buyget">Buy X Get Y</Link>
         <Link to="/app/visitors">Visitor Replay</Link>
+        <Link to="/app/newpages">New Pages</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>

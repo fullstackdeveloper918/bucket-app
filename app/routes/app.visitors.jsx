@@ -504,7 +504,7 @@ export default function ProfitsPage() {
                       <ReactPlayer
                         ref={videoRef}
                         className={styles.videoPlayerImg}
-                        url={`https://insights-thumbnail-frontier-treatment.trycloudflare.com/${details.videoURL}`}
+                        url={`https://dictionaries-hugh-bailey-reflection.trycloudflare.com/${details.videoURL}`}
                         pip={pip}
                         playing={playing}
                         controls={true}

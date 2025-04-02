@@ -1743,6 +1743,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     <option value="Temu">Temu</option>
                     <option value="CSV">CSV</option>
                   </select>
+                 <input type="file" name="" accept="./csv" id="" />
                 </div>
               </div>
 

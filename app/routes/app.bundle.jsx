@@ -85,6 +85,26 @@ export async function loader({ request }) {
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
+    // const products = products.filter((product) => {
+
+    //   return !fltedProduct.some(f => f.id === product.node.id); // Compare IDs
+    // });
+
+    console.log(totalBundle, 'ttttttttt');
+
+
+    const filteredProducts = products.filter((product) => {
+      console.log(product?.node?.id, 'cancel')
+    })
+
+
+    console.log(products, 'productsjhbvdjhsdd');
+
+
+    const [fltedProduct] = totalBundle ; 
+
+    console.log(fltedProduct, 'fltedProduct');
+
     const sales = await salesResponse.json();
 
     const allDiscountId = await allIds.json();
@@ -98,6 +118,7 @@ export async function loader({ request }) {
     );
   }
 }
+
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -3255,6 +3276,9 @@ export default function PlansPage() {
             </Form>
           </div>
         )}
+
+  
+
       </div>
 
       <Toaster />
