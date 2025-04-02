@@ -85,26 +85,6 @@ export async function loader({ request }) {
     const products = parsedGraphqlResponse?.data?.products?.edges || [];
 
     const totalBundle = totalBundleResponse?.data || [];
-    // const products = products.filter((product) => {
-
-    //   return !fltedProduct.some(f => f.id === product.node.id); // Compare IDs
-    // });
-
-    console.log(totalBundle, 'ttttttttt');
-
-
-    const filteredProducts = products.filter((product) => {
-      console.log(product?.node?.id, 'cancel')
-    })
-
-
-    console.log(products, 'productsjhbvdjhsdd');
-
-
-    const [fltedProduct] = totalBundle ; 
-
-    console.log(fltedProduct, 'fltedProduct');
-
     const sales = await salesResponse.json();
 
     const allDiscountId = await allIds.json();
@@ -121,7 +101,7 @@ export async function loader({ request }) {
 
 
 export async function action({ request }) {
-  const { session } = await authenticate.admin(request);
+  const { session,admin } = await authenticate.admin(request);
   const { shop } = session;
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -179,6 +159,7 @@ export async function action({ request }) {
       };
 
       const result = [];
+
       const sectionProductArray = Object.values(selectProducts);
       sectionProductArray.forEach((product) => {
         product.variants.forEach((variantId) => {
@@ -190,7 +171,7 @@ export async function action({ request }) {
         });
       });
 
-     
+     console.log(result, 'result check kri')
 
       try {
         let productData = JSON.stringify({
@@ -264,7 +245,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
                 startsAt: "2025-01-07T01:28:55-05:00",
                 minimumRequirement: {
                   subtotal: {
-                    greaterThanOrEqualToQuantity: 1,
+                    greaterThanOrEqualToQuantity: null,
                   },
                 },
                 customerGets: {
@@ -352,9 +333,14 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         };
 
         const discountResponse = await axios.request(discountconfig);
+
+        console.log(discountResponse?.data, 'discountResponse check krein')
         const discount_id =
           discountResponse?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
+
+
+
         const discount_info =
           discountResponse?.data?.data?.discountAutomaticBasicCreate;
 
@@ -570,7 +556,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         });
       }
     } else if (intent === "handleCopy") {
-      console.log("HandleCopy block");
       try {
         const card = JSON.parse(formData.get("card"));
         const {
@@ -680,6 +665,24 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
       }
+
+      const productDeleteMutation = `
+      mutation {
+        productDelete(input: {id: "gid://shopify/Product/${productId}"}) {
+          deletedProductId
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    const responseProductDelete = await admin.graphql(productDeleteMutation);
+    const productDeleteData = await responseProductDelete.json();
+    console.log(responseProductDelete, 'responseProductDelete');
+    console.log(productDeleteData, 'productDeleteData');
+
 
       // Delete from your local database
       const result = await db.bundle.deleteMany({
@@ -910,6 +913,7 @@ export default function PlansPage() {
     }));
   };
 
+
   const handleEdit = (item) => {
     setDetails(item);
     setShowEdit(true);
@@ -966,13 +970,6 @@ export default function PlansPage() {
     }));
   };
 
-  const handleClose = () => {
-    setIsProduct(false);
-  };
-
-  const handleSave = () => {
-    setIsProduct(false);
-  };
 
   const handleBackground = (e) => {
     const { name, type, checked, value } = e.target;
@@ -1164,7 +1161,8 @@ export default function PlansPage() {
         amount: "",
       });
       setChecked(true);
-      setSelectedPrducts([]);
+      setSectionProduct({});
+      setCurrentIndex(null)
       setPosition("Below Section");
       setSection("Buy Buttons");
       seTitleSection({

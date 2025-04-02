@@ -161,10 +161,10 @@ const AddProduct = ({
         </ul>
 
         <div className={`${styles.addBtn} ${styles.textEnd}`}>
-          <button type="button" onClick={onClose} className={styles.Backbtn}>
+        <button type="button" onClick={onClose} className={styles.Backbtn}>
             Cancel
           </button>
-          <button type="button" className={styles.NextBtn}>
+        <button type="button" onClick={onClose} className={styles.NextBtn}>
             Save
           </button>
         </div>
