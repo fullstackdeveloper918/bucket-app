@@ -244,7 +244,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
                 title: name,
                 startsAt: "2025-01-07T01:28:55-05:00",
                 minimumRequirement: {
-                  subtotal: {
+                  quantity: {
                     greaterThanOrEqualToQuantity: null,
                   },
                 },
@@ -665,9 +665,10 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
       }
-
-      const productDeleteMutation = `
-      mutation {
+       
+       // Proceed to delete the product after discount deletion
+    const productDeleteData = JSON.stringify({
+      query: `mutation {
         productDelete(input: {id: "gid://shopify/Product/${productId}"}) {
           deletedProductId
           userErrors {
@@ -675,16 +676,37 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             message
           }
         }
-      }
-    `;
+      }`,
+    });
 
-    const responseProductDelete = await admin.graphql(productDeleteMutation);
-    const productDeleteData = await responseProductDelete.json();
-    console.log(responseProductDelete, 'responseProductDelete');
-    console.log(productDeleteData, 'productDeleteData');
+    const productDeleteConfig = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `https://${shop}/admin/api/2025-04/graphql.json`, // Ensure this URL is correct
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': session?.accessToken,
+      },
+      data: productDeleteData,
+    };
+
+    const productDeleteResponse = await axios.request(productDeleteConfig);
+    const productDeleteResponseData = productDeleteResponse.data;
 
 
-      // Delete from your local database
+
+
+    // Handle user errors from product deletion
+    if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
+      return json({
+        message: "Failed to delete product from Shopify",
+        errors: productDeleteResponseData.data.productDelete.userErrors,
+        status: 400,
+      });
+    }
+  
+
+
       const result = await db.bundle.deleteMany({
         where: {
           AND: [{ id: parseInt(productId) }, { domainName: shop }],
