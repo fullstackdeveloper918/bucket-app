@@ -107,17 +107,18 @@ export async function action({ request }) {
   const intent = formData.get("intent");
 
   if (request.method === "POST") {
+    
     if (intent === "stepThird") {
       const bundle_id = formData.get("bundle_id");
       const name = formData.get("bundle_name");
       const products = formData.get("selectProducts");
       const selectProducts = JSON.parse(products);
-      console.log(selectProducts, 'selectProducts')
       const position = formData.get("position");
       const section = formData.get("section");
       const displayLocation = formData.get("displayBundle");
       const method = formData.get("discount");
       const chooseAmount = formData.get("amount");
+     
 
       const title_section = {
         text: formData.get("titleSectionText"),
@@ -171,7 +172,6 @@ export async function action({ request }) {
         });
       });
 
-     console.log(result, 'result check kri')
 
       try {
         let productData = JSON.stringify({
@@ -199,6 +199,8 @@ export async function action({ request }) {
 
         let productResponse = await axios.request(config);
         
+     
+
         let data;
 
         if (method === "Percentage") {
@@ -333,16 +335,14 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         };
 
         const discountResponse = await axios.request(discountconfig);
-
-        console.log(discountResponse?.data, 'discountResponse check krein')
         const discount_id =
           discountResponse?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
 
-
-
         const discount_info =
           discountResponse?.data?.data?.discountAutomaticBasicCreate;
+      
+
 
         const bundleData = {
           name,
@@ -354,6 +354,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           products: selectProducts,
           position,
           section,
+          product_bundle_id: String(productResponse?.data?.product?.id),
           title_section,
           title,
           product,
@@ -363,6 +364,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           backgroud,
           domainName: shop,
         };
+
 
         if (bundle_id) {
           const updatedDiscount = await db.bundle.update({
@@ -378,6 +380,8 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             activeTab: "Return",
           });
         }
+
+        console.log(bundleData, 'hence bundleData')
 
         const savedDiscount = await db.bundle.create({
           data: bundleData,
@@ -620,6 +624,9 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
     try {
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
+      const product_bundle_id = formData.get("product_bundle_id");
+
+      console.log(product_bundle_id, 'cancel')
 
       if (discount_id) {
         const data = JSON.stringify({
@@ -665,11 +672,12 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
       }
-       
+       console.log(productId, 'check here productId');
+       console.log(`gid://shopify/Product/${product_bundle_id}`);
        // Proceed to delete the product after discount deletion
     const productDeleteData = JSON.stringify({
       query: `mutation {
-        productDelete(input: {id: "gid://shopify/Product/${productId}"}) {
+        productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
           deletedProductId
           userErrors {
             field
@@ -682,7 +690,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
     const productDeleteConfig = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: `https://${shop}/admin/api/2025-04/graphql.json`, // Ensure this URL is correct
+      url: `https://${shop}/admin/api/2025-04/graphql.json`, 
       headers: {
         'Content-Type': 'application/json',
         'X-Shopify-Access-Token': session?.accessToken,
@@ -691,10 +699,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
     };
 
     const productDeleteResponse = await axios.request(productDeleteConfig);
-    const productDeleteResponseData = productDeleteResponse.data;
-
-
-
+    const productDeleteResponseData = productDeleteResponse.data?.data?.productDelete?.userErrors;
 
     // Handle user errors from product deletion
     if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
@@ -1237,7 +1242,8 @@ export default function PlansPage() {
 
   useEffect(() => {
     if (showEdit) {
-      setSelectedPrducts(details?.products);
+      console.log(details?.products, 'check details')
+      setSectionProduct(details?.products);
       setId(details.id);
       setValues((prev) => ({
         ...prev,
@@ -1569,6 +1575,7 @@ export default function PlansPage() {
             {filteredBundles
               ? filteredBundles.map((card, index) => (
                   <React.Fragment key={card.id}>
+                    {console.log(card,'card has')}
                     <div className={styles.exampleBundle}>
                       <div className={styles.bundleHeading}>
                         <div
@@ -1595,6 +1602,12 @@ export default function PlansPage() {
                               type="hidden"
                               name="product_id"
                               value={productId}
+                            />
+
+                            <input
+                              type="hidden"
+                              name="product_bundle_id"
+                              value={card?.product_bundle_id}
                             />
 
                             <input

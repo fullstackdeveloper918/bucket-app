@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://peace-males-segment-def.trycloudflare.com"
+application_url = "https://utility-charge-haiti-cash.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products write_discounts read_discounts"
 
 [auth]
 redirect_urls = [
-  "https://peace-males-segment-def.trycloudflare.com/auth/callback",
-  "https://peace-males-segment-def.trycloudflare.com/auth/shopify/callback",
-  "https://peace-males-segment-def.trycloudflare.com/api/auth/callback"
+  "https://utility-charge-haiti-cash.trycloudflare.com/auth/callback",
+  "https://utility-charge-haiti-cash.trycloudflare.com/auth/shopify/callback",
+  "https://utility-charge-haiti-cash.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
