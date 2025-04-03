@@ -1332,14 +1332,20 @@ export default function PlansPage() {
     setDiscountId(item.discount_id);
   };
 
-  const handleDeleteProducts = (deletedItem) => {
-    console.log(deletedItem?.node?.id, "deleted");
-    console.log(selectProducts, "september");
-    const updatedProducts = selectProducts.filter(
-      (item) => item?.productId !== deletedItem?.node?.id,
-    );
-    console.log(updatedProducts, "updated");
-    setSelectedPrducts(updatedProducts);
+  const handleDeleteProducts = (item) => {
+ 
+    if (sectionProduct.hasOwnProperty(item)) {
+ 
+      const updatedSectionProduct = { ...sectionProduct };
+      delete updatedSectionProduct[item];
+  
+      // Update the state with the new object
+      setSectionProduct(updatedSectionProduct);
+  
+      console.log(`Product at index ${item} has been deleted.`);
+    } else {
+      console.log(`No product found at index ${item}`);
+    }
   };
 
   const getFilteredBundles = () => {
@@ -1909,6 +1915,7 @@ export default function PlansPage() {
                                           <button
                                             type="button"
                                             className={styles.deletedBtn}
+                                            onClick={() => handleDeleteProducts(section)}
                                           >
                                             <img
                                               src={deletedIcon}
@@ -1921,7 +1928,7 @@ export default function PlansPage() {
                                               </>
                                         ))
                                       }
-                                      {console.log(sectionProduct[section].productId, 'kese hote hai')}
+                                      
                                       
                                      
                                     </div>
