@@ -41,12 +41,6 @@ const AddProduct = ({
 
   const handleChildCheckBox = (e, productId, variantId) => {
     const isSelected = e.target.checked;
-  
-    console.log(productId, 'productId');
-
-
-
-
 
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
@@ -165,7 +159,7 @@ const AddProduct = ({
           <button type="button" onClick={onClose} className={styles.Backbtn}>
             Cancel
           </button>
-          <button type="button" className={styles.NextBtn}>
+          <button type="button" onClick={onClose} className={styles.NextBtn}>
             Save
           </button>
         </div>

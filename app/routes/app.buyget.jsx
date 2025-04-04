@@ -115,14 +115,16 @@ export async function action({ request }) {
       const where_to_display = formData.get("where_to_display");
       const amount = formData.get("amount");
       const discount_method = formData.get("discount_method");
-      const buysx = JSON.parse(formData.get("buyProducts"));
-      const gety = JSON.parse(formData.get("getProducts"));
+      const buysx = JSON.parse(formData.get("sectionBuyProduct"));
+      const gety = JSON.parse(formData.get("sectionGetProduct"));
 
-      const [buyProducts] = buysx;
-      const [getProducts] = gety;
+      const buyProductIds = Object.values(buysx).map(item => item.productId);
+      const getPrductIds = Object.values(gety).map(item => item.productId);
 
       const position = formData.get("position");
       const section = formData.get("section");
+
+
       const title_section = {
         text: formData.get("titleSectionText"),
         size: formData.get("titleSectionSize"),
@@ -176,7 +178,7 @@ export async function action({ request }) {
               customerBuys: {
                 items: {
                   products: {
-                    productsToAdd: buyProducts.productId,
+                    productsToAdd: buyProductIds
                   },
                 },
                 value: {
@@ -186,7 +188,7 @@ export async function action({ request }) {
               customerGets: {
                 items: {
                   products: {
-                    productsToAdd: getProducts.productId,
+                    productsToAdd: getPrductIds,
                   },
                 },
                 value: {
@@ -202,7 +204,7 @@ export async function action({ request }) {
             },
           },
         });
-        console.log("in the percentage");
+      
       } else if (discount_method === "Free Gift") {
         data = JSON.stringify({
           query:
@@ -215,7 +217,7 @@ export async function action({ request }) {
               customerBuys: {
                 items: {
                   products: {
-                    productsToAdd: buyProducts.productId,
+                    productsToAdd: buyProductIds,
                   },
                 },
                 value: {
@@ -225,7 +227,7 @@ export async function action({ request }) {
               customerGets: {
                 items: {
                   products: {
-                    productsToAdd: getProducts.productId,
+                    productsToAdd: getPrductIds,
                   },
                 },
                 value: {
@@ -253,7 +255,7 @@ export async function action({ request }) {
               customerBuys: {
                 items: {
                   products: {
-                    productsToAdd: buyProducts.productId,
+                    productsToAdd: buyProductIds,
                   },
                 },
                 value: {
@@ -263,7 +265,7 @@ export async function action({ request }) {
               customerGets: {
                 items: {
                   products: {
-                    productsToAdd: getProducts.productId,
+                    productsToAdd: getPrductIds,
                   },
                 },
                 value: {
@@ -294,6 +296,9 @@ export async function action({ request }) {
 
       try {
         const response = await axios.request(config);
+
+
+        console.log(response?.data?.errors, 'created discount')
 
         discount_id =
           response?.data?.data?.discountAutomaticBxgyCreate
@@ -1068,6 +1073,10 @@ export default function BuyGetPage() {
         });
         setShowPage("Return");
       }
+      setCurrentBuyIndex(null);
+      setCurrentGetIndex(null);
+      setSectionBuyProduct({});
+      setSectionGetProduct({});
       setValues({
         bundle_name: "Example Bundle 1",
         where_to_display: "Bundle Product Pages",
@@ -1078,20 +1087,20 @@ export default function BuyGetPage() {
       setSection("Buy Buttons");
       seTitleSection({
         titleSectionText: "Limited Time Offer",
-        titleSectionSize: 5,
+        titleSectionSize: 12,
         titleSectionColor: "#000000",
       });
       seTitle({
         titleText: "Add Product and save 10%!",
-        titleSize: 5,
+        titleSize: 12,
         titleColor: "#000000",
       });
       setProductTitle({
-        productSize: 5,
+        productSize: 12,
         productColor: "#000000",
       });
       setBundleCost({
-        bundleCostSize: 5,
+        bundleCostSize: 12,
         bundleCostColor: "#000000",
         bundleCostComparedPrice: true,
         bundleCostSave: true,
@@ -1099,13 +1108,13 @@ export default function BuyGetPage() {
 
       setCallAction({
         ctaText: "Add To Cart",
-        ctaSize: 5,
-        ctaColor: "#000000",
+        ctaSize: 12,
+        ctaColor: "#FFFFFF",
       });
       setCart("Cart");
       setTextBelow({
         tbText: "Lifetime warranty & Free Returns",
-        tbSize: 5,
+        tbSize: 12,
         tbColor: "#555555",
       });
       setBackGround({
@@ -1126,8 +1135,10 @@ export default function BuyGetPage() {
 
   useEffect(() => {
     if (showEdit) {
+      console.log(details, 'details')
       setId(details.id);
-      console.log(details, "mine");
+      setSectionBuyProduct(details.buysx)
+      setSectionGetProduct(details.gety)
       setValues((prev) => ({
         ...prev,
         bundle_name: details.bundle_name,
@@ -1810,7 +1821,7 @@ export default function BuyGetPage() {
                                   ) : (
                                     <div className={styles.images_upload}>
                                       {
-                                        products.filter((item) => item.node.id === sectionBuyProduct[section].productId).map((product) => (
+                                        products.filter((item) => item.node.id === sectionGetProduct[section].productId).map((product) => (
                                           <>
                                           
                                           <img
@@ -2061,17 +2072,17 @@ export default function BuyGetPage() {
                             name="amount"
                             value={values.amount}
                           />
+                            <input
+                          type="hidden"
+                          name="sectionBuyProduct"
+                          value={JSON.stringify(sectionBuyProduct)}
+                        />
+                          <input
+                          type="hidden"
+                          name="sectionGetProduct"
+                          value={JSON.stringify(sectionGetProduct)}
+                        />
 
-                          {/* <input
-                            type="hidden"
-                            name="buyProducts"
-                            value={JSON.stringify(buyProducts)}
-                          /> */}
-                          {/* <input
-                            type="hidden"
-                            name="getProducts"
-                            value={JSON.stringify(getProducts)}
-                          /> */}
                           <div className={styles.table_content}>
                             <div className={styles.leftContent}>
                               <>
@@ -3153,51 +3164,45 @@ export default function BuyGetPage() {
                       )}
 
                       {showComponent <= 3 &&
-                        (sectionBuyProduct.length > 0 ? (
-                          products
-                            .filter((item) =>
-                              sectionBuyProduct.some(
-                                (buy) => buy.productId === item?.node?.id,
-                              ),
-                            )
-                            .map((item) => (
-                              <>
-                                <div className={styles.live_preview}>
-                                  <img
-                                    src={preview_mockup}
-                                    width={404}
-                                    height={822}
-                                    className={styles.mockup_tab}
-                                  />
-                                  <div
-                                    className={styles.Preview_bundle}
-                                    style={{
-                                      backgroundColor:
-                                        background.backgroundColor,
-                                      boxShadow: background.backgroundShadow
-                                        ? "0px 40.5px 108.01px 0px #0000001a"
-                                        : "none",
-                                    }}
-                                  >
-                                    <div
-                                      className={styles.limited}
-                                      style={{
-                                        fontSize: `${titleSection.titleSectionSize}px`,
-                                        color: titleSection.titleSectionColor,
-                                      }}
-                                    >
-                                      {titleSection.titleSectionText}
-                                    </div>
-                                    <h4
-                                      style={{
-                                        fontSize: `${title.titleSize}px`,
-                                        color: title.titleColor,
-                                      }}
-                                    >
-                                      {title.titleText}
-                                    </h4>
+                          <div className={styles.live_preview}>
+                          <img
+                            src={preview_mockup}
+                            width={404}
+                            height={822}
+                            className={styles.mockup_tab}
+                          />
+                          <div className={styles.Preview_bundle}>
+                            <div
+                              className={styles.limited}
+                              style={{
+                                fontSize: `${titleSection.titleSectionSize}px`,
+                                color: titleSection.titleSectionColor,
+                              }}
+                            >
+                              {titleSection.titleSectionText}
+                            </div>
+                            <h4
+                              style={{
+                                fontSize: `${title.titleSize}px`,
+                                color: title.titleColor,
+                              }}
+                            >
+                              {title.titleText}
+                            </h4>
 
-                                    <div className={styles.both_product}>
+                            <h4>Buy Products</h4>
+
+                            <div className={styles.both_product}>
+                              {Object.keys(sectionBuyProduct).length > 0 ? (
+                                products
+                                  .filter((item) =>
+                                    Object.values(sectionBuyProduct).some(
+                                      (selected) =>
+                                        selected.productId === item.node.id,
+                                    ),
+                                  )
+                                  .map((item) => (
+                                    <>
                                       <div
                                         className={styles.left_productsample}
                                       >
@@ -3206,29 +3211,6 @@ export default function BuyGetPage() {
                                             item?.node?.images?.edges[0]?.node
                                               ?.src
                                           }
-                                          width={112}
-                                          height={112}
-                                          className={styles.mockup_tab}
-                                        />
-
-                                        <select name="" id="">
-                                          <option value="newest">
-                                            Gold 14K
-                                          </option>
-                                          <option value="old">Gold 14K</option>
-                                        </select>
-
-                                        <h6>{item?.node?.title}</h6>
-                                      </div>
-                                      <div className={styles.AddProduct}>
-                                        <span>+</span>
-                                      </div>
-
-                                      <div
-                                        className={styles.left_productsample}
-                                      >
-                                        <img
-                                          src={Productpreview}
                                           width={112}
                                           height={112}
                                           className={styles.mockup_tab}
@@ -3242,86 +3224,13 @@ export default function BuyGetPage() {
 
                                         <h6>Product Name</h6>
                                       </div>
-                                    </div>
-
-                                    <div className={styles.productTotal}>
-                                      <span>Total</span>
-                                      <div className={styles.Pricetab}>
-                                        <span className={styles.delPriceOuter}>
-                                          <span
-                                            className={styles.delPrice}
-                                            style={{
-                                              display:
-                                                bundleCost.bundleCostComparedPrice
-                                                  ? "block"
-                                                  : "none",
-                                            }}
-                                          >
-                                            230$
-                                          </span>
-                                        </span>
-                                        <span
-                                          className={styles.totalPrice}
-                                          style={{
-                                            fontSize: `${bundleCost.bundleCostSize}px`,
-                                            color: bundleCost.bundleCostColor,
-                                          }}
-                                        >
-                                          130$
-                                        </span>
-                                        <span
-                                          className={styles.SaveTab}
-                                          style={{
-                                            display: bundleCost.bundleCostSave
-                                              ? "block"
-                                              : "none",
-                                          }}
-                                        >
-                                          Save 10%
-                                        </span>
+                                      <div className={styles.AddProduct}>
+                                        <span>+</span>
                                       </div>
-                                      <button
-                                        className={styles.AddBtn}
-                                        style={{
-                                          fontSize: `${callAction.ctaSize}px`,
-                                          color: callAction.ctaColor,
-                                        }}
-                                      >
-                                        {callAction.ctaText}
-                                      </button>
-                                      <p
-                                        className={styles.wrrantyTag}
-                                        style={{
-                                          fontSize: `${textBelow.tbSize}px`,
-                                          color: textBelow.tbColor,
-                                        }}
-                                      >
-                                        {textBelow.tbText}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className={styles.btnLivePreview}>
-                                    <button>Live Preview</button>
-                                  </div>
-                                </div>
-                              </>
-                            ))
-                        ) : (
-                          <>
-                            <div className={styles.live_preview}>
-                              <img
-                                src={preview_mockup}
-                                width={404}
-                                height={822}
-                                className={styles.mockup_tab}
-                              />
-                              <div className={styles.Preview_bundle}>
-                                <div className={styles.limited}>
-                                  Limited Time Offer
-                                </div>
-                                <h4>Add Bundle And Save 10%!</h4>
-
-                                <div className={styles.both_product}>
+                                    </>
+                                  ))
+                              ) : (
+                                <>
                                   <div className={styles.left_productsample}>
                                     <img
                                       src={Productpreview}
@@ -3339,7 +3248,6 @@ export default function BuyGetPage() {
                                   <div className={styles.AddProduct}>
                                     <span>+</span>
                                   </div>
-
                                   <div className={styles.left_productsample}>
                                     <img
                                       src={Productpreview}
@@ -3354,38 +3262,122 @@ export default function BuyGetPage() {
 
                                     <h6>Product Name</h6>
                                   </div>
-                                </div>
-
-                                <div className={styles.productTotal}>
-                                  <span>Total</span>
-                                  <div className={styles.Pricetab}>
-                                    <span className={styles.delPriceOuter}>
-                                      <span className={styles.delPrice}>
-                                        230$
-                                      </span>
-                                    </span>
-                                    <span className={styles.totalPrice}>
-                                      130$
-                                    </span>
-                                    <span className={styles.SaveTab}>
-                                      Save 10%
-                                    </span>
-                                  </div>
-
-                                  <button className={styles.AddBtn}>
-                                    👉 Add To Cart
-                                  </button>
-                                  <p className={styles.wrrantyTag}>
-                                    Lifetime Warranty & Free Returns
-                                  </p>
-                                </div>
-                              </div>
-                              <div className={styles.btnLivePreview}>
-                                <button>Live Preview</button>
-                              </div>
+                                </>
+                              )}
                             </div>
-                          </>
-                        ))}
+
+
+                            <h4>Get Products</h4>
+                             
+                            <div className={styles.both_product}>
+                              {Object.keys(sectionGetProduct).length > 0 ? (
+                                products
+                                  .filter((item) =>
+                                    Object.values(sectionGetProduct).some(
+                                      (selected) =>
+                                        selected.productId === item.node.id,
+                                    ),
+                                  )
+                                  .map((item) => (
+                                    <>
+                                      <div
+                                        className={styles.left_productsample}
+                                      >
+                                        <img
+                                          src={
+                                            item?.node?.images?.edges[0]?.node
+                                              ?.src
+                                          }
+                                          width={112}
+                                          height={112}
+                                          className={styles.mockup_tab}
+                                        />
+                                        <select name="" id="">
+                                          <option value="newest">
+                                            Gold 14K
+                                          </option>
+                                          <option value="old">Gold 14K</option>
+                                        </select>
+
+                                        <h6>Product Name</h6>
+                                      </div>
+                                      <div className={styles.AddProduct}>
+                                        <span>+</span>
+                                      </div>
+                                    </>
+                                  ))
+                              ) : (
+                                <>
+                                  <div className={styles.left_productsample}>
+                                    <img
+                                      src={Productpreview}
+                                      width={112}
+                                      height={112}
+                                      className={styles.mockup_tab}
+                                    />
+                                    <select name="" id="">
+                                      <option value="newest">Gold 14K</option>
+                                      <option value="old">Gold 14K</option>
+                                    </select>
+
+                                    <h6>Product Name</h6>
+                                  </div>
+                                  <div className={styles.AddProduct}>
+                                    <span>+</span>
+                                  </div>
+                                  <div className={styles.left_productsample}>
+                                    <img
+                                      src={Productpreview}
+                                      width={112}
+                                      height={112}
+                                      className={styles.mockup_tab}
+                                    />
+                                    <select name="" id="">
+                                      <option value="newest">Gold 14K</option>
+                                      <option value="old">Gold 14K</option>
+                                    </select>
+
+                                    <h6>Product Name</h6>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            <div className={styles.productTotal}>
+                              <span>Total</span>
+                              <div className={styles.Pricetab}>
+                                <span className={styles.delPriceOuter}>
+                                  <span className={styles.delPrice}>230$</span>
+                                </span>
+                                <span className={styles.totalPrice}>130$</span>
+                                <span className={styles.SaveTab}>Save 10%</span>
+                              </div>
+
+                              <button
+                                className={styles.AddBtn}
+                                style={{
+                                  fontSize: `${callAction.ctaSize}px`,
+                                  color: callAction.ctaColor,
+                                }}
+                              >
+                                {callAction.ctaText}
+                              </button>
+                              <p
+                                className={styles.wrrantyTag}
+                                style={{
+                                  fontSize: `${textBelow.tbSize}px`,
+                                  color: textBelow.tbColor,
+                                }}
+                              >
+                                {textBelow.tbText}
+                              </p>
+                            </div>
+                          </div>
+                          <div className={styles.btnLivePreview}>
+                            <button>Live Preview</button>
+                          </div>
+                        </div>
+                        }
                     </div>
 
                     {showPage === "Return" && (

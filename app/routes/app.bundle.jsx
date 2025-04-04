@@ -99,15 +99,13 @@ export async function loader({ request }) {
   }
 }
 
-
 export async function action({ request }) {
-  const { session,admin } = await authenticate.admin(request);
+  const { session, admin } = await authenticate.admin(request);
   const { shop } = session;
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (request.method === "POST") {
-    
     if (intent === "stepThird") {
       const bundle_id = formData.get("bundle_id");
       const name = formData.get("bundle_name");
@@ -118,7 +116,6 @@ export async function action({ request }) {
       const displayLocation = formData.get("displayBundle");
       const method = formData.get("discount");
       const chooseAmount = formData.get("amount");
-     
 
       const title_section = {
         text: formData.get("titleSectionText"),
@@ -172,35 +169,33 @@ export async function action({ request }) {
         });
       });
 
-
       try {
-        console.log(bundle_id, 'bundle_id checks')
+        console.log(bundle_id, "bundle_id checks");
         let productResponse;
-         if(!bundle_id){
-
-           let productData = JSON.stringify({
-             product: {
-               title: name,
-               body_html: "<strong>Good snowboard!</strong>",
-               vendor: "Burton",
-               product_type: "Snowboard",
-               status: "active",
-               tags: "dddfdfs",
-               variants: result,
-             },
-           });
-           let config = {
-             method: "post",
-             maxBodyLength: Infinity,
-             url: `https://${shop}/admin/api/2024-10/products.json`,
-             headers: {
-               "X-Shopify-Access-Token": session?.accessToken,
-               "Content-Type": "application/json",
-             },
-             data: productData,
-           };
-            productResponse = await axios.request(config);
-         }
+        if (!bundle_id) {
+          let productData = JSON.stringify({
+            product: {
+              title: name,
+              body_html: "<strong>Good snowboard!</strong>",
+              vendor: "Burton",
+              product_type: "Snowboard",
+              status: "active",
+              tags: "dddfdfs",
+              variants: result,
+            },
+          });
+          let config = {
+            method: "post",
+            maxBodyLength: Infinity,
+            url: `https://${shop}/admin/api/2024-10/products.json`,
+            headers: {
+              "X-Shopify-Access-Token": session?.accessToken,
+              "Content-Type": "application/json",
+            },
+            data: productData,
+          };
+          productResponse = await axios.request(config);
+        }
 
         let data;
 
@@ -342,8 +337,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
 
         const discount_info =
           discountResponse?.data?.data?.discountAutomaticBasicCreate;
-      
-
 
         const bundleData = {
           name,
@@ -366,7 +359,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           domainName: shop,
         };
 
-
         if (bundle_id) {
           const updatedDiscount = await db.bundle.update({
             where: { id: parseInt(bundle_id) },
@@ -382,7 +374,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
 
-        console.log(bundleData, 'hence bundleData')
+        console.log(bundleData, "hence bundleData");
 
         const savedDiscount = await db.bundle.create({
           data: bundleData,
@@ -627,7 +619,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       const discount_id = formData.get("discount_id");
       const product_bundle_id = formData.get("product_bundle_id");
 
-      console.log(product_bundle_id, 'cancel')
+      console.log(product_bundle_id, "cancel");
 
       if (discount_id) {
         const data = JSON.stringify({
@@ -673,44 +665,42 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
       }
-    
-       // Proceed to delete the product after discount deletion
-    // const productDeleteData = JSON.stringify({
-    //   query: `mutation {
-    //     productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
-    //       deletedProductId
-    //       userErrors {
-    //         field
-    //         message
-    //       }
-    //     }
-    //   }`,
-    // });
 
-    // const productDeleteConfig = {
-    //   method: 'post',
-    //   maxBodyLength: Infinity,
-    //   url: `https://${shop}/admin/api/2025-04/graphql.json`, 
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'X-Shopify-Access-Token': session?.accessToken,
-    //   },
-    //   data: productDeleteData,
-    // };
+      // Proceed to delete the product after discount deletion
+      // const productDeleteData = JSON.stringify({
+      //   query: `mutation {
+      //     productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
+      //       deletedProductId
+      //       userErrors {
+      //         field
+      //         message
+      //       }
+      //     }
+      //   }`,
+      // });
 
-    // const productDeleteResponse = await axios.request(productDeleteConfig);
-    // const productDeleteResponseData = productDeleteResponse.data?.data?.productDelete?.userErrors;
+      // const productDeleteConfig = {
+      //   method: 'post',
+      //   maxBodyLength: Infinity,
+      //   url: `https://${shop}/admin/api/2025-04/graphql.json`,
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'X-Shopify-Access-Token': session?.accessToken,
+      //   },
+      //   data: productDeleteData,
+      // };
 
-    // // Handle user errors from product deletion
-    // if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
-    //   return json({
-    //     message: "Failed to delete product from Shopify",
-    //     errors: productDeleteResponseData.data.productDelete.userErrors,
-    //     status: 400,
-    //   });
-    // }
-  
+      // const productDeleteResponse = await axios.request(productDeleteConfig);
+      // const productDeleteResponseData = productDeleteResponse.data?.data?.productDelete?.userErrors;
 
+      // // Handle user errors from product deletion
+      // if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
+      //   return json({
+      //     message: "Failed to delete product from Shopify",
+      //     errors: productDeleteResponseData.data.productDelete.userErrors,
+      //     status: 400,
+      //   });
+      // }
 
       const result = await db.bundle.deleteMany({
         where: {
@@ -940,7 +930,6 @@ export default function PlansPage() {
     }));
   };
 
-
   const handleEdit = (item) => {
     setDetails(item);
     setShowEdit(true);
@@ -996,7 +985,6 @@ export default function PlansPage() {
       [name]: value,
     }));
   };
-
 
   const handleBackground = (e) => {
     const { name, type, checked, value } = e.target;
@@ -1189,7 +1177,7 @@ export default function PlansPage() {
       });
       setChecked(true);
       setSectionProduct({});
-      setCurrentIndex(null)
+      setCurrentIndex(null);
       setPosition("Below Section");
       setSection("Buy Buttons");
       seTitleSection({
@@ -1242,7 +1230,7 @@ export default function PlansPage() {
 
   useEffect(() => {
     if (showEdit) {
-      console.log(details?.products, 'check details')
+      console.log(details?.products, "check details");
       setSectionProduct(details?.products);
       setId(details.id);
       setValues((prev) => ({
@@ -1333,15 +1321,13 @@ export default function PlansPage() {
   };
 
   const handleDeleteProducts = (item) => {
- 
     if (sectionProduct.hasOwnProperty(item)) {
- 
       const updatedSectionProduct = { ...sectionProduct };
       delete updatedSectionProduct[item];
-  
+
       // Update the state with the new object
       setSectionProduct(updatedSectionProduct);
-  
+
       console.log(`Product at index ${item} has been deleted.`);
     } else {
       console.log(`No product found at index ${item}`);
@@ -1581,7 +1567,7 @@ export default function PlansPage() {
             {filteredBundles
               ? filteredBundles.map((card, index) => (
                   <React.Fragment key={card.id}>
-                    {console.log(card,'card has')}
+                    {console.log(card, "card has")}
                     <div className={styles.exampleBundle}>
                       <div className={styles.bundleHeading}>
                         <div
@@ -1894,43 +1880,49 @@ export default function PlansPage() {
                                     </label>
                                   ) : (
                                     <div className={styles.images_upload}>
-                                      {
-                                        products.filter((item) => item.node.id === sectionProduct[section].productId).map((product) => (
+                                      {products
+                                        .filter(
+                                          (item) =>
+                                            item.node.id ===
+                                            sectionProduct[section].productId,
+                                        )
+                                        .map((product) => (
                                           <>
-                                          {console.log(product, 'chekor')}
-                                          <img
-                                          src={product.node.images.edges[0].node.src}
-                                          alt="Preview"
-                                          style={{
-                                            width: "100px",
-                                            height: "100px",
-                                            maxHeight: "100px",
-                                            maxWidth: "100px",
-                                            objectFit: "cover",
-                                            borderRadius: "15px",
-                                          }}
-                                        />
-                                        <div className={styles.image_name}>
-                                          <h4>14K Gold Necklace</h4>
-                                          <button
-                                            type="button"
-                                            className={styles.deletedBtn}
-                                            onClick={() => handleDeleteProducts(section)}
-                                          >
+                                            {console.log(product, "chekor")}
                                             <img
-                                              src={deletedIcon}
-                                              width={20}
-                                              height={20}
-                                              />
-                                            Delete
-                                          </button>
-                                        </div>
-                                              </>
-                                        ))
-                                      }
-                                      
-                                      
-                                     
+                                              src={
+                                                product.node.images.edges[0]
+                                                  .node.src
+                                              }
+                                              alt="Preview"
+                                              style={{
+                                                width: "100px",
+                                                height: "100px",
+                                                maxHeight: "100px",
+                                                maxWidth: "100px",
+                                                objectFit: "cover",
+                                                borderRadius: "15px",
+                                              }}
+                                            />
+                                            <div className={styles.image_name}>
+                                              <h4>14K Gold Necklace</h4>
+                                              <button
+                                                type="button"
+                                                className={styles.deletedBtn}
+                                                onClick={() =>
+                                                  handleDeleteProducts(section)
+                                                }
+                                              >
+                                                <img
+                                                  src={deletedIcon}
+                                                  width={20}
+                                                  height={20}
+                                                />
+                                                Delete
+                                              </button>
+                                            </div>
+                                          </>
+                                        ))}
                                     </div>
                                   )}
                                 </div>
@@ -3316,9 +3308,6 @@ export default function PlansPage() {
             </Form>
           </div>
         )}
-
-  
-
       </div>
 
       <Toaster />
