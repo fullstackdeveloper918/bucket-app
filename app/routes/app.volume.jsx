@@ -716,21 +716,21 @@ export async function action({ request }) {
         } = card;
 
         const volumeData = {
-          bundle_name: bundle_name+ ' copy',
-          position:position,
-          call_to_action_button:call_to_action_button,
-          section:section,
+          bundle_name: bundle_name + " copy",
+          position: position,
+          call_to_action_button: call_to_action_button,
+          section: section,
           select_product_volume_discount,
-          product_all:product_all,
-          discount_method:discount_method,
-          tier:tier,
-          above_title_section:above_title_section,
-          text_below_cta:text_below_cta,
-          title:title,
-          Tiers:Tiers,
+          product_all: product_all,
+          discount_method: discount_method,
+          tier: tier,
+          above_title_section: above_title_section,
+          text_below_cta: text_below_cta,
+          title: title,
+          Tiers: Tiers,
           product: product,
-          background:background,
-          isActive:isActive,
+          background: background,
+          isActive: isActive,
           domainName: shop,
         };
 
@@ -759,12 +759,10 @@ export async function action({ request }) {
     try {
       const productId = formData.get("product_id");
       const discount_id = formData.get("discount_id");
- 
-      if(discount_id) {
 
-     
-      const data = JSON.stringify({
-        query: `
+      if (discount_id) {
+        const data = JSON.stringify({
+          query: `
           mutation discountAutomaticDelete($id: ID!) {
             discountAutomaticDelete(id: $id) {
               deletedAutomaticDiscountId
@@ -776,39 +774,36 @@ export async function action({ request }) {
             }
           }
         `,
-        variables: {
-          id: discount_id,
-        },
-      });
-
-      // Configure Axios request
-      const config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: `https://${shop}/admin/api/2025-01/graphql.json`,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-        },
-        data: data,
-      };
-
-      // Make the request to Shopify
-      const response = await axios.request(config);
-      const responseData = response.data;
-
-    
-
-      // Handle user errors from Shopify
-      if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-        return json({
-          message: "Failed to delete discount on Shopify",
-          errors: responseData.data.discountAutomaticDelete.userErrors,
-          status: 400,
+          variables: {
+            id: discount_id,
+          },
         });
-      }
 
-    }
+        // Configure Axios request
+        const config = {
+          method: "post",
+          maxBodyLength: Infinity,
+          url: `https://${shop}/admin/api/2025-01/graphql.json`,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": session?.accessToken,
+          },
+          data: data,
+        };
+
+        // Make the request to Shopify
+        const response = await axios.request(config);
+        const responseData = response.data;
+
+        // Handle user errors from Shopify
+        if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
+          return json({
+            message: "Failed to delete discount on Shopify",
+            errors: responseData.data.discountAutomaticDelete.userErrors,
+            status: 400,
+          });
+        }
+      }
 
       // Delete from your local database
       const result = await db.volumeDiscount.deleteMany({
@@ -914,14 +909,9 @@ const svgs = [
 export default function VolumePage() {
   const { products, totalBundle, sales, allDiscountId } = useLoaderData();
   const actionResponse = useActionData();
-  // const submit = useSubmit();
   const navigation = useNavigation();
   const fetcher = useFetcher();
 
-  console.log(allDiscountId, "allDiscountId");
-
-  console.log(totalBundle, "totalBundle");
-  const formRef = useRef(null);
   const [showComponent, setShowComponent] = useState(0);
   const [editState, setEditState] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -957,7 +947,9 @@ export default function VolumePage() {
   const [showPosition, setShowPosition] = useState(false);
   const [details, setDetails] = useState({});
   const [isProduct, setIsProduct] = useState(false);
-  const [selectProducts, setSelectedPrducts] = useState([]);
+  const [sections, setSections] = useState([1]);
+  const [sectionProduct, setSectionProduct] = useState({});
+  const [currentIndex, setCurrentIndex] = useState(null);
   const [position, setPosition] = useState("Below Section");
   const [section, setSection] = useState("Buy Buttons");
   const [values, setValues] = useState({
@@ -1052,6 +1044,16 @@ export default function VolumePage() {
         setActiveTab("Home");
       }
     }
+  };
+
+  const closeModal = () => {
+    setCurrentIndex(null);
+    setIsProduct(false);
+  };
+
+
+  const addProductSection = () => {
+    setSections([...sections, sections.length + 1]);
   };
 
   const handleTitle = (e) => {
@@ -1274,6 +1276,12 @@ export default function VolumePage() {
       { card: JSON.stringify(card), intent: "handleCopy" },
       { method: "POST" },
     );
+  };
+
+
+  const openModal = (section) => {
+    setCurrentIndex(section);
+    setIsProduct(true);
   };
 
   useEffect(() => {
@@ -1974,84 +1982,105 @@ export default function VolumePage() {
                             </div>
 
                             {values.product === "Specific Products" && (
-                              <div className={styles.bundle_product}>
-                                <div
-                                  className={` ${styles.customSelect} ${styles.customTabsec} `}
-                                  id="second"
-                                >
-                                  {selectProducts.length > 0 ? (
-                                    products
-                                      .filter((item) =>
-                                        selectProducts.some(
-                                          (buy) =>
-                                            buy.productId === item?.node?.id,
-                                        ),
-                                      )
-                                      .map((item, index) => (
-                                        <>
-                                          <label htmlFor="">
-                                            Select Product {index + 1}
-                                          </label>
-                                          <div
-                                            className={styles.images_upload}
-                                            key={index}
-                                          >
-                                            <img
-                                              src={
-                                                item?.node?.images?.edges[0]
-                                                  ?.node?.src
-                                              }
-                                              alt="Preview"
-                                              style={{
-                                                width: "100px",
-                                                height: "100px",
-                                                maxHeight: "100px",
-                                                maxWidth: "100px",
-                                                objectFit: "cover",
-                                                borderRadius: "15px",
-                                              }}
-                                            />
-                                            <div className={styles.image_name}>
-                                              <h4>14K Gold Necklace</h4>
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  setSelectedPrducts([])
-                                                }
-                                                className={styles.deletedBtn}
-                                              >
-                                                <img
-                                                  src={deletedIcon}
-                                                  width={20}
-                                                  height={20}
-                                                />
-                                                Delete
-                                              </button>
-                                            </div>
-                                          </div>
-                                        </>
-                                      ))
-                                  ) : (
-                                    <>
+                              <>
+                                <div className={styles.addProductdiv}>
+                                  {sections.map((section, index) => (
+                                    <div
+                                      className={styles.input_labelCustomize}
+                                      key={section.id}
+                                    >
+                                      <label htmlFor="">
+                                        Select Product {index + 1}
+                                      </label>
                                       <div
-                                        className={styles.selectBox}
-                                        onClick={() => setIsProduct(true)}
+                                        className={styles.input_labelCustomize}
                                       >
-                                        <span className={styles.selected}>
-                                          Choose products
-                                        </span>
-                                        <div className={styles.arrow}>
-                                          <img
-                                            src={DorpDownIcon}
-                                            width={20}
-                                            height={16}
-                                          />
-                                        </div>
+                                        {!sectionProduct[section] ? (
+                                          <label
+                                            htmlFor="file-upload"
+                                            style={{
+                                              cursor: "pointer",
+                                              color: "blue",
+                                            }}
+                                            className={styles.inputUpload}
+                                            onClick={() => openModal(section)}
+                                          >
+                                            <span>+</span>Add Product
+                                          </label>
+                                        ) : (
+                                          <div className={styles.images_upload}>
+                                            {products
+                                              .filter(
+                                                (item) =>
+                                                  item.node.id ===
+                                                  sectionProduct[section]
+                                                    .productId,
+                                              )
+                                              .map((product) => (
+                                                <>
+                                                  {console.log(
+                                                    product,
+                                                    "chekor",
+                                                  )}
+                                                  <img
+                                                    src={
+                                                      product.node.images
+                                                        .edges[0].node.src
+                                                    }
+                                                    alt="Preview"
+                                                    style={{
+                                                      width: "100px",
+                                                      height: "100px",
+                                                      maxHeight: "100px",
+                                                      maxWidth: "100px",
+                                                      objectFit: "cover",
+                                                      borderRadius: "15px",
+                                                    }}
+                                                  />
+                                                  <div
+                                                    className={
+                                                      styles.image_name
+                                                    }
+                                                  >
+                                                    <h4>14K Gold Necklace</h4>
+                                                    <button
+                                                      type="button"
+                                                      className={
+                                                        styles.deletedBtn
+                                                      }
+                                                      onClick={() =>
+                                                        handleDeleteProducts(
+                                                          section,
+                                                        )
+                                                      }
+                                                    >
+                                                      <img
+                                                        src={deletedIcon}
+                                                        width={20}
+                                                        height={20}
+                                                      />
+                                                      Delete
+                                                    </button>
+                                                  </div>
+                                                </>
+                                              ))}
+                                          </div>
+                                        )}
                                       </div>
-                                    </>
-                                  )}
+                                    </div>
+                                  ))}
                                 </div>
-                              </div>
+
+                                <div className={styles.Addanotherdiv}>
+                                  <label
+                                    onClick={addProductSection}
+                                    htmlFor="addProduct"
+                                    style={{ cursor: "pointer", color: "blue" }}
+                                  >
+                                    <span>+</span>Add Another Product
+                                  </label>
+                                </div>
+                              </>
                             )}
                           </div>
 
@@ -3467,11 +3496,11 @@ export default function VolumePage() {
       <Toaster />
       {isProduct && (
         <AddProduct
-          onClose={handleClose}
+          onClose={closeModal}
           products={products}
-          handleSave={handleSave}
-          selectProduct={selectProducts}
-          setSelectedPrducts={setSelectedPrducts}
+          currentIndex={currentIndex}
+          sectionProduct={sectionProduct}
+          setSectionProduct={setSectionProduct}
         />
       )}
     </>

@@ -806,8 +806,6 @@ export default function PlansPage() {
   const [sections, setSections] = useState([1]);
   const [sectionProduct, setSectionProduct] = useState({});
   const [currentIndex, setCurrentIndex] = useState(null);
-
-  const [selectProducts, setSelectedPrducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [cart, setCart] = useState("Cart");
   const [isMonth, setIsMonth] = useState(false);
