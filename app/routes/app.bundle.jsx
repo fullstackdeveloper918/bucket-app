@@ -174,32 +174,33 @@ export async function action({ request }) {
 
 
       try {
-        let productData = JSON.stringify({
-          product: {
-            title: name,
-            body_html: "<strong>Good snowboard!</strong>",
-            vendor: "Burton",
-            product_type: "Snowboard",
-            status: "active",
-            tags: "dddfdfs",
-            variants: result,
-          },
-        });
+        console.log(bundle_id, 'bundle_id checks')
+        let productResponse;
+         if(!bundle_id){
 
-        let config = {
-          method: "post",
-          maxBodyLength: Infinity,
-          url: `https://${shop}/admin/api/2024-10/products.json`,
-          headers: {
-            "X-Shopify-Access-Token": session?.accessToken,
-            "Content-Type": "application/json",
-          },
-          data: productData,
-        };
-
-        let productResponse = await axios.request(config);
-        
-     
+           let productData = JSON.stringify({
+             product: {
+               title: name,
+               body_html: "<strong>Good snowboard!</strong>",
+               vendor: "Burton",
+               product_type: "Snowboard",
+               status: "active",
+               tags: "dddfdfs",
+               variants: result,
+             },
+           });
+           let config = {
+             method: "post",
+             maxBodyLength: Infinity,
+             url: `https://${shop}/admin/api/2024-10/products.json`,
+             headers: {
+               "X-Shopify-Access-Token": session?.accessToken,
+               "Content-Type": "application/json",
+             },
+             data: productData,
+           };
+            productResponse = await axios.request(config);
+         }
 
         let data;
 
