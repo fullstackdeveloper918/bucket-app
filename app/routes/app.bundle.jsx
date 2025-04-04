@@ -672,43 +672,42 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
       }
-       console.log(productId, 'check here productId');
-       console.log(`gid://shopify/Product/${product_bundle_id}`);
+    
        // Proceed to delete the product after discount deletion
-    const productDeleteData = JSON.stringify({
-      query: `mutation {
-        productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
-          deletedProductId
-          userErrors {
-            field
-            message
-          }
-        }
-      }`,
-    });
+    // const productDeleteData = JSON.stringify({
+    //   query: `mutation {
+    //     productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
+    //       deletedProductId
+    //       userErrors {
+    //         field
+    //         message
+    //       }
+    //     }
+    //   }`,
+    // });
 
-    const productDeleteConfig = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `https://${shop}/admin/api/2025-04/graphql.json`, 
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': session?.accessToken,
-      },
-      data: productDeleteData,
-    };
+    // const productDeleteConfig = {
+    //   method: 'post',
+    //   maxBodyLength: Infinity,
+    //   url: `https://${shop}/admin/api/2025-04/graphql.json`, 
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'X-Shopify-Access-Token': session?.accessToken,
+    //   },
+    //   data: productDeleteData,
+    // };
 
-    const productDeleteResponse = await axios.request(productDeleteConfig);
-    const productDeleteResponseData = productDeleteResponse.data?.data?.productDelete?.userErrors;
+    // const productDeleteResponse = await axios.request(productDeleteConfig);
+    // const productDeleteResponseData = productDeleteResponse.data?.data?.productDelete?.userErrors;
 
-    // Handle user errors from product deletion
-    if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
-      return json({
-        message: "Failed to delete product from Shopify",
-        errors: productDeleteResponseData.data.productDelete.userErrors,
-        status: 400,
-      });
-    }
+    // // Handle user errors from product deletion
+    // if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
+    //   return json({
+    //     message: "Failed to delete product from Shopify",
+    //     errors: productDeleteResponseData.data.productDelete.userErrors,
+    //     status: 400,
+    //   });
+    // }
   
 
 
