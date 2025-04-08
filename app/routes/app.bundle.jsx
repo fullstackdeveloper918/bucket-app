@@ -170,7 +170,6 @@ export async function action({ request }) {
       });
 
       try {
-        console.log(bundle_id, "bundle_id checks");
         let productResponse;
         if (!bundle_id) {
           let productData = JSON.stringify({
@@ -330,13 +329,23 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           data: data,
         };
 
-        const discountResponse = await axios.request(discountconfig);
+        const discountResponse = await axios.request(discountconfig)
         const discount_id =
           discountResponse?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
 
         const discount_info =
           discountResponse?.data?.data?.discountAutomaticBasicCreate;
+
+
+          if(discount_info?.userErrors[0].message) {
+            return json({
+              status: 500,
+              step: 4,
+              message: discount_info?.userErrors[0].message
+            })
+          };
+
 
         const bundleData = {
           name,
@@ -1131,9 +1140,8 @@ export default function PlansPage() {
   };
 
   useEffect(() => {
-    if (actionResponse) {
+      if (actionResponse?.step === 6) {
       if (actionResponse?.status === 200) {
-        if (actionResponse?.step === 6) {
           notify.success(actionResponse?.message, {
             position: "top-center",
             style: {
@@ -1141,7 +1149,80 @@ export default function PlansPage() {
               color: "white",
             },
           });
+        } else if (actionResponse?.status === 500) {
+          notify.success(actionResponse?.message, {
+            position: "top-center",
+            style: {
+              background: "red",
+              color: "white",
+            },
+          });
         }
+      }
+  }, [actionResponse]);
+
+
+
+
+  useEffect(() => {
+    if (actionResponse?.step === 4) {
+    if (actionResponse?.status === 200) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+        setShowPage("Return");
+        setId(null);
+        setValues({
+          bundle_name: "Example Bundle 1",
+          displayBundle: "Bundle Product Pages",
+          discount: "Percentage",
+          amount: "",
+        });
+        setChecked(true);
+        setSectionProduct({});
+        setCurrentIndex(null);
+        setPosition("Below Section");
+        setSection("Buy Buttons");
+        seTitleSection({
+          titleSectionText: "Limited Time Offer",
+          titleSectionSize: 5,
+          titleSectionColor: "#000000",
+        });
+        seTitle({
+          titleText: "Add Product and save 10%!",
+          titleSize: 5,
+          titleColor: "#000000",
+        });
+        setProductTitle({
+          productSize: 5,
+          productColor: "#000000",
+        });
+        setBundleCost({
+          bundleCostSize: 5,
+          bundleCostColor: "#000000",
+          bundleCostComparedPrice: true,
+          bundleCostSave: true,
+        });
+        setCallAction({
+          ctaText: "Add To Cart",
+          ctaSize: 5,
+          ctaColor: "#000000",
+        });
+        setCart("Cart");
+        setTextBelow({
+          tbText: "Lifetime warranty & Free Returns",
+          tbSize: 5,
+          tbColor: "#555555",
+        });
+        setBackGround({
+          backgroundColor: "#FFFFFF",
+          backgroundShadow: true,
+        });
+        setShowComponent(actionResponse?.step);
       } else if (actionResponse?.status === 500) {
         notify.success(actionResponse?.message, {
           position: "top-center",
@@ -1151,84 +1232,12 @@ export default function PlansPage() {
           },
         });
       }
-    }
-  }, [actionResponse]);
 
-  useEffect(() => {
-    if (actionResponse?.status === 200) {
-      if (actionResponse?.step === 4) {
-        notify.success(actionResponse?.message, {
-          position: "top-center",
-          style: {
-            background: "green",
-            color: "white",
-          },
-        });
-        setShowPage("Return");
-      }
-      setId(null);
-      setValues({
-        bundle_name: "Example Bundle 1",
-        displayBundle: "Bundle Product Pages",
-        discount: "Percentage",
-        amount: "",
-      });
-      setChecked(true);
-      setSectionProduct({});
-      setCurrentIndex(null);
-      setPosition("Below Section");
-      setSection("Buy Buttons");
-      seTitleSection({
-        titleSectionText: "Limited Time Offer",
-        titleSectionSize: 5,
-        titleSectionColor: "#000000",
-      });
-      seTitle({
-        titleText: "Add Product and save 10%!",
-        titleSize: 5,
-        titleColor: "#000000",
-      });
-      setProductTitle({
-        productSize: 5,
-        productColor: "#000000",
-      });
-      setBundleCost({
-        bundleCostSize: 5,
-        bundleCostColor: "#000000",
-        bundleCostComparedPrice: true,
-        bundleCostSave: true,
-      });
-
-      setCallAction({
-        ctaText: "Add To Cart",
-        ctaSize: 5,
-        ctaColor: "#000000",
-      });
-      setCart("Cart");
-      setTextBelow({
-        tbText: "Lifetime warranty & Free Returns",
-        tbSize: 5,
-        tbColor: "#555555",
-      });
-      setBackGround({
-        backgroundColor: "#FFFFFF",
-        backgroundShadow: true,
-      });
-      setShowComponent(actionResponse?.step);
-    } else if (actionResponse?.status === 500) {
-      notify.success(actionResponse?.error, {
-        position: "top-center",
-        style: {
-          background: "red",
-          color: "white",
-        },
-      });
-    }
+    } 
   }, [actionResponse]);
 
   useEffect(() => {
     if (showEdit) {
-      console.log(details?.products, "check details");
       setSectionProduct(details?.products);
       setId(details.id);
       setValues((prev) => ({
@@ -1239,7 +1248,6 @@ export default function PlansPage() {
         discount: details.method,
       }));
       setChecked(details.isActive === 1 ? true : false);
-
       setPosition(details.position);
       setSection(details.section);
       seTitleSection((prev) => ({
