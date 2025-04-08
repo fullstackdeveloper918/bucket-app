@@ -19,7 +19,6 @@ import {
   useFetcher,
   useLoaderData,
   useNavigation,
-  useSubmit,
 } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
@@ -156,7 +155,22 @@ export async function action({ request }) {
         shadow: formData.get("backgroundShadow"),
       };
 
+
+      const titleExist = await db.bundle.findFirst({
+        where: { name: name },
+      });
+
+     if(titleExist) {
+      return json({
+        status: 500,
+        step: 4,
+        message: 'Bundle Title should be unique'
+      })
+     }
+
       const result = [];
+
+
 
       const sectionProductArray = Object.values(selectProducts);
       sectionProductArray.forEach((product) => {
@@ -336,15 +350,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
 
         const discount_info =
           discountResponse?.data?.data?.discountAutomaticBasicCreate;
-
-
-          if(discount_info?.userErrors[0].message) {
-            return json({
-              status: 500,
-              step: 4,
-              message: discount_info?.userErrors[0].message
-            })
-          };
 
 
         const bundleData = {
