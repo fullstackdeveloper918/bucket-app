@@ -132,13 +132,10 @@ export default function ProfitsPage() {
   };
 
   const handleDuration = (duration) => {
-    console.log(duration, "checkdura");
-
-    // Check if duration is a valid number and not Infinity
+    
     if (duration !== Infinity && !isNaN(duration)) {
       setDuration(duration);
     } else {
-      // Handle the case where the duration is not valid
       console.error("Invalid duration:", duration);
     }
   };

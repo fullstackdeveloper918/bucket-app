@@ -1871,17 +1871,6 @@ export default function BuyGetPage() {
                             </label>
                           </div>
 
-                            {/* <input
-                              type="hidden"
-                              name="buyProduct"
-                              value={buyProducts}
-                            /> */}
-                            {/* <input
-                              type="hidden"
-                              name="getProduct"
-                              value={getProducts}
-                            /> */}
-
                             <div className={styles.input_labelCustomize}>
                               <label htmlFor="">Where to display bundle</label>
                               <div className={styles.bundle_product}>

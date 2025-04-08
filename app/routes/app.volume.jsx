@@ -2,7 +2,7 @@ import axios from "axios";
 import { Text } from "@shopify/polaris";
 import db from "../db.server";
 import { TitleBar } from "@shopify/app-bridge-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import preview_mockup from "../routes/assets/preview_mockup.svg";
 import DorpDownIcon from "../routes/assets/dropDown.svg";
 import deletedIcon from "../routes/assets/deleted.svg";
@@ -12,7 +12,6 @@ import offerIcon from "../../app/routes/assets/offerIcon.svg";
 import DesignIcon from "../../app/routes/assets/DesginIcon.svg";
 import drop_downImg from "../../app/routes/assets/drop_downImg.svg";
 import editIcon from "../../app/routes/assets/edit_icon.svg";
-import copy_icon from "../../app/routes/assets/cpyIcon.png";
 import { authenticate } from "../shopify.server";
 import {
   Form,
@@ -21,7 +20,6 @@ import {
   useFetcher,
   useLoaderData,
   useNavigation,
-  // useSubmit,
 } from "@remix-run/react";
 import {
   fetchSalesData,
