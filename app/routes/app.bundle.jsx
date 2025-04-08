@@ -1886,7 +1886,7 @@ export default function PlansPage() {
                                         )
                                         .map((product) => (
                                           <>
-                                            {console.log(product, "chekor")}
+                                            
                                             <img
                                               src={
                                                 product.node.images.edges[0]
@@ -1903,7 +1903,7 @@ export default function PlansPage() {
                                               }}
                                             />
                                             <div className={styles.image_name}>
-                                              <h4>14K Gold Necklace</h4>
+                                              <h4>{product?.node?.title}</h4>
                                               <button
                                                 type="button"
                                                 className={styles.deletedBtn}
@@ -3179,6 +3179,7 @@ export default function PlansPage() {
                                   )
                                   .map((item) => (
                                     <>
+                                    {console.log(item, 'item has')}
                                       <div
                                         className={styles.left_productsample}
                                       >
@@ -3198,7 +3199,7 @@ export default function PlansPage() {
                                           <option value="old">Gold 14K</option>
                                         </select>
 
-                                        <h6>Product Name</h6>
+                                        <h6>{item?.node?.title}</h6>
                                       </div>
                                       <div className={styles.AddProduct}>
                                         <span>+</span>

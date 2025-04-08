@@ -1762,7 +1762,7 @@ export default function BuyGetPage() {
                                           }}
                                         />
                                         <div className={styles.image_name}>
-                                          <h4>14K Gold Necklace</h4>
+                                          <h4>{product?.node?.title}</h4>
                                           <button
                                             type="button"
                                             className={styles.deletedBtn}
@@ -1837,7 +1837,7 @@ export default function BuyGetPage() {
                                           }}
                                         />
                                         <div className={styles.image_name}>
-                                          <h4>14K Gold Necklace</h4>
+                                          <h4>{product?.node?.title}</h4>
                                           <button
                                             type="button"
                                             className={styles.deletedBtn}
@@ -3211,7 +3211,7 @@ export default function BuyGetPage() {
                                           <option value="old">Gold 14K</option>
                                         </select>
 
-                                        <h6>Product Name</h6>
+                                        <h6>{item?.node?.title}</h6>
                                       </div>
                                       <div className={styles.AddProduct}>
                                         <span>+</span>
@@ -3288,7 +3288,7 @@ export default function BuyGetPage() {
                                           <option value="old">Gold 14K</option>
                                         </select>
 
-                                        <h6>Product Name</h6>
+                                        <h6>{item?.node?.title}</h6>
                                       </div>
                                       <div className={styles.AddProduct}>
                                         <span>+</span>

@@ -965,9 +965,23 @@ export default function VolumePage() {
       quantity: "2",
       discount: "50",
       title: "Buy 2 Products",
-      badge: "Most Popular",
+      badge: "Most Popular ⭐️",
+    },
+    {
+      quantity: "4",
+      discount: "65",
+      title: "Buy 4 Products",
+      badge: "",
+    },
+    {
+      quantity: "6",
+      discount: "70",
+      title: "Buy 6 Products",
+      badge: "",
     },
   ]);
+
+
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
     titleSectionSize: 13,
@@ -1094,23 +1108,7 @@ export default function VolumePage() {
     }));
   };
 
-  const handleClose = () => {
-    setIsProduct(false);
-  };
 
-  const handleSave = () => {
-    if (selectProducts.length > 1) {
-      notify.error("Please select only one product", {
-        position: "top-center",
-        style: {
-          background: "red",
-          color: "white",
-        },
-      });
-      return;
-    }
-    setIsProduct(false);
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -1263,9 +1261,18 @@ export default function VolumePage() {
   const handleOnChange = (e, index) => {
     e.preventDefault();
     setCheckIndex(index);
-    // setChecked(!checked);
-    // setCheckBoxId(card);
     submit(e.target.form);
+  };
+
+
+  const handleAddTier = () => {
+    const newTier = {
+      quantity: "",
+      discount: "",
+      title: "",
+      badge: "",
+    };
+    setTier((prevTiers) => [...prevTiers, newTier]);
   };
 
   const handleCopy = (e, card) => {
@@ -1292,8 +1299,6 @@ export default function VolumePage() {
             color: "white",
           },
         });
-        console.log(actionResponse, "kro");
-        // setChecked(actionResponse.isActive)
       } else if (actionResponse?.status === 500) {
         notify.success(actionResponse?.message, {
           position: "top-center",
@@ -2270,6 +2275,15 @@ export default function VolumePage() {
                               </div>
                             </React.Fragment>
                           ))}
+
+                           <div className={styles.Addanotherdiv}>
+                             <label
+                               style={{ cursor: "pointer", color: "blue" }}
+                               onClick={handleAddTier}
+                             >
+                              <span>+</span>Add Another Tier
+                             </label>
+                             </div>
 
                           <div className={styles.Add_btn}>
                             <button
@@ -3290,7 +3304,10 @@ export default function VolumePage() {
                             </h4>
 
                             <div className={styles.left_productsample}>
-                              <div className={styles.bundlewrapper}>
+                              {
+                                tier.map((item) => (
+                                <>
+                                  <div className={styles.bundlewrapper}>
                                 <div
                                   className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
                                 >
@@ -3301,7 +3318,7 @@ export default function VolumePage() {
                                       id="bundle Product"
                                       checked
                                     />
-                                    <label htmlFor="">Buy 2 Products</label>
+                                    <label htmlFor="">{item?.title}</label>
                                   </div>
 
                                   <div className={styles.Pricetab}>
@@ -3314,7 +3331,7 @@ export default function VolumePage() {
                                       $25
                                     </span>
                                     <span className={styles.SaveTab}>
-                                      Save 50%
+                                     save {item?.discount}%
                                     </span>
                                   </div>
                                 </div>
@@ -3372,70 +3389,9 @@ export default function VolumePage() {
                                   Most Popular ⭐️
                                 </div>
                               </div>
-
-                              <div
-                                className={`${styles.bundlewrapper} ${styles.bundle_wrap}`}
-                              >
-                                <div
-                                  className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
-                                >
-                                  <div className={styles.inputDiv}>
-                                    <input
-                                      type="radio"
-                                      name=""
-                                      id="bundle Product"
-                                      checked
-                                    />
-                                    <label htmlFor="">Buy 4 Products</label>
-                                  </div>
-
-                                  <div className={styles.Pricetab}>
-                                    <span className={styles.delPriceOuter}>
-                                      <span className={styles.delPrice}>
-                                        $75
-                                      </span>
-                                    </span>
-                                    <span className={styles.totalPrice}>
-                                      $35
-                                    </span>
-                                    <span className={styles.SaveTab}>
-                                      Save 65%
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div
-                                className={`${styles.bundlewrapper} ${styles.bundle_wrap}`}
-                              >
-                                <div
-                                  className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
-                                >
-                                  <div className={styles.inputDiv}>
-                                    <input
-                                      type="radio"
-                                      name=""
-                                      id="bundle Product"
-                                      checked
-                                    />
-                                    <label htmlFor="">Buy 6 Products</label>
-                                  </div>
-
-                                  <div className={styles.Pricetab}>
-                                    <span className={styles.delPriceOuter}>
-                                      <span className={styles.delPrice}>
-                                        $125
-                                      </span>
-                                    </span>
-                                    <span className={styles.totalPrice}>
-                                      $50
-                                    </span>
-                                    <span className={styles.SaveTab}>
-                                      Save 70%
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+                                </>
+                                ))
+                              }
                             </div>
 
                             <div className={styles.productTotal}>
