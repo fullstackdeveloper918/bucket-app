@@ -442,7 +442,8 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         console.log(err, "check err");
         return { error: "Failed to deactivate bundle" };
       }
-    } else if (intent === "handleAllDiscount") {
+    }
+     else if (intent === "handleAllDiscount") {
       const discountId = JSON.parse(formData.get("discountID"));
       const active = formData.get("active");
       const appType = "bundle";
@@ -537,6 +538,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             data: { status: active === "Active" ? 1 : 0 },
           });
 
+       
           return json({
             message: "App status updated successfully",
             data: updatedApp,
@@ -1143,8 +1145,11 @@ export default function PlansPage() {
       }
     }
   };
+  
+ 
 
   useEffect(() => {
+
       if (actionResponse?.step === 6) {
       if (actionResponse?.status === 200) {
           notify.success(actionResponse?.message, {

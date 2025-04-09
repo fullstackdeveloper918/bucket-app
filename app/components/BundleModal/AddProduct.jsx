@@ -15,14 +15,7 @@ const AddProduct = ({
     return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // const isAllVariantsSelected = (productId, variants) => {
-  //   // const selectedProduct = selectProduct.find(
-  //   //   (selected) => selected.productId === productId
-  //   // );
-  //   // const selectedVariants = selectedProduct ? selectedProduct.variants : [];
-  //   // return variants.every((variant) => selectedVariants.includes(variant.node.id));
-  // };
-
+ 
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
     const productId = product.node.id;
@@ -126,7 +119,9 @@ const AddProduct = ({
                   </div>
                   <div className={styles.productbyx}>
                     {variants && variants.map((variant, photoIndex) => {
-                      const variantId = variant.node.id;
+                      const variantId = variant.node.title;
+
+                      console.log(variantId, 'variant check kro mitra')
 
                       return (
                         <React.Fragment key={photoIndex}>
