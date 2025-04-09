@@ -518,6 +518,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       try {
         let responses;
 
+        console.log(discountId,'checkall')
         if (active === "Active") {
           responses = await Promise.all(
             discountId.map((id) => activateDiscount(id)),
@@ -527,6 +528,8 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             discountId.map((id) => deactivateDiscount(id)),
           );
         }
+
+        console.log(responses[0],'check responses')
 
         const existingApp = await prisma.appActiveInactive.findFirst({
           where: { AppType: appType },

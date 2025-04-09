@@ -121,7 +121,7 @@ const AddProduct = ({
                   </div>
                   <div className={styles.productbyx}>
                     {variants && variants.map((variant, photoIndex) => {
-                      const variantId = variant.node.id;
+                      const variantId = variant.node.title;
 
                       return (
                         <React.Fragment key={photoIndex}>

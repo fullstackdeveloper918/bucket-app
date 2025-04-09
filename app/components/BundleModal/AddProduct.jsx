@@ -15,7 +15,7 @@ const AddProduct = ({
     return item.node.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
- 
+
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
     const productId = product.node.id;
@@ -37,14 +37,15 @@ const AddProduct = ({
     });
   };
 
-  const handleChildCheckBox = (e, productId, variantId) => {
+
+  const handleChildCheckBox = (e, productId, variantId, variant) => {
     const isSelected = e.target.checked;
 
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
 
       if (!updatedProducts[currentIndex]) {
-        updatedProducts[currentIndex] = { productId, variants: [] };
+        updatedProducts[currentIndex] = { productId, variants: [],price: 0 };
       }
 
       if (isSelected) {
@@ -52,6 +53,7 @@ const AddProduct = ({
           updatedProducts[currentIndex] = {
             ...updatedProducts[currentIndex],
             variants: [...updatedProducts[currentIndex].variants, variantId],
+            price: variant.node.price
           };
         }
       } else {
@@ -63,6 +65,8 @@ const AddProduct = ({
           delete updatedProducts[currentIndex];
         }
       }
+
+      console.log(updatedProducts, 'hahahahha')
       return updatedProducts;
     });
   };
@@ -119,9 +123,7 @@ const AddProduct = ({
                   </div>
                   <div className={styles.productbyx}>
                     {variants && variants.map((variant, photoIndex) => {
-                      const variantId = variant.node.title;
-
-                      console.log(variantId, 'variant check kro mitra')
+                      const variantId = variant.node.id;
 
                       return (
                         <React.Fragment key={photoIndex}>
@@ -137,7 +139,7 @@ const AddProduct = ({
                                 ) || false
                               }
                               onChange={(e) =>
-                                handleChildCheckBox(e, productId, variantId)
+                                handleChildCheckBox(e, productId, variantId, variant)
                               }
                             />
                             <label htmlFor={variantId}></label>
