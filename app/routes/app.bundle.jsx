@@ -169,13 +169,18 @@ export async function action({ request }) {
      }
 
       const result = [];
+   
+      console.log(selectProducts, 'selectProducts')
+
+
       const sectionProductArray = Object.values(selectProducts);
       sectionProductArray.forEach((product) => {
+        console.log(product, 'check mine')
         product.variants.forEach((variantId) => {
           result.push({
             option1: variantId,
-            price: "3.05",
-            compare_at_price: "5.02",
+            price: product.price,
+            compare_at_price: "",
           });
         });
       });

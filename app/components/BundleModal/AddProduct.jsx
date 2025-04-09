@@ -105,6 +105,8 @@ const AddProduct = ({
             const productId = item.node.id;
             const variants = item.node.variants.edges;
 
+            
+
             return (
               <React.Fragment key={index}>
                 <li>
@@ -134,6 +136,8 @@ const AddProduct = ({
                   <div className={styles.productbyx}>
                     {variants && variants.map((variant, photoIndex) => {
                       const variantId = variant.node.id;
+
+                      console.log(variant,'variant price')
 
                       return (
                         <React.Fragment key={photoIndex}>
