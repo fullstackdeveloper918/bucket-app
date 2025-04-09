@@ -169,9 +169,6 @@ export async function action({ request }) {
      }
 
       const result = [];
-
-
-
       const sectionProductArray = Object.values(selectProducts);
       sectionProductArray.forEach((product) => {
         product.variants.forEach((variantId) => {
@@ -211,6 +208,9 @@ export async function action({ request }) {
         }
 
         let data;
+
+
+        console.log(bundle_id, 'is bundle_id')
 
         if (method === "Percentage") {
           data = JSON.stringify({
