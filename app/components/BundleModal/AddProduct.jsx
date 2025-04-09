@@ -40,36 +40,86 @@ const AddProduct = ({
 
   const handleChildCheckBox = (e, productId, variantId, variant) => {
     const isSelected = e.target.checked;
-
+  
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
-
+  
+      // If product entry doesn't exist, create it
       if (!updatedProducts[currentIndex]) {
-        updatedProducts[currentIndex] = { productId, variants: [],price: 0 };
+        updatedProducts[currentIndex] = { productId, variants: [], price: 0, titles: [] };
       }
-
+  
+      const currentProduct = updatedProducts[currentIndex];
+  
       if (isSelected) {
-        if (!updatedProducts[currentIndex].variants.includes(variantId)) {
-          updatedProducts[currentIndex] = {
-            ...updatedProducts[currentIndex],
-            variants: [...updatedProducts[currentIndex].variants, variantId],
-            price: variant.node.price
-          };
+        // If the variant is not already selected, add it with its price and title
+        if (!currentProduct.variants.includes(variantId)) {
+          currentProduct.variants.push(variantId);
+          currentProduct.titles.push(variant.node.title); // Add title for the variant
+          currentProduct.price += parseFloat(variant.node.price || 0); // Add variant price to the total price
         }
       } else {
-        updatedProducts[currentIndex].variants = updatedProducts[
-          currentIndex
-        ].variants.filter((id) => id !== variantId);
-
-        if (updatedProducts[currentIndex].variants.length === 0) {
+        // If unchecked, remove the variant by its variantId
+        currentProduct.variants = currentProduct.variants.filter(
+          (id) => id !== variantId
+        );
+  
+        // Remove the title corresponding to the variantId
+        currentProduct.titles = currentProduct.titles.filter(
+          (title) => title !== variant.node.title
+        );
+  
+        // Remove the price for the unchecked variant
+        currentProduct.price -= parseFloat(variant.node.price || 0);
+  
+        // If no variants are selected for the product, delete the product entry
+        if (currentProduct.variants.length === 0) {
           delete updatedProducts[currentIndex];
         }
       }
-
-      console.log(updatedProducts, 'hahahahha')
+  
+      updatedProducts[currentIndex] = { ...currentProduct };
+  
+      console.log(updatedProducts, 'updatedProducts');
       return updatedProducts;
     });
   };
+  
+
+
+  // const handleChildCheckBox = (e, productId, variantId, variant) => {
+  //   const isSelected = e.target.checked;
+
+  //   setSectionProduct((prev) => {
+  //     const updatedProducts = { ...prev };
+
+  //     if (!updatedProducts[currentIndex]) {
+  //       updatedProducts[currentIndex] = { productId, variants: [],price: 0 };
+  //     }
+
+  //     if (isSelected) {
+  //       if (!updatedProducts[currentIndex].variants.includes(variantId)) {
+  //         updatedProducts[currentIndex] = {
+  //           ...updatedProducts[currentIndex],
+  //           variants: [...updatedProducts[currentIndex].variants, variantId],
+  //           price: variant.node.price,
+  //           title: variant.node.title
+  //         };
+  //       }
+  //     } else {
+  //       updatedProducts[currentIndex].variants = updatedProducts[
+  //         currentIndex
+  //       ].variants.filter((id) => id !== variantId);
+
+  //       if (updatedProducts[currentIndex].variants.length === 0) {
+  //         delete updatedProducts[currentIndex];
+  //       }
+  //     }
+
+  //     console.log(updatedProducts, 'hahahahha')
+  //     return updatedProducts;
+  //   });
+  // };
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
