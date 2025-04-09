@@ -40,9 +40,6 @@ const AddProduct = ({
 
   const handleChildCheckBox = (e, productId, variantId, variant, item) => {
     const isSelected = e.target.checked;
-
-
-    console.log(variant,'varinat check')
   
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
@@ -57,8 +54,8 @@ const AddProduct = ({
           currentProduct.variants.push(variantId);
           currentProduct.titles.push(variant.node.title); 
           currentProduct.price += parseFloat(variant.node.price || 0); 
-            // Check if the variant has an image. If not, use the product's image from item.
-        const imageSrc = variant.node.image || item.node.images?.edges[0]?.node?.src; // Fallback to item.imageSrc
+           
+        const imageSrc = variant.node.image || item.node.images?.edges[0]?.node?.src; 
         currentProduct.images.push(imageSrc);
         }
       } else {

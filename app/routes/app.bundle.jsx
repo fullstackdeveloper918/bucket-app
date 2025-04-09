@@ -180,6 +180,8 @@ export async function action({ request }) {
         });
       });
 
+      console.log(result, 'result check')
+
       try {
         let productResponse;
         if (!bundle_id) {
