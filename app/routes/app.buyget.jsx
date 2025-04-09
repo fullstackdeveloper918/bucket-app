@@ -164,6 +164,20 @@ export async function action({ request }) {
         shadow: formData.get("backgroundShadow"),
       };
 
+
+      const titleExist = await db.bundle.findFirst({
+        where: { name: bundle_name },
+      });
+
+     if(titleExist) {
+      return json({
+        status: 500,
+        step: 4,
+        message: 'Bundle Title should be unique'
+      });
+     }
+
+
       let data, discount_id, discount_info;
 
       if (discount_method === "Percentage") {
@@ -1062,8 +1076,8 @@ export default function BuyGetPage() {
   };
 
   useEffect(() => {
+    if (actionResponse?.step === 4) {
     if (actionResponse?.status === 200) {
-      if (actionResponse?.step === 4) {
         notify.success(actionResponse?.message, {
           position: "top-center",
           style: {
@@ -1123,7 +1137,7 @@ export default function BuyGetPage() {
       });
       setShowComponent(actionResponse?.step);
     } else if (actionResponse?.status === 500) {
-      notify.success(actionResponse?.error, {
+      notify.success(actionResponse?.message, {
         position: "top-center",
         style: {
           background: "red",
@@ -1289,9 +1303,6 @@ export default function BuyGetPage() {
 
   const filteredBundles = getFilteredBundles();
 
-  console.log(sectionBuyProduct, 'sectionBuyProduct')
-  console.log(sectionGetProduct, 'sectionGetProduct')
-  console.log(activeSelection, 'activeSelection')
 
   return (
     <>

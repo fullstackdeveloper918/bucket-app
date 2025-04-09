@@ -160,7 +160,7 @@ export async function action({ request }) {
         where: { name: name },
       });
 
-     if(titleExist) {
+     if(!bundle_id && titleExist) {
       return json({
         status: 500,
         step: 4,
