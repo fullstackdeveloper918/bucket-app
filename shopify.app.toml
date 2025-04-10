@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://afford-excel-magnetic-workshops.trycloudflare.com"
+application_url = "https://comparative-fell-throat-satisfy.trycloudflare.com"
 embedded = true
 name = "bucket-new-app"
 handle = "bucket-new-app"
@@ -23,9 +23,9 @@ scopes = "write_products,read_customers,write_customers,read_draft_orders,write_
 
 [auth]
 redirect_urls = [
-  "https://afford-excel-magnetic-workshops.trycloudflare.com/auth/callback",
-  "https://afford-excel-magnetic-workshops.trycloudflare.com/auth/shopify/callback",
-  "https://afford-excel-magnetic-workshops.trycloudflare.com/api/auth/callback"
+  "https://comparative-fell-throat-satisfy.trycloudflare.com/auth/callback",
+  "https://comparative-fell-throat-satisfy.trycloudflare.com/auth/shopify/callback",
+  "https://comparative-fell-throat-satisfy.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
