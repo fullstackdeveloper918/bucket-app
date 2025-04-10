@@ -173,10 +173,11 @@ export async function action({ request }) {
 
       const sectionProductArray = Object.values(selectProducts);
       sectionProductArray.forEach((product) => {
-        product.variants.forEach((variantId) => {
+        product.variants.forEach((variantId,index) => {
           result.push({
             option1: variantId,
             price: product.price,
+            title: product.titles[index] || '',
             compare_at_price: "",
           });
         });
