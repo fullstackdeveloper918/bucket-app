@@ -497,6 +497,95 @@ color: #606060;
 padding: 40px 0px 20px;
 border-bottom: 1px solid #C5C5C5
 }
+.Availablesec{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #C5C5C5;
+  padding: 10px 0px 20px;
+}
+.rewardsecleft{
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.rewardsecleft h4{
+font-family: var(--font-primary);
+font-weight: 600;
+font-size: 22px;
+line-height: 34px;
+letter-spacing: -0.09px;
+color: var(--textcolor);
+}
+.rewardsecleft p{
+font-family: var(--font-primary);
+font-weight: 500;
+font-size: 16px;
+line-height: 100%;
+letter-spacing: -0.06px;
+color: #606060;
+}
+.rewardsecs{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0px;
+}
+.fomrdiv input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none; 
+  width: 100%;
+  height: 1rem;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 4px solid #E0E0E0;
+  background: #E0E0E0;
+}
+.fomrdiv input[type="range"]::-webkit-slider-runnable-track {
+  height: 1rem;
+  background: #E0E0E0;
+  border-radius: 1rem;
+}
+
+.fomrdiv input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none; 
+  height: 1rem;
+  width: 1rem;
+  background-color: white;
+  border-radius: 50%;
+/*slider-thumb border color*/
+  border: 1px solid #00C6FB(335, 100%, 65%);
+  background: linear-gradient(89.98deg, #00C6FB 0%, #077DD6 100%);
+  box-shadow: -50rem 0 5rem 20rem #00C6FB(6, 97%, 71%);
+}
+.emailcontent{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.emailcontent h4{
+  font-family: var(--font-primary);
+font-weight: 500;
+font-size: 20px;
+line-height: 30px;
+letter-spacing: -0.09px;
+color: var(--textcolor);
+}
+.emailcontent button{
+  background: linear-gradient(239.75deg, #005bea 0%, #00c6fb 92.41%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-primary);
+  font-size: 22px;
+  padding: 0px;
+  border: 0px;
+  cursor: pointer;
+}
+.rangePnael{
+  width: 100%;
+}
 /* settingScreen end */
 
 @media (max-width: 1440px) {
@@ -505,8 +594,13 @@ border-bottom: 1px solid #C5C5C5
     width: 100%;
   }
   .exampleBundle {
-  padding: 30px;
+  padding: 50px;
   }
+  .setingtopbar{
+    display: grid;
+    grid-template-columns: 7fr 2fr;
+    gap: 20px;
+}
 }
 @media (max-width: 768px) {
   .pricing-plans {

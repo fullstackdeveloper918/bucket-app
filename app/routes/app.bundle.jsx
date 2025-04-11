@@ -517,8 +517,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       };
       try {
         let responses;
-
-        console.log(discountId,'checkall')
         if (active === "Active") {
           responses = await Promise.all(
             discountId.map((id) => activateDiscount(id)),
@@ -528,8 +526,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             discountId.map((id) => deactivateDiscount(id)),
           );
         }
-
-        console.log(responses[0],'check responses')
 
         const existingApp = await prisma.appActiveInactive.findFirst({
           where: { AppType: appType },
@@ -638,7 +634,9 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       const discount_id = formData.get("discount_id");
       const product_bundle_id = formData.get("product_bundle_id");
 
-      console.log(product_bundle_id, "cancel");
+
+      console.log(productId, 'productIdkiski')
+
 
       if (discount_id) {
         const data = JSON.stringify({
@@ -674,52 +672,35 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         // Make the request to Shopify
         const response = await axios.request(config);
         const responseData = response.data;
-
-        // Handle user errors from Shopify
-        if (responseData.data.discountAutomaticDelete.userErrors.length > 0) {
-          return json({
-            message: "Failed to delete discount on Shopify",
-            errors: responseData.data.discountAutomaticDelete.userErrors,
-            status: 400,
-          });
-        }
       }
 
-      // Proceed to delete the product after discount deletion
-      // const productDeleteData = JSON.stringify({
-      //   query: `mutation {
-      //     productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
-      //       deletedProductId
-      //       userErrors {
-      //         field
-      //         message
-      //       }
-      //     }
-      //   }`,
-      // });
+      const productDeleteData = await admin.graphql(
+        `#graphql
+        mutation {
+          productDelete(input: {id: "gid://shopify/Product/${product_bundle_id}"}) {
+            deletedProductId
+            userErrors {
+              field
+              message
+            }
+          }
+        }`,
+      );
+      
+      const productDeleteConfig = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: `https://${shop}/admin/api/2025-04/graphql.json`,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': session?.accessToken,
+        },
+        data: productDeleteData,
+      };
 
-      // const productDeleteConfig = {
-      //   method: 'post',
-      //   maxBodyLength: Infinity,
-      //   url: `https://${shop}/admin/api/2025-04/graphql.json`,
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'X-Shopify-Access-Token': session?.accessToken,
-      //   },
-      //   data: productDeleteData,
-      // };
-
-      // const productDeleteResponse = await axios.request(productDeleteConfig);
-      // const productDeleteResponseData = productDeleteResponse.data?.data?.productDelete?.userErrors;
-
-      // // Handle user errors from product deletion
-      // if (productDeleteResponseData.data.productDelete.userErrors.length > 0) {
-      //   return json({
-      //     message: "Failed to delete product from Shopify",
-      //     errors: productDeleteResponseData.data.productDelete.userErrors,
-      //     status: 400,
-      //   });
-      // }
+      const productDeleteResponse = await axios.request(productDeleteConfig);
+     
+     
 
       const result = await db.bundle.deleteMany({
         where: {
@@ -727,13 +708,10 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         },
       });
 
-      if (result.count === 0) {
-        return json({
-          message: `No discounts found for domain: ${shop} and product_id: ${productId}`,
-          status: 404,
-        });
-      }
 
+      console.log(result, 'result ki h')
+
+     
       return json({
         message: "Bundle successfully deleted",
         status: 200,
@@ -741,10 +719,10 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         step: 5,
       });
     } catch (error) {
-      console.error("Error in delete process:", error);
+      console.error("Error in delete process:", error?.response?.data?.errors);
       return json({
         message: "Failed to delete discount",
-        error: error.message,
+        error: error,
         status: 500,
         method: "delete",
         step: 5,

@@ -311,9 +311,6 @@ export async function action({ request }) {
       try {
         const response = await axios.request(config);
 
-
-        console.log(response?.data?.errors, 'created discount')
-
         discount_id =
           response?.data?.data?.discountAutomaticBxgyCreate
             ?.automaticDiscountNode?.id;
@@ -474,8 +471,6 @@ export async function action({ request }) {
             discountId.map((id) => deactivateDiscount(id)),
           );
         }
-
-        console.log("Discount Responses:", responses);
 
         const existingApp = await prisma.appActiveInactive.findFirst({
           where: { AppType: appType },
@@ -932,6 +927,15 @@ export default function BuyGetPage() {
     setActiveTab("Products");
     setShowComponent(1);
     setShowPage("first");
+    setShowButton({
+      titleSection: "Show",
+      title: "Show",
+      productTitle: "Show",
+      bundleCost: "Show",
+      callAction: "Show",
+      textBelow: "Show",
+      background: "Show"
+    })
   };
 
   const handleBack = () => {
@@ -3136,6 +3140,38 @@ export default function BuyGetPage() {
                               </>
 
                               <>
+ 
+                               {/* Above Title Section Fields */}
+                             <input type="hidden" name="titleSectionText" value={titleSection.titleSectionText} />
+                            <input type="hidden" name="titleSectionSize" value={titleSection.titleSectionSize} />
+                            <input type="hidden" name="titleSectionColor" value={titleSection.titleSectionColor} />
+                             {/* Title Fields */}
+                             <input type="hidden" name="titleText" value={title.titleText} />
+                            <input type="hidden" name="titleSize" value={title.titleSize}/>
+                            <input type="hidden" name="titleColor" value={title.titleColor} />
+                             {/* Product Title */}
+                             <input type="hidden" name="productSize" value={productTitle.productSize} />
+                            <input type="hidden" name="productColor" value={productTitle.productColor} />
+                           
+                             {/* Bundle Cost */}
+                             <input type="hidden" name="bundleCostSize" value={bundleCost.bundleCostSize} />
+                            <input type="hidden" name="bundleCostColor" value={bundleCost.bundleCostColor} />
+                            <input type="hidden" name="bundleCostComparedPrice" value={bundleCost.bundleCostComparedPrice} />
+                            <input type="hidden" name="bundleCostSave" value={bundleCost.bundleCostSave} />
+                             {/* CTA Fields */}
+                             <input type="hidden" name="ctaText" value={callAction.ctaText} />
+                            <input type="hidden" name="ctaSize" value={callAction.ctaSize} />
+                            <input type="hidden" name="ctaColor" value={callAction.ctaColor} />
+                            <input type="hidden" name="cart" value={cart} />
+                             {/* Text Below CTA Fields */}
+                             <input type="hidden" name="tbText" value={textBelow.tbText} />
+                            <input type="hidden" name="tbSize" value={textBelow.tbSize} />
+                            <input type="hidden" name="tbColor" value={textBelow.tbColor} />
+                             {/* Background Fields */}
+                             <input type="hidden" name="backgroundColor" value={background.backgroundColor} />
+                            <input type="hidden" name="backgroundShadow" value={background.backgroundShadow} />
+
+
                                 <div className={styles.Add_btn}>
                                   <button
                                     type="button"

@@ -19,13 +19,10 @@ const AddProduct = ({
   const handleParentCheckBox = (e, product, variants) => {
     const isSelected = e.target.checked;
     const productId = product.node.id;
-  
+
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
-      if (!updatedProducts[currentIndex]) {
-        updatedProducts[currentIndex] = { productId: null, variants: [] };
-      }
-  
+
       if (isSelected) {
         updatedProducts[currentIndex] = {
           productId,
@@ -34,40 +31,55 @@ const AddProduct = ({
       } else {
         delete updatedProducts[currentIndex];
       }
-  
+
+      console.log(updatedProducts, "updatedProducts");
       return updatedProducts;
     });
   };
 
-  const handleChildCheckBox = (e, productId, variantId) => {
-    const isSelected = e.target.checked;
 
+  const handleChildCheckBox = (e, productId, variantId, variant, item) => {
+    const isSelected = e.target.checked;
+  
     setSectionProduct((prev) => {
       const updatedProducts = { ...prev };
       if (!updatedProducts[currentIndex]) {
-        updatedProducts[currentIndex] = { productId, variants: [] };
+        updatedProducts[currentIndex] = { productId, variants: [], price: 0, titles: [], images: []  };
       }
   
+      const currentProduct = updatedProducts[currentIndex];
+  
       if (isSelected) {
-        if (!updatedProducts[currentIndex].variants.includes(variantId)) {
-          updatedProducts[currentIndex] = {
-            ...updatedProducts[currentIndex],
-            variants: [...updatedProducts[currentIndex].variants, variantId],
-          };
+        if (!currentProduct.variants.includes(variantId)) {
+          currentProduct.variants.push(variantId);
+          currentProduct.titles.push(variant.node.title); 
+          currentProduct.price += parseFloat(variant.node.price || 0); 
+           
+        const imageSrc = variant.node.image || item.node.images?.edges[0]?.node?.src; 
+        currentProduct.images.push(imageSrc);
         }
       } else {
-        updatedProducts[currentIndex].variants = updatedProducts[currentIndex].variants.filter(
+        currentProduct.variants = currentProduct.variants.filter(
           (id) => id !== variantId
         );
-        if (updatedProducts[currentIndex].variants.length === 0) {
+  
+        currentProduct.titles = currentProduct.titles.filter(
+          (title) => title !== variant.node.title
+        );
+        currentProduct.price -= parseFloat(variant.node.price || 0);
+  
+        if (currentProduct.variants.length === 0) {
           delete updatedProducts[currentIndex];
         }
       }
   
+      updatedProducts[currentIndex] = { ...currentProduct };
+  
+      console.log(updatedProducts, 'updatedProducts');
       return updatedProducts;
     });
   };
-
+  
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -92,6 +104,8 @@ const AddProduct = ({
           {filteredProducts && filteredProducts?.map((item, index) => {
             const productId = item.node.id;
             const variants = item.node.variants.edges;
+
+            
 
             return (
               <React.Fragment key={index}>
@@ -121,7 +135,9 @@ const AddProduct = ({
                   </div>
                   <div className={styles.productbyx}>
                     {variants && variants.map((variant, photoIndex) => {
-                      const variantId = variant.node.title;
+                      const variantId = variant.node.id;
+
+                      console.log(variant,'variant price')
 
                       return (
                         <React.Fragment key={photoIndex}>
@@ -137,7 +153,7 @@ const AddProduct = ({
                                 ) || false
                               }
                               onChange={(e) =>
-                                handleChildCheckBox(e, productId, variantId)
+                                handleChildCheckBox(e, productId, variantId, variant, item)
                               }
                             />
                             <label htmlFor={variantId}></label>
@@ -156,10 +172,10 @@ const AddProduct = ({
         </ul>
 
         <div className={`${styles.addBtn} ${styles.textEnd}`}>
-          <button type="button" onClick={onClose} className={styles.Backbtn}>
+        <button type="button" onClick={onClose} className={styles.Backbtn}>
             Cancel
           </button>
-          <button type="button" onClick={onClose} className={styles.NextBtn}>
+        <button type="button" onClick={onClose} className={styles.NextBtn}>
             Save
           </button>
         </div>
