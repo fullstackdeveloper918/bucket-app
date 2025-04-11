@@ -702,7 +702,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
      
      
 
-      const result = await db.bundle.deleteMany({
+      const result = await db.bundle.delete({
         where: {
           AND: [{ id: parseInt(productId) }, { domainName: shop }],
         },
@@ -802,6 +802,7 @@ export default function PlansPage() {
 
   const [sections, setSections] = useState([1]);
   const [sectionProduct, setSectionProduct] = useState({});
+  const [showBundles, setShowBundles] = useState({});
   const [currentIndex, setCurrentIndex] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [cart, setCart] = useState("Cart");
@@ -1583,7 +1584,7 @@ export default function PlansPage() {
                         >
                           <Form method="POST">
                             <label className={styles.switch}>
-                              <input
+                              <input 
                                 type="checkbox"
                                 name="checkbox"
                                 value={card?.isActive}

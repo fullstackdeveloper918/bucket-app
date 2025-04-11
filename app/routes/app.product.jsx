@@ -1709,6 +1709,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
         }}
       >
         {showImportPopup == 1 && (
+                 <Form method="post" encType="multipart/form-data">
           <div className={styles.modal_content}>
             <h3>Import Reviews</h3>
             <div className={styles.modalHeading}>
@@ -1743,7 +1744,10 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     <option value="Temu">Temu</option>
                     <option value="CSV">CSV</option>
                   </select>
-                 <input type="file" name="" accept="./csv" id="" />
+           
+                  <input type="file" accept=".csv" name="selected_csv" />
+                    
+                
                 </div>
               </div>
 
@@ -1785,32 +1789,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
               )}
 
 
-              {/* {
-                importSource === "CSV" && (
-                  <div>
-                     <CSVUpload />
-                    </div>
               
-                )
-              } */}
-
-              {/* {importSource === "CSV" && (
-                <div className={styles.input_labelCustomize}>
-                  <label htmlFor="csvUpload">Import File</label>
-                  <input
-                    type="file"
-                    id="csvUpload"
-                    accept=".csv"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file && file.type !== "text/csv") {
-                        alert("Only CSV files are allowed!");
-                        e.target.value = ""; // Clear the input field
-                      }
-                    }}
-                  />
-                </div>
-              )} */}
 
               {importSource !== "CSV" && (
                 <div className={styles.timing_after}>
@@ -1867,10 +1846,9 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   Launch
                 </button>
               )}
-              {importSource == "CSV" && (
+              {importSource !== "CSV" && (
                 <button
                   type="submit"
-                  // onClick={() => setShowImportPopup(2)}
                   name="intent"
                   value="UploadCSV"
                   className={styles.NextBtn}
@@ -1880,6 +1858,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
               )}
             </div>
           </div>
+          </Form>
         )}
 
         {showImportPopup == 2 && (

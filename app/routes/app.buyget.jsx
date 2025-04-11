@@ -214,6 +214,11 @@ export async function action({ request }) {
                   },
                 },
               },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: false,
+                orderDiscounts: false,
+              },
               usesPerOrderLimit: "1",
             },
           },
@@ -252,6 +257,12 @@ export async function action({ request }) {
                     },
                   },
                 },
+                
+              },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: false,
+                orderDiscounts: false,
               },
               usesPerOrderLimit: "1",
             },
@@ -290,6 +301,11 @@ export async function action({ request }) {
                     },
                   },
                 },
+              },
+              combinesWith: {
+                productDiscounts: true,
+                shippingDiscounts: false,
+                orderDiscounts: false,
               },
               usesPerOrderLimit: "1",
             },
@@ -626,10 +642,7 @@ export async function action({ request }) {
           status: 400,
         });
       }
-
     }
-
-
 
       // Delete from your local database
       const result = await db.bogoxy.deleteMany({
