@@ -19,6 +19,7 @@ api_version = "2025-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+#test
 scopes = "write_products,read_customers,write_customers,read_draft_orders,write_draft_orders,read_products,customer_read_customers,customer_write_customers,customer_read_orders,customer_write_orders,customer_read_draft_orders,write_order_edits,read_order_edits,write_orders,read_orders,read_order_submission_rules,write_order_submission_rules"
 
 [auth]
