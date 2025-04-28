@@ -9,6 +9,7 @@ generator client {
 // enough when changing adapters.
 // See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 //hello
+//hello
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL") // Use MySQL connection string
