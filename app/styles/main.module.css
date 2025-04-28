@@ -7,7 +7,12 @@
   margin: 0px auto;
   padding: 0px 30px;
 }
-
+.containerDivReplay {
+  max-width: 1800px;
+  width: 100%;
+  margin: 0px auto;
+  padding: 0px 30px;
+}
 .upper_box .PolarisBox {
   background: #fff;
   box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
@@ -81,7 +86,7 @@
 
 .inline_stackwraper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
 }
 
@@ -114,7 +119,7 @@
 .checked_btn .btn_one,
 .btn_one {
   cursor: pointer;
-  padding: 10px 30px;
+  padding: 8px 40px;
   border-radius: 25px;
   border: 1px solid rgba(226, 226, 226, 1) !important;
   background: transparent;
@@ -231,7 +236,7 @@
 
 .tableWarpper table {
   width: 100%;
-  padding: 0px 30px;
+  padding: 0px 0px;
 }
 
 .tableWarpper table thead {
@@ -315,7 +320,7 @@
 }
 
 .requestReview {
-  padding: 10px 50px;
+  padding: 8px 40px;
 }
 
 .requestReview h3 {
@@ -526,7 +531,7 @@
 
 .input_labelCustomize {
   display: flex;
-  gap: 15px;
+  gap: 10px;
   flex-direction: column;
 }
 
@@ -563,7 +568,7 @@
   text-decoration-skip-ink: none;
   color: #000 !important;
   display: flex;
-  gap: 15px;
+  gap: 10px;
   justify-content: center;
   align-items: center;
 }
@@ -879,7 +884,7 @@
   padding: 0px !important;
   text-align: center !important;
   font-family: Poppins;
-  font-size: 20.38px;
+  font-size: 18.38px;
   font-weight: 500;
   line-height: 30.57px;
   letter-spacing: -0.01em;
@@ -887,7 +892,7 @@
   text-decoration-skip-ink: none;
   color: #000 !important;
   display: flex;
-  gap: 15px;
+  gap: 10px;
   justify-content: flex-start;
   align-items: center;
   width: fit-content;
@@ -2083,7 +2088,7 @@ justify-content: center;
   font-weight: 600;
   line-height: 46.14px;
   letter-spacing: -0.01em;
-  text-align: center;
+  text-align: left;
   color: #292d32;
 }
 
@@ -2314,8 +2319,8 @@ justify-content: center;
 
 .activeButton {
   border: 0;
-  height: 51px;
-  padding: 5.52px 20px;
+  height: auto !important;
+  padding: 5.52px 30px !important;
   gap: 8px;
   border-radius: 12px;
   background-color: rgba(0, 172, 79, 0.1);
@@ -2461,21 +2466,21 @@ input:checked+.slider:before {
   min-height: unset;
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 50px;
   /* padding: 0 0 30px; */
   margin-top: 50px;
 }
 
 .variantHeadimg {
   font-family: Poppins;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 500;
   line-height: 38.12px;
   letter-spacing: -0.01em;
   text-align: left;
   text-underline-position: from-font;
   text-decoration-skip-ink: none;
-  padding: 0px 0px 0px 20px;
+  padding: 0px 0px 0px 0px;
 
 }
 
@@ -2483,8 +2488,11 @@ input:checked+.slider:before {
   background: #fff;
   padding: 30px;
   margin-top: 40px;
+  margin-bottom: 40px;
+
   border-radius: 60px;
   box-shadow: 6px 6px 54px 0px #0000000d;
+  
 }
 
 .exampleBundle .deletedBtn,
@@ -2742,6 +2750,9 @@ input:checked+.slider:before {
 
 .relativeDiv {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .videoPlayerImg {
@@ -3086,7 +3097,8 @@ a.prev.dot {
 }
 
 .productbyx {
-  padding-left: 4.5rem;
+  /* padding-left: 4.5rem; */
+  padding: 0 !important;
 }
 
 .bundleNewApp {
@@ -3169,7 +3181,7 @@ a.prev.dot {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .activeButton {
@@ -3243,6 +3255,7 @@ a.prev.dot {
   width: 100%;
   top: calc(100% - 38%);
   z-index: 9;
+  left: 0;
 }
 .newAppdeop{
   top: calc(100% - 25%);
@@ -3539,6 +3552,8 @@ span.nuberstep {
   max-width: fit-content;
   margin: 0px auto 20px;
 }
+
+
 /* visitdetail end*/
 @media (max-width: 1440px) {
 
@@ -3555,7 +3570,7 @@ span.nuberstep {
     border-radius: 8px;
     font-size: 13px;
     line-height: 28.98px;
-    padding: 10px 20px;
+    padding: 8px 40px;
     display: flex;
     align-items: center;
   }
@@ -3618,7 +3633,7 @@ span.nuberstep {
   .input_labelCustomize .inputDiv,
   .input_labelCustomize .inputUpload {
     min-height: 50px;
-    padding: 10px 40px;
+    padding: 8px 30px;
     border-radius: 12px;
     font-size: 16px;
   }
@@ -3657,9 +3672,11 @@ span.nuberstep {
   }
 
   .timing_after>div label {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 600;
     line-height: 16px;
+    color: #000000;
+
   }
 
   .timing_after>div .inputTiming input {
@@ -3835,9 +3852,7 @@ span.nuberstep {
     gap: 0px 40px;
   }
 
-  .modal_content .formGroup input:checked+label:after {
-    top: 3px;
-  }
+
 
   .modal_content .Backbtn,
   .modal_content .NextBtn {
@@ -4065,11 +4080,7 @@ span.nuberstep {
   color: rgba(172, 172, 172, 1);
   margin: 0px 0px 7px;
 }
-.inline_stackwraper {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
+
 .upper_box .ContentWraper h3 {
   font-family: Poppins;
   font-size: 37.22px;
@@ -4096,10 +4107,10 @@ span.nuberstep {
   margin-top: 0px;
 }
 
-.checked_btn .btn_one {
+._checked_btn_1c4ly_207 ._btn_one_1c4ly_227 {
   cursor: pointer;
-  padding: 10px 30px;
-  border-radius: 25px;
+  padding: 8px 40px;
+  border-radius: 100px;
   border: 1px solid rgba(226, 226, 226, 1) !important;
   background: transparent;
   font-family: Poppins;
@@ -4218,7 +4229,7 @@ span.nuberstep {
 }
 .tableWarpper table {
   width: 100%;
-  padding: 0px 30px;
+  padding: 0px 0px;
 }
 .tableWarpper table thead {
   border-bottom: 1.38px solid #eeeeee !important;
@@ -4313,7 +4324,7 @@ span.nuberstep {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
 } 
 .arrowActive svg path{
 fill:#00AC4F;
@@ -4336,6 +4347,7 @@ fill:#00AC4F;
 }
 .sortBy .butttonsTab span, .sortBy .selectDropdown li{
   font-size: 16px;
+  white-space: nowrap;
 }
 .selectDropdown{
   position: absolute;
@@ -4663,7 +4675,7 @@ cursor: pointer;
     border-radius: 8px;
     font-size: 13px;
     line-height: 28.98px;
-    padding: 10px 20px;
+    padding: 10px 30px;
   }
   .headingWrapper h4 {
     font-size: 22px;
@@ -4852,11 +4864,22 @@ cursor: pointer;
   }
 }
 /* Hide pagination links if there are too many pages */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   .pagination a {
     font-size: 12px;
     padding: 6px 10px;
   }
+  .exampleBundle {
+    background: #fff;
+    padding: 30px;
+    margin-top: 40px;
+    border-radius: 60px;
+    box-shadow: 6px 6px 54px 0px #0000000d;
+    flex-wrap: wrap-reverse !important;
+  }
+  .btnFlexWrapper{
+    font-size: 24px;
+}
 }
 
 

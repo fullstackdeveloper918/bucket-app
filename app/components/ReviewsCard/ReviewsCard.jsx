@@ -3,6 +3,7 @@ import styles from "../../components/Reviews/Reviews.module.css";
 import collectedIcon from "../../routes/assets/collected_icon.svg";
 
 const ReviewsCard = ({ item, totalCount, index }) => {
+  console.log(totalCount, "totalCount");
   return (
     <>
       <div className={styles.upper_box}>

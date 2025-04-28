@@ -105,12 +105,15 @@ export async function action({ request }) {
 
   if (request.method === "POST") {
     if (intent === "stepThird") {
+      let selectedProducts = [];
+
       const bundle_id = formData.get("bundle_id");
       const product = formData.get("product");
       const bundle_name = formData.get("bundle_name");
       const discount_method = formData.get("discount_method");
       const product_details = formData.get("product_details");
-      const [selectedProducts] = JSON.parse(product_details);
+      const productDetailsRaw = formData.get("product_details");
+      selectedProducts = JSON.parse(productDetailsRaw);
       const tier = formData.get("tier");
       const position = formData.get("position");
       const section = formData.get("section");
@@ -981,7 +984,6 @@ export default function VolumePage() {
     },
   ]);
 
-
   const [titleSection, seTitleSection] = useState({
     titleSectionText: "Limited Time Offer",
     titleSectionSize: 13,
@@ -1063,9 +1065,27 @@ export default function VolumePage() {
     setIsProduct(false);
   };
 
-
   const addProductSection = () => {
     setSections([...sections, sections.length + 1]);
+  };
+
+  const handleDeleteProducts = (section) => {
+    console.log(section, sections, sectionProduct, "section index");
+
+    // Remove the section from the sections array
+    const updatedSections = sections.filter((item) => item !== section);
+
+    // Use Object.entries() to filter out the section key-value pair
+    const updatedProducts = Object.entries(sectionProduct)
+      .filter(([key]) => key !== String(section)) // Filter out the key corresponding to `section`
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {});
+
+    // Update the state
+    setSectionProduct(updatedProducts);
+    setSections(updatedSections);
   };
 
   const handleTitle = (e) => {
@@ -1107,8 +1127,6 @@ export default function VolumePage() {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -1169,7 +1187,19 @@ export default function VolumePage() {
   };
 
   const handleSecond = () => {
+    if (tier.length === 0) {
+      notify.error("Please add at least one tier to proceed", {
+        position: "top-center",
+        style: {
+          background: "red",
+          color: "white",
+        },
+      });
+      return;
+    }
+  
     const [singleTier] = tier;
+  
     if (singleTier.badge === "") {
       notify.error("Please enter badge text", {
         position: "top-center",
@@ -1230,7 +1260,7 @@ export default function VolumePage() {
       setShowPage("third");
     }
   };
-
+  
   const handleTierChange = (index, field, value) => {
     const updatedTiers = tier.map((item, i) =>
       i === index ? { ...item, [field]: value } : item,
@@ -1252,10 +1282,14 @@ export default function VolumePage() {
     setShowPage("first");
   };
 
-  const handleDelete = (item) => {
-    setShowPopup(true);
-    setProductId(item.id);
-    setDiscountId(item.discount_id);
+  const handleDelete = (index) => {
+    const updatedTiers = tier.filter((_, i) => i !== index);
+    setTier(updatedTiers);
+  
+  
+    // setShowPopup(true);
+    // setProductId(item.id);
+    // setDiscountId(item.discount_id);
   };
 
   const handleOnChange = (e, index) => {
@@ -1263,7 +1297,6 @@ export default function VolumePage() {
     setCheckIndex(index);
     submit(e.target.form);
   };
-
 
   const handleAddTier = () => {
     const newTier = {
@@ -1282,7 +1315,6 @@ export default function VolumePage() {
       { method: "POST" },
     );
   };
-
 
   const openModal = (section) => {
     setCurrentIndex(section);
@@ -1336,6 +1368,8 @@ export default function VolumePage() {
           badge: "Most Popular",
         },
       ]);
+      setSectionProduct({});
+
       setPosition("Below Section");
       setSection("Buy Buttons");
       seTitleSection({
@@ -1411,6 +1445,8 @@ export default function VolumePage() {
   useEffect(() => {
     if (editState) {
       setId(details.id);
+      setSectionProduct(details?.products);
+
       setValues((prev) => ({
         ...prev,
         bundle_name: details.bundle_name,
@@ -2019,7 +2055,7 @@ export default function VolumePage() {
                                                   sectionProduct[section]
                                                     .productId,
                                               )
-                                              .map((product) => (
+                                              .map((product, index) => (
                                                 <>
                                                   {console.log(
                                                     product,
@@ -2045,7 +2081,9 @@ export default function VolumePage() {
                                                       styles.image_name
                                                     }
                                                   >
-                                                    <h4>14K Gold Necklace</h4>
+                                                    <h4>
+                                                      {product.node.title}
+                                                    </h4>
                                                     <button
                                                       type="button"
                                                       className={
@@ -2054,6 +2092,7 @@ export default function VolumePage() {
                                                       onClick={() =>
                                                         handleDeleteProducts(
                                                           section,
+                                                          index,
                                                         )
                                                       }
                                                     >
@@ -2251,7 +2290,8 @@ export default function VolumePage() {
                                   </div>
                                   <div className={styles.image_name}>
                                     <button
-                                      onClick={() => handleDelete(item.id)}
+                                    type="button"
+                                      onClick={() => handleDelete(index)}
                                       className={styles.deletedBtn}
                                     >
                                       <svg
@@ -2276,14 +2316,14 @@ export default function VolumePage() {
                             </React.Fragment>
                           ))}
 
-                           <div className={styles.Addanotherdiv}>
-                             <label
-                               style={{ cursor: "pointer", color: "blue" }}
-                               onClick={handleAddTier}
-                             >
+                          <div className={styles.Addanotherdiv}>
+                            <label
+                              style={{ cursor: "pointer", color: "blue" }}
+                              onClick={handleAddTier}
+                            >
                               <span>+</span>Add Another Tier
-                             </label>
-                             </div>
+                            </label>
+                          </div>
 
                           <div className={styles.Add_btn}>
                             <button
@@ -2348,11 +2388,11 @@ export default function VolumePage() {
                                   name="discount_method"
                                   value={values.discount_method}
                                 />
-                                <input
+                               {/* <input
                                   type="hidden"
                                   name="product_details"
                                   value={JSON.stringify(selectProducts)}
-                                />
+                                />*/}
                                 <div className={styles.input_labelCustomize}>
                                   <label htmlFor="">Position</label>
 
@@ -2520,6 +2560,8 @@ export default function VolumePage() {
                                             onClick={() =>
                                               handleBtn("titleSection", "Hide")
                                             }
+                                            name="showButtonTitle"
+                                            value={showButton.titleSection}
                                           >
                                             Hide
                                           </li>
@@ -3235,12 +3277,14 @@ export default function VolumePage() {
                                       />
                                       <label htmlFor="shadow">Shadow</label>
                                     </div>
-                                  </>
+                                  </> 
                                 )}
                               </div>
                             </>
 
                             <>
+                            <input type="hidden" name="titleSectionNew" value={showButton.titleSection} />
+
                               <div className={styles.Add_btn}>
                                 <button
                                   onClick={() => setShowPage("second")}
@@ -3304,94 +3348,100 @@ export default function VolumePage() {
                             </h4>
 
                             <div className={styles.left_productsample}>
-                              {
-                                tier.map((item) => (
+                              {tier.map((item) => (
                                 <>
                                   <div className={styles.bundlewrapper}>
-                                <div
-                                  className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
-                                >
-                                  <div className={styles.inputDiv}>
-                                    <input
-                                      type="radio"
-                                      name=""
-                                      id="bundle Product"
-                                      checked
-                                    />
-                                    <label htmlFor="">{item?.title}</label>
+                                    <div
+                                      className={` ${styles.leftProduct} ${styles.leftProductWraper}`}
+                                    >
+                                      <div className={styles.inputDiv}>
+                                        <input
+                                          type="radio"
+                                          name=""
+                                          id="bundle Product"
+                                          checked
+                                        />
+                                        <label htmlFor="">{item?.title}</label>
+                                      </div>
+
+                                      <div className={styles.Pricetab}>
+                                        <span className={styles.delPriceOuter}>
+                                          <span className={styles.delPrice}>
+                                            $50
+                                          </span>
+                                        </span>
+                                        <span className={styles.totalPrice}>
+                                          $25
+                                        </span>
+                                        <span className={styles.SaveTab}>
+                                          save {item?.discount}%
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className={styles.sizecolor}>
+                                      <ul>
+                                        <li>
+                                          <div className={styles.sizecolrDiv}>
+                                            <label>
+                                              <span>Size</span>
+                                            </label>
+                                            <select name="" id="">
+                                              <option value="newest">
+                                                25+5 CM
+                                              </option>
+                                              <option value="old">
+                                                25+5 CM
+                                              </option>
+                                            </select>
+                                          </div>
+
+                                          <div className={styles.sizecolrDiv}>
+                                            <label>
+                                              <span>Color</span>
+                                            </label>
+                                            <select name="" id="">
+                                              <option value="newest">
+                                                Gold 14K
+                                              </option>
+                                              <option value="old">
+                                                Gold 14K
+                                              </option>
+                                            </select>
+                                          </div>
+                                        </li>
+
+                                        <li>
+                                          <div className={styles.sizecolrDiv}>
+                                            <select name="" id="">
+                                              <option value="newest">
+                                                25+5 CM
+                                              </option>
+                                              <option value="old">
+                                                25+5 CM
+                                              </option>
+                                            </select>
+                                          </div>
+
+                                          <div className={styles.sizecolrDiv}>
+                                            <select name="" id="">
+                                              <option value="newest">
+                                                Gold 14K
+                                              </option>
+                                              <option value="old">
+                                                Gold 14K
+                                              </option>
+                                            </select>
+                                          </div>
+                                        </li>
+                                      </ul>
+                                    </div>
+                                    <div className={styles.mostPopular}>
+                                      Most Popular ⭐️
+                                    </div>
                                   </div>
-
-                                  <div className={styles.Pricetab}>
-                                    <span className={styles.delPriceOuter}>
-                                      <span className={styles.delPrice}>
-                                        $50
-                                      </span>
-                                    </span>
-                                    <span className={styles.totalPrice}>
-                                      $25
-                                    </span>
-                                    <span className={styles.SaveTab}>
-                                     save {item?.discount}%
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className={styles.sizecolor}>
-                                  <ul>
-                                    <li>
-                                      <div className={styles.sizecolrDiv}>
-                                        <label>
-                                          <span>Size</span>
-                                        </label>
-                                        <select name="" id="">
-                                          <option value="newest">
-                                            25+5 CM
-                                          </option>
-                                          <option value="old">25+5 CM</option>
-                                        </select>
-                                      </div>
-
-                                      <div className={styles.sizecolrDiv}>
-                                        <label>
-                                          <span>Color</span>
-                                        </label>
-                                        <select name="" id="">
-                                          <option value="newest">
-                                            Gold 14K
-                                          </option>
-                                          <option value="old">Gold 14K</option>
-                                        </select>
-                                      </div>
-                                    </li>
-
-                                    <li>
-                                      <div className={styles.sizecolrDiv}>
-                                        <select name="" id="">
-                                          <option value="newest">
-                                            25+5 CM
-                                          </option>
-                                          <option value="old">25+5 CM</option>
-                                        </select>
-                                      </div>
-
-                                      <div className={styles.sizecolrDiv}>
-                                        <select name="" id="">
-                                          <option value="newest">
-                                            Gold 14K
-                                          </option>
-                                          <option value="old">Gold 14K</option>
-                                        </select>
-                                      </div>
-                                    </li>
-                                  </ul>
-                                </div>
-                                <div className={styles.mostPopular}>
-                                  Most Popular ⭐️
-                                </div>
-                              </div>
                                 </>
-                                ))
-                              }
+                              ))}
                             </div>
 
                             <div className={styles.productTotal}>

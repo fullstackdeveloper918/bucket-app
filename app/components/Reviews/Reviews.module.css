@@ -1,0 +1,100 @@
+
+.containerDiv {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0px auto;
+    padding: 0px 30px;
+  }
+  
+  .upper_box .PolarisBox {
+    background: #fff;
+    box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
+    border-radius: 36px;
+    min-height: 131px;
+    display: flex;
+    align-items: center;
+    padding: 25px 30px;
+  }
+  
+  .inlineStack {
+    display: flex;
+    gap: 20px;
+    align-items: end;
+  }
+  
+  .upper_box .Polaris-ShadowBevel {
+    border: 0px;
+    background: transparent !important;
+    box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
+  }
+  
+  .upper_box .Polaris-ShadowBevel::before {
+    display: none;
+  }
+  
+  .upper_box {
+    background: transparent !important;
+  }
+  
+  .inline_stack>.Polaris-InlineStack {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+  }
+  
+  .upper_box .Polaris-InlineStack {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: end;
+  }
+  
+  .upper_box .card_img {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #00ac4f1a;
+    border-radius: 90px;
+  }
+  
+  .upper_box img {
+    object-fit: contain;
+  }
+  
+  .upper_box .ContentWraper h6 {
+    font-family: Poppins;
+    font-size: 16.28px;
+    font-weight: 400;
+    line-height: 24.42px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: rgba(172, 172, 172, 1);
+    margin: 0px 0px 7px;
+  }
+  
+  .inline_stackwraper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+  }
+  
+  .upper_box .ContentWraper h3 {
+    font-family: Poppins;
+    font-size: 37.22px;
+    font-weight: 600;
+    line-height: 37.22px;
+    letter-spacing: -0.01em;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+  }
+  
+  .containerDiv .Polaris-Page {
+    max-width: 1134px !important;
+    width: 100%;
+  }

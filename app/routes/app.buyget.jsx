@@ -214,11 +214,6 @@ export async function action({ request }) {
                   },
                 },
               },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: false,
-                orderDiscounts: false,
-              },
               usesPerOrderLimit: "1",
             },
           },
@@ -257,12 +252,6 @@ export async function action({ request }) {
                     },
                   },
                 },
-                
-              },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: false,
-                orderDiscounts: false,
               },
               usesPerOrderLimit: "1",
             },
@@ -301,11 +290,6 @@ export async function action({ request }) {
                     },
                   },
                 },
-              },
-              combinesWith: {
-                productDiscounts: true,
-                shippingDiscounts: false,
-                orderDiscounts: false,
               },
               usesPerOrderLimit: "1",
             },
@@ -642,7 +626,10 @@ export async function action({ request }) {
           status: 400,
         });
       }
+
     }
+
+
 
       // Delete from your local database
       const result = await db.bogoxy.deleteMany({
@@ -1077,6 +1064,7 @@ export default function BuyGetPage() {
   };
 
 
+  console.log(buySections,sectionBuyProduct,"buySections")
   const addProductSection = (type) => {
     if(type === "Buy") {
       setBuySections([...buySections, buySections.length + 1])
@@ -1165,11 +1153,38 @@ export default function BuyGetPage() {
   }, [actionResponse]);
 
   useEffect(() => {
+    const normalizeProduct = (product) => {
+      if (!product) return product;
+    
+      const normalizedProduct = {};
+      
+      Object.keys(product).forEach((key) => {
+        // Change the key from `2`, `3`, etc., to `1` or whichever logic you prefer
+        const newKey = '1'; // You can choose the logic for the key change here
+        normalizedProduct[newKey] = product[key];
+      });
+      
+      return normalizedProduct;
+    };
+    
     if (showEdit) {
-      console.log(details, 'details')
+      console.log(details, 'details');
+    
+      let updatedBuyProduct = details.buysx;
+      let updatedGetProduct = details.gety;
+    
+      // Normalize both buysx and gety objects
+      updatedBuyProduct = normalizeProduct(updatedBuyProduct);
+      updatedGetProduct = normalizeProduct(updatedGetProduct);
+    
+      console.log("Normalized Buy Product:", updatedBuyProduct);
+      console.log("Normalized Get Product:", updatedGetProduct);
+    
+      // Set the modified state
       setId(details.id);
-      setSectionBuyProduct(details.buysx)
-      setSectionGetProduct(details.gety)
+      setSectionBuyProduct(updatedBuyProduct);
+      setSectionGetProduct(updatedGetProduct);
+    
       setValues((prev) => ({
         ...prev,
         bundle_name: details.bundle_name,
@@ -1179,50 +1194,60 @@ export default function BuyGetPage() {
       }));
       setPosition(details.position);
       setSection(details.section);
+    
       seTitleSection((prev) => ({
         ...prev,
         titleSectionText: details.title_section.text,
         titleSectionSize: details.title_section.size,
         titleSectionColor: details.title_section.color,
       }));
+    
       seTitle((prev) => ({
         ...prev,
         titleText: details.title.text,
         titleSize: details.title.size,
         titleColor: details.title.color,
       }));
+    
       setProductTitle((prev) => ({
         ...prev,
         productSize: details.product.size,
         productColor: details.product.color,
       }));
+    
       setBundleCost((prev) => ({
         ...prev,
         bundleCostColor: details.bundle_cost.color,
         bundleCostSize: details.bundle_cost.size,
-        bundleCostComparedPrice:
-          details.bundle_cost.comparedPrice == "on" ? true : false,
-        bundleCostSave: details.bundle_cost.save == "on" ? true : false,
+        bundleCostComparedPrice: details.bundle_cost.comparedPrice === "on",
+        bundleCostSave: details.bundle_cost.save === "on",
       }));
+    
       setCallAction((prev) => ({
         ...prev,
         ctaText: details.call_to_action_button.text,
         ctaSize: details.call_to_action_button.size,
         ctaColor: details.call_to_action_button.color,
       }));
+    
       setCart(details.call_to_action_button.cart);
+    
       setTextBelow((prev) => ({
         ...prev,
         tbText: details.text_below_cta.text,
         tbSize: details.text_below_cta.size,
         tbColor: details.text_below_cta.color,
       }));
+    
       setBackGround((prev) => ({
         ...prev,
         backgroundColor: details.backgroud.color,
-        backgroundShadow: details.backgroud.shadow == "on" ? true : false,
+        backgroundShadow: details.backgroud.shadow === "on",
       }));
     }
+    
+    
+    
   }, [showEdit]);
 
   useEffect(() => {
@@ -1321,6 +1346,35 @@ export default function BuyGetPage() {
   const filteredBundles = getFilteredBundles();
 
 
+
+
+  const handleDeleteProducts = (product) => {
+    const productId = product?.node?.id;
+  
+    // loop through sectionBuyProduct to find which section has this productId
+    const updatedSectionBuyProduct = { ...sectionBuyProduct };
+  
+    for (const sectionKey in updatedSectionBuyProduct) {
+      if (updatedSectionBuyProduct[sectionKey].productId === productId) {
+        delete updatedSectionBuyProduct[sectionKey];
+      }
+    }
+  
+    setSectionBuyProduct(updatedSectionBuyProduct);
+  };
+  const handleDeleteGetProduct = (product, section) => {
+    // Check if the product is in the section's list of products
+    const updatedSection = { ...sectionGetProduct };
+  
+    // Remove the product from the section
+    delete updatedSection[section];
+  
+    // Update the state or store to reflect the change
+    setSectionGetProduct(updatedSection);
+  
+    // Alternatively, if the state is managed in another way (like Redux), dispatch an action to remove the product.
+  };
+  
   return (
     <>
       <div className={styles.containerDiv}>
@@ -1793,6 +1847,7 @@ export default function BuyGetPage() {
                                           <h4>{product?.node?.title}</h4>
                                           <button
                                             type="button"
+                                            onClick={()=>handleDeleteProducts(product)}
                                             className={styles.deletedBtn}
                                           >
                                             <img
@@ -1825,68 +1880,63 @@ export default function BuyGetPage() {
                           </div>
 
                           <div className={styles.addProductdiv}>
-                            {getSections.map((section, index) => (
-                              <div
-                                className={styles.input_labelCustomize}
-                                key={section.id}
-                              >
-                                <label htmlFor="">
-                                  Customer Gets {index + 1}
-                                </label>
-                                <div className={styles.input_labelCustomize}>
-                                  {!sectionGetProduct[section] ? (
-                                    <label
-                                      htmlFor="file-upload"
-                                      style={{
-                                        cursor: "pointer",
-                                        color: "blue",
-                                      }}
-                                      className={styles.inputUpload}
-                                      onClick={() => openModal(section, "GET")}
-                                    >
-                                      <span>+</span>Add Product
-                                    </label>
-                                  ) : (
-                                    <div className={styles.images_upload}>
-                                      {
-                                        products.filter((item) => item.node.id === sectionGetProduct[section].productId).map((product) => (
-                                          <>
-                                          
-                                          <img
-                                          src={product.node.images.edges[0].node.src}
-                                          alt="Preview"
-                                          style={{
-                                            width: "100px",
-                                            height: "100px",
-                                            maxHeight: "100px",
-                                            maxWidth: "100px",
-                                            objectFit: "cover",
-                                            borderRadius: "15px",
-                                          }}
-                                        />
-                                        <div className={styles.image_name}>
-                                          <h4>{product?.node?.title}</h4>
-                                          <button
-                                            type="button"
-                                            className={styles.deletedBtn}
-                                          >
-                                            <img
-                                              src={deletedIcon}
-                                              width={20}
-                                              height={20}
-                                              />
-                                            Delete
-                                          </button>
-                                        </div>
-                                              </>
-                                        ))
-                                      }
-                                     
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
+                          {getSections.map((section, index) => (
+  <div className={styles.input_labelCustomize} key={section.id}>
+    <label htmlFor="">
+      Customer Gets {index + 1}
+    </label>
+    <div className={styles.input_labelCustomize}>
+      {!sectionGetProduct[section] || !sectionGetProduct[section].productId ? (
+        <label
+          htmlFor="file-upload"
+          style={{
+            cursor: "pointer",
+            color: "blue",
+          }}
+          className={styles.inputUpload}
+          onClick={() => openModal(section, "GET")}
+        >
+          <span>+</span>Add Product
+        </label>
+      ) : (
+        <div className={styles.images_upload}>
+          {products
+            .filter((item) => item.node.id === sectionGetProduct[section].productId)
+            .map((product) => (
+              <>
+                <img
+                  src={product.node.images.edges[0].node.src}
+                  alt="Preview"
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    maxHeight: "100px",
+                    maxWidth: "100px",
+                    objectFit: "cover",
+                    borderRadius: "15px",
+                  }}
+                />
+                <div className={styles.image_name}>
+                  <h4>{product?.node?.title}</h4>
+                  <button
+                    type="button"
+                    className={styles.deletedBtn}
+                    onClick={() => handleDeleteGetProduct(product, section)}
+                  >
+                    <img src={deletedIcon} width={20} height={20} />
+                    Delete
+                  </button>
+                </div>
+              </>
+            ))}
+        </div>
+      )}
+    </div>
+  </div>
+))}
+
+
+
                           </div>
 
                           <div className={styles.Addanotherdiv}>

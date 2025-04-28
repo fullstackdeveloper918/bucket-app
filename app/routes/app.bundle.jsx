@@ -22,6 +22,7 @@ import {
 } from "@remix-run/react";
 import { authenticate } from "../shopify.server";
 import { Toaster, toast as notify } from "sonner";
+
 import {
   fetchSalesData,
   getAllBundle,
@@ -106,6 +107,7 @@ export async function action({ request }) {
 
   if (request.method === "POST") {
     if (intent === "stepThird") {
+      console.log("run");
       const bundle_id = formData.get("bundle_id");
       const name = formData.get("bundle_name");
       const products = formData.get("selectProducts");
@@ -115,7 +117,22 @@ export async function action({ request }) {
       const displayLocation = formData.get("displayBundle");
       const method = formData.get("discount");
       const chooseAmount = formData.get("amount");
-
+      const showButtonTitle = formData.get("titleSectionNew");
+      console.log(showButtonTitle, "formdatav here");
+      
+      console.log(
+        bundle_id,
+        name,
+        products,
+        selectProducts,
+        position,
+        section,
+        displayLocation,
+        method,
+        chooseAmount,
+        showButtonTitle,
+        "Check consoles",
+      );
       const title_section = {
         text: formData.get("titleSectionText"),
         size: formData.get("titleSectionSize"),
@@ -155,33 +172,31 @@ export async function action({ request }) {
         shadow: formData.get("backgroundShadow"),
       };
 
-
       const titleExist = await db.bundle.findFirst({
         where: { name: name },
       });
 
-     if(!bundle_id && titleExist) {
-      return json({
-        status: 500,
-        step: 4,
-        message: 'Bundle Title should be unique'
-      })
-     }
+      if (showButtonTitle === "Show" && !bundle_id && titleExist) {
+        return json({
+          status: 500,
+          step: 4,
+          message: "Bundle Title should be unique",
+        });
+      }
 
       const result = [];
 
-
-      const sectionProductArray = Object.values(selectProducts);
-      sectionProductArray.forEach((product) => {
-        product.variants.forEach((variantId,index) => {
-          result.push({
-            option1: variantId,
-            price: product.price,
-            title: product.titles[index] || '',
-            compare_at_price: "",
-          });
-        });
-      });
+      // const sectionProductArray = Object.values(selectProducts);
+      // sectionProductArray.forEach((product) => {
+      //   product.variants.forEach((variantId, index) => {
+      //     result.push({
+      //       option1: variantId,
+      //       price: product.price,
+      //       title: product.titles[index] || "",
+      //       compare_at_price: "",
+      //     });
+      //   });
+      // });
 
       try {
         let productResponse;
@@ -306,7 +321,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
                 startsAt: "2025-01-07T01:28:55-05:00",
                 minimumRequirement: {
                   quantity: {
-                    greaterThanOrEqualToQuantity: null
+                    greaterThanOrEqualToQuantity: null,
                   },
                 },
                 customerGets: {
@@ -343,14 +358,13 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           data: data,
         };
 
-        const discountResponse = await axios.request(discountconfig)
+        const discountResponse = await axios.request(discountconfig);
         const discount_id =
           discountResponse?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
 
         const discount_info =
           discountResponse?.data?.data?.discountAutomaticBasicCreate;
-
 
         const bundleData = {
           name,
@@ -402,6 +416,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           activeTab: "Return",
         });
       } catch (error) {
+        console.log("error is here");
         console.log("Error encountered:", error);
         return json({
           message: "Failed to process the request",
@@ -442,8 +457,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         console.log(err, "check err");
         return { error: "Failed to deactivate bundle" };
       }
-    }
-     else if (intent === "handleAllDiscount") {
+    } else if (intent === "handleAllDiscount") {
       const discountId = JSON.parse(formData.get("discountID"));
       const active = formData.get("active");
       const appType = "bundle";
@@ -537,7 +551,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             data: { status: active === "Active" ? 1 : 0 },
           });
 
-       
           return json({
             message: "App status updated successfully",
             data: updatedApp,
@@ -634,9 +647,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       const discount_id = formData.get("discount_id");
       const product_bundle_id = formData.get("product_bundle_id");
 
-
-      console.log(productId, 'productIdkiski')
-
+      console.log(productId,discount_id,product_bundle_id, "productIdkiski");
 
       if (discount_id) {
         const data = JSON.stringify({
@@ -686,32 +697,28 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           }
         }`,
       );
-      
+
       const productDeleteConfig = {
-        method: 'post',
+        method: "post",
         maxBodyLength: Infinity,
         url: `https://${shop}/admin/api/2025-04/graphql.json`,
         headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Access-Token': session?.accessToken,
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": session?.accessToken,
         },
         data: productDeleteData,
       };
 
       const productDeleteResponse = await axios.request(productDeleteConfig);
-     
-     
 
-      const result = await db.bundle.delete({
+      const result = await db.bundle.deleteMany({
         where: {
           AND: [{ id: parseInt(productId) }, { domainName: shop }],
         },
       });
 
+      console.log(result, "result ki h");
 
-      console.log(result, 'result ki h')
-
-     
       return json({
         message: "Bundle successfully deleted",
         status: 200,
@@ -802,7 +809,6 @@ export default function PlansPage() {
 
   const [sections, setSections] = useState([1]);
   const [sectionProduct, setSectionProduct] = useState({});
-  const [showBundles, setShowBundles] = useState({});
   const [currentIndex, setCurrentIndex] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
   const [cart, setCart] = useState("Cart");
@@ -814,7 +820,7 @@ export default function PlansPage() {
   const [isProduct, setIsProduct] = useState(false);
   const [id, setId] = useState(null);
   const [details, setDetails] = useState({});
-
+  const [showProducts, setShowProducts] = useState(false);
   const [showButton, setShowButton] = useState({
     titleSection: "Show",
     title: "Show",
@@ -1031,6 +1037,15 @@ export default function PlansPage() {
         style: {
           background: "red",
           color: "white",
+          position: "fixed",
+          right: "10px",
+          top: "10px",
+          zIndex: "500",
+          display: "flex",
+          alignItems: "ceneter",
+          padding: "10px 20px",
+          borderRadius: "6px",
+          gap: "10px",
         },
       });
     } else {
@@ -1054,13 +1069,13 @@ export default function PlansPage() {
       bundleCost: "Show",
       callAction: "Show",
       textBelow: "Show",
-      background: "Show"
-    })
-
+      background: "Show",
+    });
   };
 
   const handleActive = (e, item) => {
     e.preventDefault();
+    console.log(e,item,"items here to check")
     setActive(false);
     setActiveApp(item);
     fetcher.submit(
@@ -1137,38 +1152,32 @@ export default function PlansPage() {
       }
     }
   };
-  
- 
 
   useEffect(() => {
-
-      if (actionResponse?.step === 6) {
+    if (actionResponse?.step === 6) {
       if (actionResponse?.status === 200) {
-          notify.success(actionResponse?.message, {
-            position: "top-center",
-            style: {
-              background: "green",
-              color: "white",
-            },
-          });
-        } else if (actionResponse?.status === 500) {
-          notify.success(actionResponse?.message, {
-            position: "top-center",
-            style: {
-              background: "red",
-              color: "white",
-            },
-          });
-        }
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "green",
+            color: "white",
+          },
+        });
+      } else if (actionResponse?.status === 500) {
+        notify.success(actionResponse?.message, {
+          position: "top-center",
+          style: {
+            background: "red",
+            color: "white",
+          },
+        });
       }
+    }
   }, [actionResponse]);
-
-
-
 
   useEffect(() => {
     if (actionResponse?.step === 4) {
-    if (actionResponse?.status === 200) {
+      if (actionResponse?.status === 200) {
         notify.success(actionResponse?.message, {
           position: "top-center",
           style: {
@@ -1234,8 +1243,7 @@ export default function PlansPage() {
           },
         });
       }
-
-    } 
+    }
   }, [actionResponse]);
 
   useEffect(() => {
@@ -1328,18 +1336,23 @@ export default function PlansPage() {
     setDiscountId(item.discount_id);
   };
 
-  const handleDeleteProducts = (item) => {
-    if (sectionProduct.hasOwnProperty(item)) {
-      const updatedSectionProduct = { ...sectionProduct };
-      delete updatedSectionProduct[item];
+  const handleDeleteProducts = (section) => {
+    console.log(section, sections, sectionProduct, "section index");
 
-      // Update the state with the new object
-      setSectionProduct(updatedSectionProduct);
+    // Remove the section from the sections array
+    const updatedSections = sections.filter((item) => item !== section);
 
-      console.log(`Product at index ${item} has been deleted.`);
-    } else {
-      console.log(`No product found at index ${item}`);
-    }
+    // Use Object.entries() to filter out the section key-value pair
+    const updatedProducts = Object.entries(sectionProduct)
+      .filter(([key]) => key !== String(section)) // Filter out the key corresponding to `section`
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {});
+
+    // Update the state
+    setSectionProduct(updatedProducts);
+    setSections(updatedSections);
   };
 
   const getFilteredBundles = () => {
@@ -1392,6 +1405,7 @@ export default function PlansPage() {
 
   return (
     <>
+      <Toaster />
       <div className={styles.containerDiv}>
         <TitleBar title="Bundles App"></TitleBar>
         <div className={styles.flexWrapper}>
@@ -1419,7 +1433,7 @@ export default function PlansPage() {
               </button>
             )}
 
-            <h2>Product Bundles</h2>
+            <h2>Product Bundle</h2>
           </div>
 
           <div
@@ -1506,7 +1520,7 @@ export default function PlansPage() {
                     {month}{" "}
                     <img
                       src={drop_downImg}
-                      className={styles.inactiveImg}
+                      // className={styles.inactiveImg}
                       width={15}
                       height={8}
                     />{" "}
@@ -1584,7 +1598,7 @@ export default function PlansPage() {
                         >
                           <Form method="POST">
                             <label className={styles.switch}>
-                              <input 
+                              <input
                                 type="checkbox"
                                 name="checkbox"
                                 value={card?.isActive}
@@ -1896,7 +1910,6 @@ export default function PlansPage() {
                                         )
                                         .map((product) => (
                                           <>
-                                            
                                             <img
                                               src={
                                                 product.node.images.edges[0]
@@ -2293,7 +2306,7 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Above title section</h4>
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() =>
                                       handleShowStatus("titleSection")
@@ -2328,9 +2341,13 @@ export default function PlansPage() {
                                           Show
                                         </li>
                                         <li
+                                        name="titleSections"
+                                        
                                           onClick={() =>
                                             handleBtn("titleSection", "Hide")
                                           }
+
+                                          value={showButton.titleSection}
                                         >
                                           Hide
                                         </li>
@@ -2410,7 +2427,7 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Title</h4>
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() => handleShowStatus("title")}
                                     className={styles.butttonsTab}
@@ -2517,7 +2534,7 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Product Title</h4>
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() =>
                                       handleShowStatus("productTitle")
@@ -2613,7 +2630,7 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Bundle Cost</h4>
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() =>
                                       handleShowStatus("bundleCost")
@@ -2748,7 +2765,7 @@ export default function PlansPage() {
                                 className={`${styles.headingWrapper} ${styles.heading_img}`}
                               >
                                 <h4>Call To Action Button</h4>
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() =>
                                       handleShowStatus("callAction")
@@ -2871,7 +2888,6 @@ export default function PlansPage() {
                                             </li>
                                           </ul>
                                         )}
-                                        
                                       </div>
                                     </div>
                                   </div>
@@ -2911,7 +2927,7 @@ export default function PlansPage() {
                             <div className={styles.divideDiv}>
                               <div className={styles.heading_img}>
                                 <h3>Text Below CTA</h3>{" "}
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() =>
                                       handleShowStatus("textBelow")
@@ -3023,7 +3039,7 @@ export default function PlansPage() {
                             <div className={styles.divideDiv}>
                               <div className={styles.heading_img}>
                                 <h3>Background</h3>{" "}
-                                <div type="button" class={styles.btn_one}>
+                                <div type="button" className={styles.btn_one}>
                                   <div
                                     onClick={() =>
                                       handleShowStatus("background")
@@ -3119,37 +3135,115 @@ export default function PlansPage() {
                           </>
 
                           <>
+                            {/* Above Title Section Fields */}
+                            <input
+                              type="hidden"
+                              name="titleSectionText"
+                              value={titleSection.titleSectionText}
+                            />
+                            <input
+                              type="hidden"
+                              name="titleSectionSize"
+                              value={titleSection.titleSectionSize}
+                            />
+                            <input
+                              type="hidden"
+                              name="titleSectionColor"
+                              value={titleSection.titleSectionColor}
+                            />
+                            {/* Title Fields */}
+                            <input
+                              type="hidden"
+                              name="titleText"
+                              value={title.titleText}
+                            />
+                            <input
+                              type="hidden"
+                              name="titleSize"
+                              value={title.titleSize}
+                            />
+                            <input
+                              type="hidden"
+                              name="titleColor"
+                              value={title.titleColor}
+                            />
+                            {/* Product Title */}
+                            <input
+                              type="hidden"
+                              name="productSize"
+                              value={productTitle.productSize}
+                            />
+                            <input
+                              type="hidden"
+                              name="productColor"
+                              value={productTitle.productColor}
+                            />
 
-                             {/* Above Title Section Fields */}
-                             <input type="hidden" name="titleSectionText" value={titleSection.titleSectionText} />
-                            <input type="hidden" name="titleSectionSize" value={titleSection.titleSectionSize} />
-                            <input type="hidden" name="titleSectionColor" value={titleSection.titleSectionColor} />
-                             {/* Title Fields */}
-                             <input type="hidden" name="titleText" value={title.titleText} />
-                            <input type="hidden" name="titleSize" value={title.titleSize}/>
-                            <input type="hidden" name="titleColor" value={title.titleColor} />
-                             {/* Product Title */}
-                             <input type="hidden" name="productSize" value={productTitle.productSize} />
-                            <input type="hidden" name="productColor" value={productTitle.productColor} />
-                           
-                             {/* Bundle Cost */}
-                             <input type="hidden" name="bundleCostSize" value={bundleCost.bundleCostSize} />
-                            <input type="hidden" name="bundleCostColor" value={bundleCost.bundleCostColor} />
-                            <input type="hidden" name="bundleCostComparedPrice" value={bundleCost.bundleCostComparedPrice} />
-                            <input type="hidden" name="bundleCostSave" value={bundleCost.bundleCostSave} />
-                             {/* CTA Fields */}
-                             <input type="hidden" name="ctaText" value={callAction.ctaText} />
-                            <input type="hidden" name="ctaSize" value={callAction.ctaSize} />
-                            <input type="hidden" name="ctaColor" value={callAction.ctaColor} />
+                            {/* Bundle Cost */}
+                            <input
+                              type="hidden"
+                              name="bundleCostSize"
+                              value={bundleCost.bundleCostSize}
+                            />
+                            <input
+                              type="hidden"
+                              name="bundleCostColor"
+                              value={bundleCost.bundleCostColor}
+                            />
+                            <input
+                              type="hidden"
+                              name="bundleCostComparedPrice"
+                              value={bundleCost.bundleCostComparedPrice}
+                            />
+                            <input
+                              type="hidden"
+                              name="bundleCostSave"
+                              value={bundleCost.bundleCostSave}
+                            />
+                            {/* CTA Fields */}
+                            <input
+                              type="hidden"
+                              name="ctaText"
+                              value={callAction.ctaText}
+                            />
+                            <input
+                              type="hidden"
+                              name="ctaSize"
+                              value={callAction.ctaSize}
+                            />
+                            <input
+                              type="hidden"
+                              name="ctaColor"
+                              value={callAction.ctaColor}
+                            />
                             <input type="hidden" name="cart" value={cart} />
-                             {/* Text Below CTA Fields */}
-                             <input type="hidden" name="tbText" value={textBelow.tbText} />
-                            <input type="hidden" name="tbSize" value={textBelow.tbSize} />
-                            <input type="hidden" name="tbColor" value={textBelow.tbColor} />
-                             {/* Background Fields */}
-                             <input type="hidden" name="backgroundColor" value={background.backgroundColor} />
-                            <input type="hidden" name="backgroundShadow" value={background.backgroundShadow} />
-                          
+                            {/* Text Below CTA Fields */}
+                            <input
+                              type="hidden"
+                              name="tbText"
+                              value={textBelow.tbText}
+                            />
+                            <input
+                              type="hidden"
+                              name="tbSize"
+                              value={textBelow.tbSize}
+                            />
+                            <input
+                              type="hidden"
+                              name="tbColor"
+                              value={textBelow.tbColor}
+                            />
+                            {/* Background Fields */}
+                            <input
+                              type="hidden"
+                              name="backgroundColor"
+                              value={background.backgroundColor}
+                            />
+                            <input
+                              type="hidden"
+                              name="backgroundShadow"
+                              value={background.backgroundShadow}
+                            />
 
                             <div className={styles.Add_btn}>
                               <button
@@ -3215,7 +3309,7 @@ export default function PlansPage() {
                                   )
                                   .map((item) => (
                                     <>
-                                    {console.log(item, 'item has')}
+                                      {console.log(item, "item has")}
                                       <div
                                         className={styles.left_productsample}
                                       >
@@ -3345,7 +3439,6 @@ export default function PlansPage() {
         )}
       </div>
 
-      <Toaster />
       {isProduct && (
         <AddProduct
           onClose={closeModal}

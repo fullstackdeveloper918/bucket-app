@@ -1,202 +1,450 @@
+const shopifyConfig1 = window.shopifyConfig || {};
 
-const label = document.querySelector('.dropdown__filter-selected');
-const options = Array.from(document.querySelectorAll('.dropdown__select-option'));
+// jQuery code for fetching discount data
+$(document).ready(async function() {
+    $('.sectionloader').show();
+    const appUrl12 = "https://voted-checks-coupon-edited.trycloudflare.com"
+    console.log(appUrl12,"Running");
+const productid= $('.bundle_main').attr('date_area');
+console.log("product id bundle",productid);
+    const fetchDiscountCodeCount = async () => {
 
-options.forEach((option) => {
-    option.addEventListener('click', () => {
-    console.log("first")
-        label.textContent = option.textContent;
-        // Close the dropdown after selection
-        document.querySelector('.dropdown__switch').checked = false;
-    });
-});
+        const apiUrl = `${appUrl12}/app/api/get/bundle`;
 
-// Change option selected for second dropdown
-const label2 = document.querySelector('.dropdown__filter-selected2');
-const options2 = Array.from(document.querySelectorAll('.dropdown__select-option2'));
+        try {
+            const response = await $.ajax({
+                url: apiUrl,
+                method: 'GET',
+                dataType: 'json',
+            });
+        
+            if (response && response.shopDetails) {
+                $('.bundle_main').hide();
+            
+                response.shopDetails.forEach(bundle => {
+                    if (bundle.products) {
+                        const sectionarea = bundle.section; 
+                       
+                        const sectionposition = bundle.position;
+                        const bundleproduct=bundle.product_bundle_id;
+                        const method = bundle.method; 
+                        const chooseAmount = bundle.chooseAmount;
+                        const priceshow = `${chooseAmount}${method === "Percentage" ? "%" : ""}`;
+                        const headingText = `Add Product and save ${chooseAmount}${method === "Percentage" ? "%" : ""}!`;
+                        const titleSection = bundle.title_section;
+                        const titleText = bundle.title_section.text;
+                        const titleColor = bundle.title_section.color;
+                        const titleSize = bundle.title_section.size;     
+                        const text_below_cta = bundle.text_below_cta;
+                        const text_below_cta_text = bundle.text_below_cta.text;
+                        const text_below_cta_color = bundle.text_below_cta.color;
+                        const text_below_cta_size = bundle.text_below_cta.size;
+                        const addtocarttext= bundle.call_to_action_button.text;
+                        const addtocartsize= bundle.call_to_action_button.size;
+                        const addtocartcolor= bundle.call_to_action_button.color;
+                        const bundle_cost = bundle.bundle_cost;
+                        const bundle_cost_size = bundle.bundle_cost.size;
+                        const bundle_cost_color = bundle.bundle_cost.color;
+                        const bundle_cost_comparedPrice = bundle.bundle_cost.comparedPrice;
+                        const bundle_cost_save = bundle.bundle_cost.save;
+                         // Initialize variables for total calculation
+                        let totalOriginalPrice = 0;
+                        let totalDiscountedPrice = 0;
 
-options2.forEach((option) => {
-    option.addEventListener('click', () => {
-    console.log("first")
+                        // Arrays to store product images and names
+                        let productImages = [];
+                        let productNames = [];
+                        let variantDetails = [];
+                
+                    
+                        let accessToken = ''; // Global variable
+                        let formattedShopDomain = window.location.origin.replace(/^https?:\/\//, "");
+                        let fetchPromises = [];
 
-        label2.textContent = option.textContent;
-        // Close the dropdown after selection
-        document.querySelector('.dropdown__switch2').checked = false;
-    });
-});
+fetch(`${appUrl12}/app/api/getToken`)
+    .then(response => response.json())
+    .then(tokenData => {
+        accessToken = tokenData.shopDetails.accessToken;
 
-// Close dropdown onclick outside (for the first dropdown)
-document.addEventListener('click', (e) => {
-    const toggle = document.querySelector('.dropdown__switch');
-    const element = e.target;
+        Object.keys(bundle.products).forEach(key => {
+            const product = bundle.products[key];
+            const productId = product.productId;
+            const extractedProductId = productId.split('/').pop();
+            const productName = `Product ${productId}`;
+            // price
+            const productPrice = product.price;
+            const productimages= product.images;
+            let discountedPrice = productPrice;
+          
+            totalOriginalPrice += productPrice;
+            totalDiscountedPrice += discountedPrice;
+            // wnd price
 
-    if (element === toggle) return;
+            const fetchPromise = fetch(`https://${formattedShopDomain}/admin/api/2025-04/products/${extractedProductId}.json`, {
+                method: 'GET',
+                headers: { 'X-Shopify-Access-Token': accessToken }
+            })
+            .then(response => response.json())
+            .then(data => {
 
-    const isDropdownChild = element.closest('.dropdown__filter');
-    if (!isDropdownChild) {
-        toggle.checked = false;  // Close the first dropdown
-    }
-});
+                const productData = data.product;
+                const productImage = productData.images[0].src;
+                const variantIds = productData.variants.map(variant => variant.id.toString());
 
-// Close dropdown onclick outside (for the second dropdown)
-document.addEventListener('click', (e) => {
- 
-    const toggle2 = document.querySelector('.dropdown__switch2');
-    const element = e.target;
+                product.variants.forEach(variant => {
+                    const extractedVariantId = variant.split('/').pop();
 
-    if (element === toggle2) return;
-
-    const isDropdownChild2 = element.closest('.dropdown__filter2');
-    if (!isDropdownChild2) {
-        toggle2.checked = false;  // Close the second dropdown
-    }
-});
-document.addEventListener("DOMContentLoaded", async () => {
-  console.log("Running");
-
-  const fetchDiscountCodeCount = async () => {
-    const apiUrl = "https://mocki.io/v1/f33ccdd5-4c32-48fa-b323-5f98f662381c";
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: "GET",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error fetching data: ${response.statusText}`);
-      }
-
-      const { data } = await response.json(); 
-      if (data && data.length > 0) {
-        const discount = data[0]; 
-        const intial= discount.buy_x.product_id;
-        const second= discount.get_y.product_id;
-        const productinitial= document.querySelector(".product_mainc.product_intial");
-        productinitial.setAttribute('product',productinitial)
-        const product_image1=discount.buy_x.product_imge;
-        const product_image2=discount.get_y.product_imge;
-
-        const productimageinitial=document.querySelector(".product_mainc.product_intial img");
-    
-        productimageinitial.src =product_image1;
-        const productimageinitial2=document.querySelector(".product_mainc.product_final img");
-        productimageinitial2.src =product_image2;
-        const productsecond= document.querySelector(".product_mainc.product_final");
-        productsecond.setAttribute('product',second)
-        const discountCountElement = document.querySelector(".heading_bundle h2");
-        const saveblock = document.querySelector(".save_block");
-        if (discountCountElement) {
-          discountCountElement.textContent = `Add Bundle And Save ${discount.discount_off }`;
-        }
-        if (saveblock) {
-            saveblock.textContent=`Save ${discount.discount_off}`;
-        }
-       
-      
- 
-       function parsePrice(price) {
-           const currencySymbol = price.match(/[^0-9.]/g)?.join("") || ""; // Extract currency symbol
-           const numericValue = parseFloat(price.replace(/[^0-9.]/g, "")); // Remove non-numeric characters
-           return { numericValue, currencySymbol }; // Return both numeric value and symbol
-       }
-       
-       // Parse prices and extract their numeric values and symbols
-       const parsedInitialPrice = parsePrice(discount.buy_x.product_price);
-       const parsedSecondPrice = parsePrice(discount.get_y.product_price);
-       
-       // Use the currency symbol from the first product as the default
-       const currencySymbol = parsedInitialPrice.currencySymbol;
-       
-       // Extract numeric values
-       const productInitialPrice = parsedInitialPrice.numericValue;
-       const productSecondPrice = parsedSecondPrice.numericValue;
-       
-       // Calculate the total price
-       const totalPrice = productInitialPrice + productSecondPrice;
-       
-       // Log total price for debugging
-       console.log("Total Price:", totalPrice);
-       
-       // Update total price in the DOM (with extracted currency symbol)
-       const pricediv = document.querySelector(".pro_price.linethoorgh h3");
-       pricediv.textContent = `${totalPrice.toFixed(2)}${currencySymbol}`; // Add currency symbol dynamically
-       
-       // Calculate discount amount
-       const discount_off = discount.discount_off;
-       const discount_off2 = parseFloat(discount_off.replace("%", "")); // Remove % and parse as number
-       const discountAmount = (totalPrice * discount_off2) / 100;
-       
-       // Calculate discounted price
-       const discountedPrice = totalPrice - discountAmount;
-       
-       // Update discounted price in the DOM (with extracted currency symbol)
-       const actualprice = document.querySelector(".pro_price.noneline h3");
-       actualprice.textContent = `${discountedPrice.toFixed(2)}${currencySymbol}`; // Add currency symbol dynamically
-       
-      } else {
-        console.warn("No discount data available");
-      }
-    } catch (error) {
-      console.error("Error fetching discount codes:", error);
-    }
-  };
-
-  fetchDiscountCodeCount();
-  if (window.Shopify && window.Shopify.cart) {
-    const cart = window.Shopify.cart;
-    console.log("Cart Object:", cart);
-
-    // Access cart type (if available)
-    const cartType = cart.attributes?.cart_type || "No cart type specified";
-    console.log("Cart Type:", cartType);
-} else {
-    console.log("Cart information not available in window.Shopify.");
-}
-
-
-});
-$(document).ready(function () {
-    $('.bucket_add_cart_btn').on('click', function () {
-        // Fetch discount data from the API
-        $.ajax({
-            type: 'GET',
-            url: 'https://mocki.io/v1/f33ccdd5-4c32-48fa-b323-5f98f662381c',
-            dataType: 'json',
-            success: function (response) {
-                if (response.status === "success" && response.data.length > 0) {
-                    // Extract buy_x and get_y data
-                    const discountData = response.data[0];
-                    const buyX = discountData.buy_x;
-                    const getY = discountData.get_y;
-
-                    // Prepare items for adding to the cart
-                    const items = [
-                        { id: buyX.variant_id, quantity: buyX.quantity_required },
-                        { id: getY.variant_id, quantity: getY.quantity_given }
-                    ];
-
-                    // Add items to cart
-                    $.ajax({
-                        type: 'POST',
-                        url: '/cart/add.js',
-                        data: JSON.stringify({ items: items }),
-                        dataType: 'json',
-                        contentType: 'application/json',
-                        success: function (data) {
-                            console.log("Cart updated successfully:", data);
-                            $('#CartCount span:first').text(data.item_count); // Update cart count
-                        },
-                        error: function (error) {
-                            console.error("Error adding items to cart:", error);
+                    if (variantIds.includes(extractedVariantId)) {
+                        const matchedVariant = productData.variants.find(v => v.id === parseInt(extractedVariantId));
+                        const matchedImage = productData.images.find(image => image.id === matchedVariant.image_id);
+                        if (matchedImage) {
+                            productImages.push(matchedImage.src);
+                            productNames.push(productName);
+                        } else {
+                            // Use fallback product image if no variant image matched
+                            productImages.push(productImage);
                         }
-                    });
-                } else {
-                    console.error("Invalid response from API");
-                }
-            },
-            error: function (error) {
-                console.error("Error fetching discount data:", error);
+                        
+                    }
+                });
+            })
+            .catch(error => console.error("Fetch error:", error));
+            // Then, calculate discounted total
+            if (method === "Percentage") {
+                totalDiscountedPrice = totalOriginalPrice - (totalOriginalPrice * (chooseAmount / 100));
+            } else {
+                totalDiscountedPrice = totalOriginalPrice - chooseAmount;
             }
+            
+            console.log("Total Discounted Price:", totalDiscountedPrice);
+            
+            // Final discount summary
+            const totalDiscountAmount = totalOriginalPrice - totalDiscountedPrice;
+            fetchPromises.push(fetchPromise);
+        });
+        console.log("sectionarea ",sectionarea)
+        // After all product data is fetched
+        Promise.all(fetchPromises).then(() => {
+            $('.sectionloader').hide();
+             if(sectionarea === "Product Description"){
+                console.log(sectionarea)
+             }
+             let bundleHTML = "";
+
+             if (sectionarea === "Product Description") {
+                 bundleHTML = `
+                   <div class="bundle_csrt page-width ${sectionarea} for_desktop_block">
+                         <div class="child_bundle_csrt">
+                             <div class="subheading_bundle" style="color:${titleColor}; font-size:${titleSize}">
+                                 <p>${titleText}</p>
+                             </div>
+                             <div class="heading_bundle_csrt"><h2>${headingText}</h2></div>
+                              <div class="bundle_child_csrt">
+                             ${productImages.map((image, index) => `
+                                 <div class="product_block_csrt">
+                                     <div class="product_variants">
+                                         <img class="image_csrt" src="${image}" alt="${productNames[index]}">
+                                     </div>
+                                 </div>
+                             `).join('')}
+                         </div>
+                             <div class="price_block">
+                                 ${bundle_cost_comparedPrice === "on" ? `
+                                     <div class="total_csrt"><span>Total</span></div>
+                                     <div class="bundle_price">
+                                         <div class="pro_price linethoorgh"><h3>${totalOriginalPrice}$</h3></div>
+                                         <div class="pro_price noneline"><h3>${totalDiscountedPrice}$</h3></div>
+                                         ${bundle_cost_save === "on" ? `
+                                     <div class="save_block" style="background:#000; color:#fff;">Save ${priceshow}</div>` : ''}
+                                     </div>` : ''}
+                                 
+                             </div>
+                             <div class="bucket_add_cart_btn" data-pro-nsrt="${bundleproduct}" style="color:${addtocartcolor}; font-size:${addtocartsize}">
+                                 <a class="add_cart">${addtocarttext}</a>
+                                 <img class="cartloader" style="display:none" src="https://cdn.shopify.com/s/files/1/0619/3784/4303/files/Animation_-_1744185329762.gif?v=1744185431"/>
+                             </div>
+                             <p style="color:${text_below_cta_color}; font-size:${text_below_cta_size}">${text_below_cta_text}</p>
+                         </div>
+                        
+                     </div>
+                 `;
+             } 
+             else if (sectionarea === "Buy Buttons") {
+                bundleHTML = `
+               <div class="bundle_csrt page-width ${sectionarea} for_desktop_block">
+                         <div class="child_bundle_csrt">
+                             <div class="subheading_bundle" style="color:${titleColor}; font-size:${titleSize}">
+                                 <p>${titleText}</p>
+                             </div>
+                             <div class="heading_bundle_csrt"><h2>${headingText}</h2></div>
+                              <div class="bundle_child_csrt">
+                             ${productImages.map((image, index) => `
+                                 <div class="product_block_csrt">
+                                     <div class="product_variants">
+                                         <img class="image_csrt" src="${image}" alt="${productNames[index]}">
+                                     </div>
+                                 </div>
+                             `).join('')}
+                         </div>
+                             <div class="price_block">
+                                 ${bundle_cost_comparedPrice === "on" ? `
+                                     <div class="total_csrt"><span>Total</span></div>
+                                     <div class="bundle_price">
+                                         <div class="pro_price linethoorgh"><h3>${totalOriginalPrice}$</h3></div>
+                                         <div class="pro_price noneline"><h3>${totalDiscountedPrice}$</h3></div>
+                                         ${bundle_cost_save === "on" ? `
+                                     <div class="save_block" style="background:#000; color:#fff;">Save ${priceshow}</div>` : ''}
+                                     </div>` : ''}
+                                 
+                             </div>
+                             <div class="bucket_add_cart_btn" data-pro-nsrt="${bundleproduct}" style="color:${addtocartcolor}; font-size:${addtocartsize}">
+                                 <a class="add_cart">${addtocarttext}</a>
+                                 <img class="cartloader" style="display:none" src="https://cdn.shopify.com/s/files/1/0619/3784/4303/files/Animation_-_1744185329762.gif?v=1744185431"/>
+                             </div>
+                             <p style="color:${text_below_cta_color}; font-size:${text_below_cta_size}">${text_below_cta_text}</p>
+                         </div>
+                        
+                     </div>
+            `;
+             }
+             else {
+                 bundleHTML = `
+                     <div class="bundle_csrt page-width ${sectionarea} for_desktop">
+                         <div class="child_bundle_csrt">
+                             <div class="subheading_bundle" style="color:${titleColor}; font-size:${titleSize}">
+                                 <p>${titleText}</p>
+                             </div>
+                             <div class="heading_bundle_csrt"><h2>${headingText}</h2></div>
+                             <div class="price_block">
+                                 ${bundle_cost_comparedPrice === "on" ? `
+                                     <div class="total_csrt"><span>Total</span></div>
+                                     <div class="bundle_price">
+                                         <div class="pro_price linethoorgh"><h3>${totalOriginalPrice}$</h3></div>
+                                         <div class="pro_price noneline"><h3>${totalDiscountedPrice}$</h3></div>
+                                         ${bundle_cost_save === "on" ? `
+                                     <div class="save_block" style="background:#000; color:#fff;">Save ${priceshow}</div>` : ''}
+                                     </div>` : ''}
+                                 
+                             </div>
+                             <div class="bucket_add_cart_btn" data-pro-nsrt="${bundleproduct}" style="color:${addtocartcolor}; font-size:${addtocartsize}">
+                                 <a class="add_cart">${addtocarttext}</a>
+                                 <img class="cartloader" style="display:none" src="https://cdn.shopify.com/s/files/1/0619/3784/4303/files/Animation_-_1744185329762.gif?v=1744185431"/>
+                             </div>
+                             <p style="color:${text_below_cta_color}; font-size:${text_below_cta_size}">${text_below_cta_text}</p>
+                         </div>
+                         <div class="bundle_child_csrt">
+                             ${productImages.map((image, index) => `
+                                 <div class="product_block_csrt">
+                                     <div class="product_variants">
+                                         <img class="image_csrt" src="${image}" alt="${productNames[index]}">
+                                     </div>
+                                 </div>
+                             `).join('')}
+                         </div>
+                     </div>
+                        <div class="bundle_csrt page-width ${sectionarea} for_mobile">
+                         <div class="child_bundle_csrt">
+                             <div class="subheading_bundle" style="color:${titleColor}; font-size:${titleSize}">
+                                 <p>${titleText}</p>
+                             </div>
+                             <div class="heading_bundle_csrt"><h2>${headingText}</h2></div>
+                              <div class="bundle_child_csrt">
+                             ${productImages.map((image, index) => `
+                                 <div class="product_block_csrt">
+                                     <div class="product_variants">
+                                         <img class="image_csrt" src="${image}" alt="${productNames[index]}">
+                                     </div>
+                                 </div>
+                             `).join('')}
+                         </div>
+                             <div class="price_block">
+                                 ${bundle_cost_comparedPrice === "on" ? `
+                                     <div class="total_csrt"><span>Total</span></div>
+                                     <div class="bundle_price">
+                                         <div class="pro_price linethoorgh"><h3>${totalOriginalPrice}$</h3></div>
+                                         <div class="pro_price noneline"><h3>${totalDiscountedPrice}$</h3></div>
+                                         ${bundle_cost_save === "on" ? `
+                                     <div class="save_block" style="background:#000; color:#fff;">Save ${priceshow}</div>` : ''}
+                                     </div>` : ''}
+                                 
+                             </div>
+                             <div class="bucket_add_cart_btn" data-pro-nsrt="${bundleproduct}" style="color:${addtocartcolor}; font-size:${addtocartsize}">
+                                 <a class="add_cart">${addtocarttext}</a>
+                                 <img class="cartloader" style="display:none" src="https://cdn.shopify.com/s/files/1/0619/3784/4303/files/Animation_-_1744185329762.gif?v=1744185431"/>
+                             </div>
+                             <p style="color:${text_below_cta_color}; font-size:${text_below_cta_size}">${text_below_cta_text}</p>
+                         </div>
+                        
+                     </div>
+                 `;
+             }
+    
+        
+            console.log("Section area refff:", sectionarea);
+             if(sectionarea==="Buy Buttons"){
+                   if(sectionposition === "Below Section"){
+                    $(`div .product-form`).each(function () {
+                        $(this).after(bundleHTML);
+                    });
+                   }
+                   else{
+                    $(`div .product-form`).each(function () {
+                        $(this).before(bundleHTML);
+                    });
+                   }
+            
+             }
+             else if(sectionarea==="Product Description"){
+                if(sectionposition === "Below Section"){
+                    $(`div .product__description`).each(function () {
+                        $(this).before(bundleHTML);
+                    });
+                }
+                
+                else{
+                    $(`div .product__description`).each(function () {
+                        $(this).after(bundleHTML);
+                    });
+                }
+               
+             }
+             else if(sectionarea ==="End Of Product Page"){
+                $(`footer.footer`).each(function () {
+                    $(this).before(bundleHTML);
+                });
+             }
+          
+        });
+
+    })
+    .catch(error => {
+        console.error("Error fetching access token:", error);
+    });
+    let isProcessing = false;
+
+    $(document).off('click', '.bucket_add_cart_btn').on('click', '.bucket_add_cart_btn', function () {
+        $('a.add_cart').hide();
+        $('img.cartloader').show();
+
+        $('.bucket_add_cart_btn').toggleClass("active_btn")
+
+        if (isProcessing) return; // prevent rapid repeat clicks
+        isProcessing = true;
+    
+        const productcart = $(this).attr('data-pro-nsrt');
+        console.log("Clicked once. Product cart:", productcart);
+    
+        fetch(`https://${formattedShopDomain}/admin/api/2025-04/products/${productcart}.json`, {
+            method: 'GET',
+            headers: {
+                'X-Shopify-Access-Token': accessToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const variants = data.product.variants;
+            const variantIds = variants.map(variant => variant.id);
+    
+            const themestores = `${appUrl12}/app/api/get/theme`;
+    
+            $.ajax({
+                url: themestores,
+                type: "GET",
+                dataType: "json",
+                success: function (response) {
+                    console.log("Theme info:", response);
+    
+                    if (response.cart_type === "drawer") {
+                        const addAllVariants = async () => {
+                            for (let id of variantIds) {
+                                await $.ajax({
+                                    type: 'POST',
+                                    url: '/cart/add.js',
+                                    data: {
+                                        quantity: 1,
+                                        id: id
+                                    },
+                                    dataType: 'json'
+                                }).catch(error => {
+                                    console.error(`❌ Error adding variant ${id}:`, error);
+                                });
+                            }
+                            $('a.add_cart').show();
+                            $('img.cartloader').hide();
+                            $.ajax({
+                                url: '/?section_id=cart-drawer',
+                                type: 'GET',
+                                dataType: 'html',
+                                success: function (data) {
+                                    const drawerContent = $(data).find('cart-drawer').html();
+                                    $('cart-drawer').html(drawerContent);
+                                    $('cart-drawer').removeClass('is-empty').addClass('animate active');
+    
+                                    // ✅ allow future clicks again
+                                    isProcessing = false;
+                                },
+                                error: function () {
+                                    isProcessing = false; // in case of error too
+                                }
+                            });
+                        };
+    
+                        addAllVariants();
+                    } else {
+                        const addAllVariants = async () => {
+                            for (let id of variantIds) {
+                                await $.ajax({
+                                    type: 'POST',
+                                    url: '/cart/add.js',
+                                    data: {
+                                        quantity: 1,
+                                        id: id
+                                    },
+                                    dataType: 'json'
+                                }).catch(error => {
+                                    console.error(`❌ Error adding variant ${id}:`, error);
+                                });
+                            }
+    
+                            $.ajax({
+                                url: '/?section_id=cart-drawer',
+                                type: 'GET',
+                                dataType: 'html',
+                                success: function (data) {
+                                    window.location.href = '/cart';
+                                    isProcessing = false;
+                                },
+                                error: function () {
+                                    isProcessing = false; // in case of error too
+                                }
+                            });
+                        };
+    
+                        addAllVariants();
+                    }
+                },
+                error: function () {
+                    isProcessing = false; // reset on theme fetch error
+                }
+            });
+        })
+        .catch(error => {
+            console.error("Fetch error:", error);
+            isProcessing = false; // reset on product fetch error
         });
     });
+    
+                    }
+                });
+                
+                
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+        
+    };
+
+    await fetchDiscountCodeCount();
 });

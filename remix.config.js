@@ -12,9 +12,14 @@ if (
 
 /** @type {import('@remix-run/dev').AppConfig} */
 module.exports = {
-  ignoredRouteFiles: ["**/.*"],
-  appDirectory: "app",
-  serverModuleFormat: "cjs",
-  dev: { port: process.env.HMR_SERVER_PORT || 8002 },
-  future: {},
+  ignoredRouteFiles: ["**/.*"], // Ignores dotfiles in routes (e.g., .ts, .js)
+  appDirectory: "app", // Points to the directory where your Remix app code resides
+  serverModuleFormat: "cjs", // Use CommonJS format for server-side modules
+  entryClientFile: "app/entry.client.tsx", // Points to the client-side entry file
+  dev: {
+    port: process.env.HMR_SERVER_PORT || 8002, // Hot module replacement server port
+  },
+  future: {
+    // Keep future configuration options empty or specify any upcoming features (if needed)
+  },
 };

@@ -37,16 +37,18 @@ import DeletePopup from "../components/DeletePopup/Deletepopup";
 
 const ReviewsCard = lazy(() => import("../components/ReviewsCard/ReviewsCard"));
 
-export async function loader({ request }) {
+export async function loader(request) {
+  const checkTotal = await db.review.findMany();
+  const single = getSingleReviews(request);
+  console.log("hanjisingle", single);
   return json(
     await promiseHash({
       productReviews: getProductInfo(),
       totalCount: getTotalReviewCount(request),
-      singleReviews: await getSingleReviews(request), // ✅ add await here
-    })
+      singleReviews: getSingleReviews(request),
+    }),
   );
 }
-
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -103,10 +105,73 @@ export async function action({ request }) {
           step: 3,
         });
       }
+    } else if (intent === "UploadCSV") {
+      // try {
+      //   const formData = await request.formData();
+      //   const file = formData.get("file");
+      //   if (!file) {
+      //     return json({ error: "No file uploaded" }, { status: 400 });
+      //   }
+      //   const csvData = await file.text();
+      //   const result = Papa.parse(csvData, {
+      //     header: true,
+      //     skipEmptyLines: true,
+      //     dynamicTyping: { rating: true },
+      //   });
+      //   if (result.errors.length > 0) {
+      //     console.error("CSV Parsing Errors:", result.errors);
+      //     return json({ error: "Invalid CSV format" }, { status: 400 });
+      //   }
+      //   const { productId, productName, shopDomain } = result.data[0];
+      //   if (!productId || !productName || !shopDomain) {
+      //     return json(
+      //       { error: "productId, productName, and shopDomain are required" },
+      //       { status: 400 },
+      //     );
+      //   }
+      //   const reviews = result.data.map((row) => ({
+      //     shopDomain: row.shopDomain?.trim(),
+      //     productId: row.productId?.trim(),
+      //     productName: row.productName?.trim(),
+      //     userName: row.userName?.trim(),
+      //     userEmail: row.userEmail?.trim() || null,
+      //     rating: typeof row.rating === "number" ? row.rating : 0,
+      //     comment: row.comment?.trim() || null,
+      //     isPublic: String(row.isPublic).toLowerCase() === "true",
+      //   }));
+      //   for (const review of reviews) {
+      //     if (
+      //       review.shopDomain !== shopDomain ||
+      //       review.productId !== productId ||
+      //       review.productName !== productName ||
+      //       !review.userName ||
+      //       review.rating === null
+      //     ) {
+      //       return json(
+      //         {
+      //           error:
+      //             "All rows must have the same shopDomain, productId, and productName. Also, userName and rating are required.",
+      //         },
+      //         { status: 400 },
+      //       );
+      //     }
+      //   }
+      //   await db.review.createMany({ data: reviews });
+      //   return json(
+      //     {
+      //       message:
+      //         "Reviews uploaded successfully for the given product and domain",
+      //     },
+      //     { status: 200 },
+      //   );
+      // } catch (error) {
+      //   console.error("Error processing file:", error);
+      //   return json({ error: "Failed to process file" }, { status: 500 });
+      // }
     } else if (intent === "handleActive") {
       const active = formData.get("active");
+      console.log(active, "checkactive");
       const appType = "review";
-
       try {
         const existingApp = await prisma.appActiveInactive.findFirst({
           where: { AppType: appType },
@@ -147,16 +212,8 @@ export async function action({ request }) {
           status: 500,
         });
       }
-    } else {
-      return json({
-        message: "Unknown intent",
-        status: 400,
-      });
     }
-  }
-
-  // DELETE method
-  if (request.method === "DELETE") {
+  } else if (request.method === "DELETE") {
     const reviewId = formData.get("reviewId");
     try {
       const deletedReview = await db.review.delete({
@@ -178,21 +235,15 @@ export async function action({ request }) {
         step: 5,
       });
     }
+  } else {
+    return undefined;
   }
-
-  // fallback return if method is not handled
-  return json({
-    message: "Invalid request method or missing intent",
-    status: 400,
-  });
 }
-
 export default function AppsPage() {
   const { productReviews, totalCount, singleReviews } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
-  console.log(singleReviews,"singleReview")
   const fetcher = useFetcher();
 
   const [activeTab, setActiveTab] = useState("Reviews");
@@ -213,7 +264,7 @@ export default function AppsPage() {
   const [values, setValues] = useState({
     email_send_at: 10,
     subject: "Quick Question: How’s Your New [Product Name]?",
-    text: `Hey [Customer’s First Name]! 
+    text: `Hey [Customer’s First Name]!
 We’re all about making our customers’ lives better with [Product Name], and we’d love to hear how it’s working for you! Just a quick, honest review could help so many others who are looking for the right fit, just like you were.`,
     five_star: "Absolutely love it!",
     four_star: "Really good!",
@@ -254,9 +305,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
   };
 
   const handleEditClick = (productId) => {
-    const data = fetcher.load(`?productId=${productId}`);
-    console.log(data,"dethcer data")
     setEdit(!edit);
+    const data = fetcher.load(`?productId=${productId}`);
   };
 
   const handleDeleteReview = (item) => {
@@ -356,30 +406,6 @@ We’re all about making our customers’ lives better with [Product Name], and 
     setSort(false);
   };
 
-  const [selectedRating, setSelectedRating] = useState("");
-
-  const handleRatingChange = (event) => {
-    setSelectedRating(event.target.value);
-  };
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const reviewsPerPage = 10;
-
-  const totalPages = Math.ceil(productReviews.length / reviewsPerPage);
-
-  const paginatedReviews = productReviews.slice(
-    (currentPage - 1) * reviewsPerPage,
-    currentPage * reviewsPerPage
-  );
-
-  const handlePageClick = (page) => {
-    setCurrentPage(page);
-  };
-
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
   return (
     <div className={styles.containerDiv}>
       <TitleBar title="Product Reviews"></TitleBar>
@@ -388,7 +414,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
           <Layout.Section>
             <div className={styles.flexWrapper}>
               <div className={styles.headingFlex}>
-                {/* <button className={styles.btn_Back}>
+                <button className={styles.btn_Back}>
+                  {/* <img src={arrowIcon} width={20} height={16} />{" "} */}
                   <svg
                     width="14"
                     height="14"
@@ -403,7 +430,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                       fill="#0F172A"
                     />
                   </svg>
-                </button> */}
+                </button>
                 <h2>Product Reviews</h2>
               </div>
 
@@ -568,8 +595,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </tr>
                 </thead>
                 <tbody>
-                    {console.log(edit
-                    , fetcher,"fetcher")}
+                  {console.log(edit, fetcher, "henceee")}
+
                   {edit
                     ? fetcher?.data?.singleReviews?.reviews.map((item) => (
                         <React.Fragment>
@@ -741,56 +768,51 @@ We’re all about making our customers’ lives better with [Product Name], and 
                       ))}
                 </tbody>
               </table>
-              {paginatedReviews.map((review, index) => (
-        <div key={index}>
-          {/* your review rendering logic */}
-          <p>{review.comment}</p>
-        </div>
-      ))}
+              {productReviews.length > 1 && (
+                <div className={styles.paginationFlex}>
+                  <p>Showing 1 of 8 pages</p>
 
-      {productReviews.length > reviewsPerPage && (
-        <div className={styles.paginationFlex}>
-          <p>
-            Showing page {currentPage} of {totalPages}
-          </p>
-
-          <div className={styles.pagination}>
-            <a
-              href="#"
-              onClick={() => currentPage > 1 && handlePageClick(currentPage - 1)}
-              className={`${styles.prev} ${styles.marginGiven}`}
-              aria-label="Previous"
-            >
-              «
-            </a>
-
-            {pageNumbers.map((num) => (
-              <a
-                href="#"
-                key={num}
-                onClick={() => handlePageClick(num)}
-                className={`${styles.prev} ${
-                  currentPage === num ? styles.active : ""
-                }`}
-                aria-label={`Page ${num}`}
-              >
-                {num}
-              </a>
-            ))}
-
-            <a
-              href="#"
-              onClick={() =>
-                currentPage < totalPages && handlePageClick(currentPage + 1)
-              }
-              className={`${styles.next} ${styles.marginGiven}`}
-              aria-label="Next"
-            >
-              »
-            </a>
-          </div>
-        </div>
-      )}
+                  <div className={styles.pagination}>
+                    <a
+                      href="#"
+                      className={`${styles.prev} ${styles.marginGiven}`}
+                      aria-label="Previous"
+                    >
+                      «
+                    </a>
+                    <a
+                      href="#"
+                      className={`${styles.prev} ${styles.active}`}
+                      aria-label="Page 1"
+                    >
+                      1
+                    </a>
+                    <a href="#" className={styles.prev} aria-label="Page 2">
+                      2
+                    </a>
+                    <a href="#" className={styles.prev} aria-label="Page 3">
+                      3
+                    </a>
+                    <a
+                      href="#"
+                      className={`${styles.prev} ${styles.dot}`}
+                      aria-label="Page 3"
+                    >
+                      ....
+                    </a>
+                    <a href="#" aria-label="Page 3">
+                      8
+                    </a>
+                    <a
+                      href="#"
+                      className={`${styles.next} ${styles.marginGiven}`}
+                      aria-label="Next"
+                    >
+                      »
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1032,110 +1054,96 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </div>
 
                   <div className={styles.review_tabs}>
-                    {/* 5 Star */}
                     <div className={styles.reviewAdd}>
-                      <input
-                        type="radio"
-                        name="rating"
-                        value="five_star"
-                        checked={selectedRating === "five_star"}
-                        onChange={handleRatingChange}
-                      />
+                      <input type="radio" />
                       <div className={styles.starIcon}>
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i}>
-                            <img src={stars} width={25} height={25} />
-                          </span>
-                        ))}
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
                       </div>
+
                       <span className={styles.rating_content}>
                         {values.five_star}
                       </span>
                     </div>
-
-                    {/* 4 Star */}
                     <div className={styles.reviewAdd}>
-                      <input
-                        type="radio"
-                        name="rating"
-                        value="four_star"
-                        checked={selectedRating === "four_star"}
-                        onChange={handleRatingChange}
-                      />
+                      <input type="radio" />
                       <div className={styles.starIcon}>
-                        {[...Array(4)].map((_, i) => (
-                          <span key={i}>
-                            <img src={stars} width={25} height={25} />
-                          </span>
-                        ))}
-                      </div>
-                      <span className={styles.rating_content}>
-                        {values.four_star}
-                      </span>
-                    </div>
-
-                    {/* 3 Star */}
-                    <div className={styles.reviewAdd}>
-                      <input
-                        type="radio"
-                        name="rating"
-                        value="three_star"
-                        checked={selectedRating === "three_star"}
-                        onChange={handleRatingChange}
-                      />
-                      <div className={styles.starIcon}>
-                        {[...Array(3)].map((_, i) => (
-                          <span key={i}>
-                            <img src={stars} width={25} height={25} />
-                          </span>
-                        ))}
-                      </div>
-                      <span className={styles.rating_content}>
-                        {values.three_star}
-                      </span>
-                    </div>
-
-                    {/* 2 Star */}
-                    <div className={styles.reviewAdd}>
-                      <input
-                        type="radio"
-                        name="rating"
-                        value="two_star"
-                        checked={selectedRating === "two_star"}
-                        onChange={handleRatingChange}
-                      />
-                      <div className={styles.starIcon}>
-                        {[...Array(2)].map((_, i) => (
-                          <span key={i}>
-                            <img src={stars} width={25} height={25} />
-                          </span>
-                        ))}
-                      </div>
-                      <span className={styles.rating_content}>
-                        {values.two_star}
-                      </span>
-                    </div>
-
-                    {/* 1 Star */}
-                    <div className={styles.reviewAdd}>
-                      <input
-                        type="radio"
-                        name="rating"
-                        value="one_star"
-                        checked={selectedRating === "one_star"}
-                        onChange={handleRatingChange}
-                      />
-                      <div className={styles.starIcon}>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
                         <span>
                           <img src={stars} width={25} height={25} />
                         </span>
                       </div>
                       <span className={styles.rating_content}>
+                        {values.four_star}
+                      </span>
+                    </div>
+                    <div className={styles.reviewAdd}>
+                      <input type="radio" />
+                      <div className={styles.starIcon}>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                      </div>
+
+                      <span className={styles.rating_content}>
+                        {values.three_star}
+                      </span>
+                    </div>
+                    <div className={styles.reviewAdd}>
+                      <input type="radio" />
+
+                      <div className={styles.starIcon}>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                      </div>
+                      <span className={styles.rating_content}>
+                        {values.two_star}
+                      </span>
+                    </div>
+                    <div className={styles.reviewAdd}>
+                      <input type="radio" />
+                      <div className={styles.starIcon}>
+                        <span>
+                          <img src={stars} width={25} height={25} />
+                        </span>
+                      </div>
+
+                      <span className={styles.rating_content}>
                         {values.one_star}
                       </span>
                     </div>
                   </div>
-
                   <div className={styles.add_richtext}>
                     <textarea name="" id="" placeholder="Add text"></textarea>
                   </div>

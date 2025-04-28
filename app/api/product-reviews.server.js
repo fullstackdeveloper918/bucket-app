@@ -1,31 +1,42 @@
 import db from "../db.server";
 
-export const getTotalReviewCount = async ({ request }) => {
+export const getTotalReviewCount = async ({ request } = {}) => {
   try {
-    const isPublic = new URL(request.url).searchParams.get("isPublic");
+    if (!request || !request.url) {
+      return { "Total Reviews": 0, "Average Rating": 0.0 };
+    }
+
+    const url = new URL(request.url);
+    const isPublicParam = url.searchParams.get("isPublic");
+
     const isPublicFilter =
-      isPublic === "true" ? true : isPublic === "false" ? false : undefined;
+      isPublicParam === "true"
+        ? true
+        : isPublicParam === "false"
+        ? false
+        : undefined;
+
     const whereCondition =
-      isPublicFilter !== undefined ? { isPublic: isPublicFilter } : {};
+      isPublicFilter !== undefined ? { isPublic: isPublicFilter } : undefined;
 
     const totalReviews = await db.review.count({ where: whereCondition });
 
-    const { _avg: { rating = 0 } = {} } = await db.review.aggregate({
+    const aggregateResult = await db.review.aggregate({
       _avg: { rating: true },
       where: whereCondition,
     });
 
-    console.log(totalReviews, "totalReviews");
+    const rating = aggregateResult?._avg?.rating ?? 0;
 
     return {
-      "Total Reviews": totalReviews,
+      "Total Reviews": totalReviews ?? 0,
       "Average Rating": parseFloat(rating.toFixed(1)),
     };
   } catch (error) {
     console.error("Error fetching review statistics:", error);
     return {
-      message: "Failed to fetch review statistics",
-      status: 500,
+      "Total Reviews": 0,
+      "Average Rating": 0.0,
     };
   }
 };
@@ -36,16 +47,146 @@ export const getProductInfo = async () => {
       by: ["productId", "productName"],
       _count: { id: true },
     });
+
+    if (!reviewsGroupedByProduct || reviewsGroupedByProduct.length === 0) {
+      return [];
+    }
+
     return reviewsGroupedByProduct.map(
       ({ productId, productName, _count }) => ({
-        productId,
-        productName,
-        totalReviews: _count.id,
+        productId: productId ?? "",
+        productName: productName ?? "",
+        totalReviews: _count?.id ?? 0,
       }),
     );
   } catch (error) {
     console.error("Error fetching reviews:", error);
-    return { message: "Failed to fetch reviews", status: 500 };
+    return [];
+  }
+};
+
+export const getSingleReviews = async ({ request } = {}) => {
+  try {
+    if (!request || !request.url) {
+      return {
+        status: 400,
+        message: "Request or URL missing",
+        reviews: [],
+        averageRating: 0,
+        starCounts: {
+          fiveStars: 0,
+          fourStars: 0,
+          threeStars: 0,
+          twoStars: 0,
+          oneStar: 0,
+        },
+      };
+    }
+
+    const url = new URL(request.url);
+    const productId = url.searchParams.get("productId");
+
+    if (!productId) {
+      return {
+        status: 400,
+        message: "Product ID is required",
+        reviews: [],
+        averageRating: 0,
+        starCounts: {
+          fiveStars: 0,
+          fourStars: 0,
+          threeStars: 0,
+          twoStars: 0,
+          oneStar: 0,
+        },
+      };
+    }
+
+    const reviews = await db.review.findMany({
+      where: {
+        productId: productId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!reviews || reviews.length === 0) {
+      return {
+        status: 404,
+        message: "No reviews found for this product",
+        reviews: [],
+        averageRating: 0,
+        starCounts: {
+          fiveStars: 0,
+          fourStars: 0,
+          threeStars: 0,
+          twoStars: 0,
+          oneStar: 0,
+        },
+      };
+    }
+
+    let totalRating = 0;
+    let fiveStarCount = 0;
+    let oneStarCount = 0;
+    let twoStarCount = 0;
+    let threeStarCount = 0;
+    let fourStarCount = 0;
+
+    reviews.forEach((review) => {
+      const rating = review.rating ?? 0;
+      totalRating += rating;
+
+      switch (rating) {
+        case 5:
+          fiveStarCount++;
+          break;
+        case 4:
+          fourStarCount++;
+          break;
+        case 3:
+          threeStarCount++;
+          break;
+        case 2:
+          twoStarCount++;
+          break;
+        case 1:
+          oneStarCount++;
+          break;
+      }
+    });
+
+    const averageRating = totalRating / reviews.length || 0;
+
+    return {
+      status: 200,
+      message: "Product Review successfully retrieved",
+      reviews,
+      averageRating: averageRating.toFixed(2),
+      starCounts: {
+        fiveStars: fiveStarCount,
+        fourStars: fourStarCount,
+        threeStars: threeStarCount,
+        twoStars: twoStarCount,
+        oneStar: oneStarCount,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return {
+      status: 500,
+      message: "Failed to fetch reviews",
+      reviews: [],
+      averageRating: 0,
+      starCounts: {
+        fiveStars: 0,
+        fourStars: 0,
+        threeStars: 0,
+        twoStars: 0,
+        oneStar: 0,
+      },
+    };
   }
 };
 
@@ -70,79 +211,6 @@ export const action = async ({ request }) => {
   } catch (error) {
     console.error("Error deleting review:", error);
     return json({ message: "Failed to delete review" }, { status: 500 });
-  }
-};
-
-export const getSingleReviews = async ({ request }) => {
-  const url = new URL(request.url);
-  const productId = url.searchParams.get("productId");
-  console.log(productId, "productId");
-
-  if (!productId) {
-    return { message: "Product ID is required" }, { status: 400 };
-  }
-
-  try {
-    const reviews = await db.review.findMany({
-      where: {
-        productId: productId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    if (reviews.length === 0) {
-      return { message: "No reviews found for this product" }, { status: 404 };
-    }
-    let totalRating = 0;
-    let fiveStarCount = 0;
-    let oneStarCount = 0;
-    let twoStarCount = 0;
-    let threeStarCount = 0;
-    let fourStarCount = 0;
-
-    reviews.forEach((review) => {
-      const rating = review.rating; 
-      totalRating += rating;
-
-      switch (rating) {
-        case 5:
-          fiveStarCount++;
-          break;
-        case 4:
-          fourStarCount++;
-          break;
-        case 3:
-          threeStarCount++;
-          break;
-        case 2:
-          twoStarCount++;
-          break;
-        case 1:
-          oneStarCount++;
-          break;
-      }
-    });
-
-    const averageRating = totalRating / reviews.length;
-
-    // Return the reviews and additional statistics
-    return {
-      status: 200,
-      message: "Product Review succesfully reterived",
-      reviews,
-      averageRating: averageRating.toFixed(2), // Limit to 2 decimal places
-      starCounts: {
-        fiveStars: fiveStarCount,
-        fourStars: fourStarCount,
-        threeStars: threeStarCount,
-        twoStars: twoStarCount,
-        oneStar: oneStarCount,
-      },
-    };
-  } catch (error) {
-    console.error("Error fetching reviews:", error);
-    return { message: "Failed to fetch reviews" }, { status: 500 };
   }
 };
 

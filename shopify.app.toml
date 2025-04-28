@@ -1,13 +1,17 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://bucket-app-4j4z.onrender.com"
+client_id = "c820427dd77db00c5eec1c27d1b798ae"
+name = "efficient-portfolio-app"
+handle = "efficient-portfolio-app-12"
+application_url = "https://example.com/"
 embedded = true
-name = "bucket-new-app"
-handle = "bucket-new-app"
+
+[build]
+include_config_on_deploy = true
+dev_store_url = "rohit-cybersify.myshopify.com"
 
 [webhooks]
-api_version = "2025-01"
+api_version = "2025-04"
 
   [[webhooks.subscriptions]]
   topics = [ "app/uninstalled" ]
@@ -19,21 +23,10 @@ api_version = "2025-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-#test
-#test2
-scopes = "write_products,read_customers,write_customers,read_draft_orders,write_draft_orders,read_products,customer_read_customers,customer_write_customers,customer_read_orders,customer_write_orders,customer_read_draft_orders,write_order_edits,read_order_edits,write_orders,read_orders,read_order_submission_rules,write_order_submission_rules"
+scopes = "write_products"
 
 [auth]
-redirect_urls = [
-  "https://bucket-app-4j4z.onrender.com/auth/callback",
-  "https://bucket-app-4j4z.onrender.com/auth/shopify/callback",
-  "https://bucket-app-4j4z.onrender.com/api/auth/callback"
-]
+redirect_urls = [ "https://example.com/api/auth" ]
 
 [pos]
 embedded = false
-
-[build]
-dev_store_url = "rohit-cybersify.myshopify.com"
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true
