@@ -109,6 +109,9 @@ export async function action({ request }) {
 
       const bundle_id = formData.get("bundle_id");
       const product = formData.get("product");
+      const pageQuery = formData.get("pageQuery");
+
+      console.log(pageQuery,"pageQuery")
       const bundle_name = formData.get("bundle_name");
       const discount_method = formData.get("discount_method");
       const product_details = formData.get("product_details");
@@ -160,7 +163,7 @@ export async function action({ request }) {
           },
         });
 
-        if (existingBundle) {
+        if (existingBundle && pageQuery == "add") {
           return json({
             error: "Bundle name already exists. Please choose another title.",
             status: 500,
@@ -174,6 +177,7 @@ export async function action({ request }) {
           data = JSON.stringify({
             query:
               "mutation discountAutomaticBasicCreate($automaticBasicDiscount: DiscountAutomaticBasicInput!) { discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) { automaticDiscountNode { id automaticDiscount { ... on DiscountAutomaticBasic { title startsAt combinesWith { productDiscounts shippingDiscounts orderDiscounts } minimumRequirement { ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } } customerGets { value { ... on DiscountPercentage { percentage } } items { ... on AllDiscountItems { allItems } } } } } } userErrors { field code message } } }",
+
             variables: {
               automaticBasicDiscount: {
                 title: bundle_name,
@@ -285,10 +289,7 @@ export async function action({ request }) {
     }
     userErrors {
       field
-      message
-    }
-  }
-}`,
+      message}}}`,
             variables: {
               automaticBasicDiscount: {
                 title: bundle_name,
@@ -302,9 +303,7 @@ export async function action({ request }) {
                 customerGets: {
                   value: { percentage: JSON.parse(tierData?.discount) / 100 },
                   items: {
-                    products: {
-                      productsToAdd: selectedProducts?.productId,
-                    },
+                    all: true,
                   },
                 },
               },
@@ -369,9 +368,7 @@ export async function action({ request }) {
                     },
                   },
                   items: {
-                    products: {
-                      productsToAdd: ["gid://shopify/Product/10025742303543"],
-                    },
+                    all: true,
                   },
                 },
               },
@@ -959,6 +956,8 @@ export default function VolumePage() {
     discount_method: "Percentage",
   });
 
+  // Call the function
+  // console.log(sectionProduct,"sectionProduct")
   const [activeTab, setActiveTab] = useState("Home");
   const [id, setId] = useState(null);
   const [activeApp, setActiveApp] = useState("Active");
@@ -1020,6 +1019,7 @@ export default function VolumePage() {
     backgroundShadow: true,
   });
 
+  const [pageQuery,setPageQuery ] = useState()
   const handleBtn = (type, item) => {
     setShowStatus((prev) => ({
       ...prev,
@@ -1064,6 +1064,7 @@ export default function VolumePage() {
     setCurrentIndex(null);
     setIsProduct(false);
   };
+  console.log(sections, "sections..");
 
   const addProductSection = () => {
     setSections([...sections, sections.length + 1]);
@@ -1197,9 +1198,9 @@ export default function VolumePage() {
       });
       return;
     }
-  
+
     const [singleTier] = tier;
-  
+
     if (singleTier.badge === "") {
       notify.error("Please enter badge text", {
         position: "top-center",
@@ -1260,7 +1261,7 @@ export default function VolumePage() {
       setShowPage("third");
     }
   };
-  
+
   const handleTierChange = (index, field, value) => {
     const updatedTiers = tier.map((item, i) =>
       i === index ? { ...item, [field]: value } : item,
@@ -1268,15 +1269,42 @@ export default function VolumePage() {
     setTier(updatedTiers);
   };
 
+
+  const logProductIds = () => {
+    Object.keys(sectionProduct).forEach((key) => {
+      console.log(`Inspecting section ${key}:`, sectionProduct[key]); // Log the content for each section
+
+      const productId = sectionProduct[key]?.productId; // Safely extract productId
+      if (productId) {
+        console.log(`Product ID for section ${key}:`, productId); // Log the productId if it exists
+      } else {
+        console.log(`No productId for section ${key}`); // Log if no productId found
+      }
+    });
+  };
+
   const handleEdit = (item) => {
+    console.log(item, "item edit hai");
+    setPageQuery("edit")
+
     setDetails(item);
     setEditState(true);
     setActiveTab("Products");
     setShowComponent(1);
     setShowPage("first");
+    setSectionProduct(JSON.parse(item?.product_details))
+    logProductIds();
+    const productLength = JSON.parse(item?.product_details);
+    const resultArray = Object.keys(productLength).map((key, index) => {
+      return Number(key); // Mapping to the format you want // Mapping to the format you want
+    });
+    console.log(resultArray, "lenght here fix");
+    setSections(resultArray);
   };
+  console.log(sections, "lenght here fixeseses");
 
   const handleCreate = () => {
+    setPageQuery("add")
     setActiveTab("Products");
     setShowComponent(1);
     setShowPage("first");
@@ -1285,13 +1313,17 @@ export default function VolumePage() {
   const handleDelete = (index) => {
     const updatedTiers = tier.filter((_, i) => i !== index);
     setTier(updatedTiers);
-  
-  
-    // setShowPopup(true);
-    // setProductId(item.id);
-    // setDiscountId(item.discount_id);
+
+    setShowPopup(true);
+    setProductId(item.id);
+    setDiscountId(item.discount_id);
   };
 
+  const handleDeleteCard = (item) => {
+    setShowPopup(true);
+    setProductId(item.id);
+    setDiscountId(item.discount_id);
+  };
   const handleOnChange = (e, index) => {
     e.preventDefault();
     setCheckIndex(index);
@@ -1317,6 +1349,8 @@ export default function VolumePage() {
   };
 
   const openModal = (section) => {
+    console.log("koda ho")
+    console.log(section,"hdhhdhd")
     setCurrentIndex(section);
     setIsProduct(true);
   };
@@ -1441,11 +1475,11 @@ export default function VolumePage() {
       }
     }
   }, [actionResponse]);
-
   useEffect(() => {
-    if (editState) {
+    if (editState && details) {
+      console.log(details, "details");
       setId(details.id);
-      setSectionProduct(details?.products);
+      // setSectionProduct(details?.product_details || []);
 
       setValues((prev) => ({
         ...prev,
@@ -1454,46 +1488,59 @@ export default function VolumePage() {
           details.product_all == 1 ? "All Products" : "Specific Products",
         discount_method: details.discount_method,
       }));
-      setTier(JSON.parse(details.tier));
+
+      try {
+        setTier(details.tier ? JSON.parse(details.tier) : []);
+      } catch (e) {
+        console.error("Invalid tier JSON:", e);
+        setTier([]);
+      }
+
       setPosition(details.position);
       setSection(details.section);
+
       seTitleSection((prev) => ({
         ...prev,
-        titleSectionText: details.above_title_section.text,
-        titleSectionSize: details.above_title_section.size,
-        titleSectionColor: details.above_title_section.color,
+        titleSectionText: details.above_title_section?.text || "",
+        titleSectionSize: details.above_title_section?.size || "",
+        titleSectionColor: details.above_title_section?.color || "",
       }));
+
       seTitle((prev) => ({
         ...prev,
-        titleText: details.title.text,
-        titleSize: details.title.size,
-        titleColor: details.title.color,
+        titleText: details.title?.text || "",
+        titleSize: details.title?.size || "",
+        titleColor: details.title?.color || "",
       }));
+
       setTiers((prev) => ({
         ...prev,
-        tierColor: details.Tiers.color,
-        tierComparedPrice: details.Tiers.comparedPrice === "on" ? true : false,
-        tierSave: details.Tiers.save === "on" ? true : false,
-        badge_color: details.Tiers.badgeColor,
+        tierColor: details.Tiers?.color || "#000000",
+        tierComparedPrice: details.Tiers?.comparedPrice === "on",
+        tierSave: details.Tiers?.save === "on",
+        badge_color: details.Tiers?.badgeColor || "#000000",
       }));
 
       setCallAction((prev) => ({
         ...prev,
-        ctaText: details.call_to_action_button.text,
-        ctaSize: details.call_to_action_button.size,
-        ctaColor: details.call_to_action_button.color,
+        ctaText: details.call_to_action_button?.text || "",
+        ctaSize: details.call_to_action_button?.size || "",
+        ctaColor: details.call_to_action_button?.color || "#ffffff",
       }));
-      setCart(details.call_to_action_button.cart);
+
+      setCart(details.call_to_action_button?.cart || "Cart");
+
       setTextBelow((prev) => ({
         ...prev,
-        tbText: details.text_below_cta.text,
-        tbSize: details.text_below_cta.size,
-        tbColor: details.text_below_cta.color,
+        tbText: details.text_below_cta?.text || "",
+        tbSize: details.text_below_cta?.size || "",
+        tbColor: details.text_below_cta?.color || "",
       }));
+
       setBackGround((prev) => ({
         ...prev,
-        backgroundColor: details.background.color,
-        backgroundShadow: details.background.shadow == "on" ? true : false,
+        backgroundColor: details.background?.color || "#ffffff",
+        backgroundShadow: details.background?.shadow === "on",
       }));
     }
   }, [editState]);
@@ -1548,6 +1595,9 @@ export default function VolumePage() {
   };
 
   const filteredBundles = getFilteredBundles();
+  console.log(filteredBundles, "filteredBundles");
+
+  console.log(sectionProduct, "sectionsss...");
 
   return (
     <>
@@ -1729,7 +1779,7 @@ export default function VolumePage() {
                               name="checkId"
                               value={card.id}
                             />
-
+                        
                             <input
                               type="checkbox"
                               name="checkbox"
@@ -1768,7 +1818,7 @@ export default function VolumePage() {
                           <button
                             className={styles.deletedBtn}
                             type="button"
-                            onClick={() => handleDelete(card)}
+                            onClick={() => handleDeleteCard(card)}
                           >
                             <svg
                               width="20"
@@ -2023,94 +2073,115 @@ export default function VolumePage() {
                             {values.product === "Specific Products" && (
                               <>
                                 <div className={styles.addProductdiv}>
-                                  {sections.map((section, index) => (
-                                    <div
-                                      className={styles.input_labelCustomize}
-                                      key={section.id}
-                                    >
-                                      <label htmlFor="">
-                                        Select Product {index + 1}
-                                      </label>
+                                  {sections.map((section, index) => {
+                                    let productDetailsObject;
+                                    try {
+                                      productDetailsObject =
+                                        typeof sectionProduct === "string"
+                                          ? JSON.parse(sectionProduct)
+                                          : sectionProduct;
+                                    } catch (error) {
+                                      console.error(
+                                        "Error parsing sectionProduct:",
+                                        error,
+                                      );
+                                      return null;
+                                    }
+
+                                    const sectionData =
+                                      productDetailsObject &&
+                                      productDetailsObject[section];
+
+                                    return (
                                       <div
                                         className={styles.input_labelCustomize}
+                                        key={section.id}
                                       >
-                                        {!sectionProduct[section] ? (
-                                          <label
-                                            htmlFor="file-upload"
-                                            style={{
-                                              cursor: "pointer",
-                                              color: "blue",
-                                            }}
-                                            className={styles.inputUpload}
-                                            onClick={() => openModal(section)}
-                                          >
-                                            <span>+</span>Add Product
-                                          </label>
-                                        ) : (
-                                          <div className={styles.images_upload}>
-                                            {products
-                                              .filter(
-                                                (item) =>
-                                                  item.node.id ===
-                                                  sectionProduct[section]
-                                                    .productId,
-                                              )
-                                              .map((product, index) => (
-                                                <>
-                                                  {console.log(
-                                                    product,
-                                                    "chekor",
-                                                  )}
-                                                  <img
-                                                    src={
-                                                      product.node.images
-                                                        .edges[0].node.src
-                                                    }
-                                                    alt="Preview"
-                                                    style={{
-                                                      width: "100px",
-                                                      height: "100px",
-                                                      maxHeight: "100px",
-                                                      maxWidth: "100px",
-                                                      objectFit: "cover",
-                                                      borderRadius: "15px",
-                                                    }}
-                                                  />
-                                                  <div
-                                                    className={
-                                                      styles.image_name
-                                                    }
-                                                  >
-                                                    <h4>
-                                                      {product.node.title}
-                                                    </h4>
-                                                    <button
-                                                      type="button"
-                                                      className={
-                                                        styles.deletedBtn
+                                        <label htmlFor="">
+                                          Select Product {index + 1}
+                                        </label>
+
+                                        <div
+                                          className={
+                                            styles.input_labelCustomize
+                                          }
+                                        >
+                                          {!sectionData ? (
+                                            // If no product for the section, show Add Product button
+                                            <label
+                                              htmlFor="file-upload"
+                                              style={{
+                                                cursor: "pointer",
+                                                color: "blue",
+                                              }}
+                                              className={styles.inputUpload}
+                                              onClick={() => openModal(section)}
+                                            >
+                                              <span>+</span>Add Product
+                                            </label>
+                                          ) : (
+                                            <div
+                                              className={styles.images_upload}
+                                            >
+                                              {products
+                                                .filter(
+                                                  (item) =>
+                                                    item.node.id ===
+                                                    sectionData.productId,
+                                                ) // Filter the product based on productId
+                                                .map((product, index) => (
+                                                  <div key={index}>
+                                                    <img
+                                                      src={
+                                                        product.node.images
+                                                          .edges[0].node.src
                                                       }
-                                                      onClick={() =>
-                                                        handleDeleteProducts(
-                                                          section,
-                                                          index,
-                                                        )
+                                                      alt="Preview"
+                                                      style={{
+                                                        width: "100px",
+                                                        height: "100px",
+                                                        maxHeight: "100px",
+                                                        maxWidth: "100px",
+                                                        objectFit: "cover",
+                                                        borderRadius: "15px",
+                                                      }}
+                                                    />
+                                                    <div
+                                                      className={
+                                                        styles.image_name
                                                       }
                                                     >
-                                                      <img
-                                                        src={deletedIcon}
-                                                        width={20}
-                                                        height={20}
-                                                      />
-                                                      Delete
-                                                    </button>
+                                                      <h4>
+                                                        {product.node.title}
+                                                      </h4>
+                                                      <button
+                                                        type="button"
+                                                        className={
+                                                          styles.deletedBtn
+                                                        }
+                                                        onClick={() =>
+                                                          handleDeleteProducts(
+                                                            section,
+                                                            index,
+                                                          )
+                                                        }
+                                                      >
+                                                        <img
+                                                          src={deletedIcon}
+                                                          width={20}
+                                                          height={20}
+                                                        />
+                                                        Delete
+                                                      </button>
+                                                    </div>
                                                   </div>
-                                                </>
-                                              ))}
-                                          </div>
-                                        )}
+                                                ))}
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
+                                    );
+                                  })}
                                 </div>
 
                                 <div className={styles.Addanotherdiv}>
@@ -2290,7 +2361,7 @@ export default function VolumePage() {
                                   </div>
                                   <div className={styles.image_name}>
                                     <button
-                                    type="button"
+                                      type="button"
                                       onClick={() => handleDelete(index)}
                                       className={styles.deletedBtn}
                                     >
@@ -2368,6 +2439,13 @@ export default function VolumePage() {
                                   name="bundle_id"
                                   value={id}
                                 />
+
+<input
+                              type="hidden"
+                              name="pageQuery"
+                              value={pageQuery}
+                            />
+                              
                                 <input
                                   type="hidden"
                                   name="tier"
@@ -2388,11 +2466,11 @@ export default function VolumePage() {
                                   name="discount_method"
                                   value={values.discount_method}
                                 />
-                               {/* <input
+                                <input
                                   type="hidden"
                                   name="product_details"
-                                  value={JSON.stringify(selectProducts)}
-                                />*/}
+                                  value={JSON.stringify(sectionProduct)}
+                                />
                                 <div className={styles.input_labelCustomize}>
                                   <label htmlFor="">Position</label>
 
@@ -3277,13 +3355,17 @@ export default function VolumePage() {
                                       />
                                       <label htmlFor="shadow">Shadow</label>
                                     </div>
-                                  </> 
+                                  </>
                                 )}
                               </div>
                             </>
 
                             <>
-                            <input type="hidden" name="titleSectionNew" value={showButton.titleSection} />
+                              <input
+                                type="hidden"
+                                name="titleSectionNew"
+                                value={showButton.titleSection}
+                              />
 
                               <div className={styles.Add_btn}>
                                 <button
