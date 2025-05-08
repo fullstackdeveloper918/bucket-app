@@ -1,13 +1,116 @@
 <video id="preview" controls style="width: 100%; display: none;"></video>
+
+<!-- Load Axios -->
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> {% endcomment %}
+<script src="{{ 'config.js' | asset_url }}"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+async function sendVisitorData(sessionReplayUrl) {
+  try {
+    const ipRes = await fetch("https://api.ipify.org?format=json");
+    const ipData = await ipRes.json();
+    const ip = ipData.ip;
+
+    const shopifyConfig = window.shopifyConfig || {};
+    const appUrl = shopifyConfig.AppUrl;
+
+    if (!appUrl) {
+      console.error("AppUrl is undefined");
+      return;
+    }
+
+    const payload = {
+      domain: window.location.hostname,
+      country: "Unknown",
+      ipAddress: ip,
+      videoURL: sessionReplayUrl || "Not available",
+      message: "User visited this page",
+      userName: "Guest",
+      actionNumber: 1,
+    };
+
+    const response = await fetch("https://especially-ecommerce-spend-applications.trycloudflare.com/app/api/post/visitorReply", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+  mode: "no-cors", // This bypasses CORS, but you won't be able to access the response
+});
+
+
+    if (!response.ok) {
+      throw new Error("Failed to send visitor data");
+    }
+
+    const data = await response.json();
+    console.log("Visitor data sent:", data);
+
+  } catch (error) {
+    console.error("Error sending visitor data", error);
+  }
+}
+
+async function handlePostHogTrackingOnly() {
+  try {
+    console.log("Initializing PostHog...");
+
+    if (typeof window !== "undefined" && typeof document !== "undefined") {
+      const initPosthog = () => {
+        posthog.init("phc_B8Z8cU1pK6TGLc9rMOz2jwv51cfKAatWEivQamURyG6", {
+          api_host: "https://us.i.posthog.com",
+          capture_pageview: true,
+          session_recording: {
+            captureFullscreen: true,
+            maskAllInputs: false,
+          },
+          person_profiles: "identified_only",
+          loaded: (posthogInstance) => {
+            const sessionReplayUrl = posthogInstance.get_session_replay_url?.();
+            console.log("PostHog Session URL:", sessionReplayUrl);
+
+            // Send visitor data
+            sendVisitorData(sessionReplayUrl);
+          },
+        });
+      };
+
+      if (typeof posthog === "undefined") {
+        const script = document.createElement("script");
+        script.src = "https://us.i.posthog.com/static/array.js";
+        script.async = true;
+        script.onload = initPosthog;
+        script.onerror = (error) => {
+          console.error("Failed to load PostHog script:", error);
+        };
+        document.head.appendChild(script);
+      } else {
+        initPosthog();
+      }
+    } else {
+      console.warn("PostHog not loaded: window or document not available.");
+    }
+  } catch (error) {
+    console.error("Error initializing PostHog:", error);
+  }
+}
+
+// Trigger on page load
+window.onload = handlePostHogTrackingOnly;
+</script>
+
 
 {% schema %}
+{
+  "name": "Vistors",
+  "target": "section",
+  "stylesheet": "visitor.css",
+  "javascript": "visitor.js"
+}
+{% endschema %}
 
-    {
-    "name": "Vistors",
-    "target": "section",
-    "stylesheet": "visitor.css",
-    "javascript": "visitor.js",
-   
-    }
-    {% endschema %}
+
+
+

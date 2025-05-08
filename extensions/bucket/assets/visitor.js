@@ -1,68 +1,107 @@
-async function startScreenRecording() {
-    console.log("vitor runing https://wilderness-mo-hills-expanding.trycloudflare.com")
-    try {
-        // Get screen recording stream
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        let recordedChunks = [];
+//  $(document).ready(function () {
+//     function sendVisitorData(sessionReplayUrl) {
+//       $.get("https://api.ipify.org?format=json", function (ipRes) {
+//         const ip = ipRes.ip;
 
-        mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
-        };
+//         const shopifyConfig = window.shopifyConfig || {};
+//         const appUrl = shopifyConfig.AppUrl;
 
-        mediaRecorder.onstop = async () => {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+//         console.log(shopifyConfig, appUrl, "here to send");
+//         if (!appUrl) {
+//           console.error("AppUrl is undefined");
+//           return;
+//         }
 
-            // Convert Blob to File (API may require a File instead of Blob)
-            const domain = "rohit-cybersify.myshopify.com";  
-            const filename = `${domain.replace(/\./g, "_")}.webm`;  // Convert dots to underscores
-            const file = new File([blob], filename, { type: "video/webm" });
+//         const payload = {
+//           domain: window.location.hostname,
+//           country: "Unknown",
+//           ipAddress: ip,
+//           videoURL: sessionReplayUrl || "Not available",
+//           message: "User visited this page",
+//           userName: "Guest",
+//           actionNumber: 1,
+//         };
 
-            console.log("Blob:", blob);
-            console.log("Filename:", filename);
-            console.log("File:", file);
+//         $.ajax({
+//           url: "https://bahamas-drinking-chaos-deadly.trycloudflare.com/app/api/post/visitorReply",
+//           method: "POST",
+//           contentType: "application/json",
+//           data: JSON.stringify(payload),
+//           success: function (response) {
+//             console.log("Visitor data sent:", response);
+//           },
+//           error: function (xhr, status, error) {
+//             console.error("Failed to send visitor data", error);
+//           },
+//         });
+//       }).fail(function () {
+//         console.error("Failed to fetch IP address");
+//       });
+//     }
 
-            // Create FormData and append fields
-            const formData = new FormData();
-            formData.append("domain", domain);
-            formData.append("country", "YourCountry");     
-            formData.append("message", "Your message here");
-            formData.append("video", file);  // Append the actual file, not just the filename
+//     async function handlePostHogTrackingOnly() {
+//       console.log("Initializing PostHog...");
 
-            // Log FormData content before sending
-            for (let [key, value] of formData.entries()) {
-                console.log(key, value);
-            }
+//       if (typeof window !== "undefined" && typeof document !== "undefined") {
+//         try {
+//           const initPosthog = () => {
+//             posthog.init("phc_B8Z8cU1pK6TGLc9rMOz2jwv51cfKAatWEivQamURyG6", {
+//               api_host: "https://us.i.posthog.com",
+//               capture_pageview: true,
+//               session_recording: {
+//                 captureFullscreen: true,
+//                 maskAllInputs: false,
+//               },
+//               person_profiles: "identified_only",
+//               loaded: (posthogInstance) => {
+//                 const sessionReplayUrl = posthogInstance.get_session_replay_url?.();
+//                 console.log("PostHog Session URL:", sessionReplayUrl);
 
-            // Send the video file to the API using Axios
-            try {
-                const response = await axios.post(
-                    "https://wilderness-mo-hills-expanding.trycloudflare.com/app/api/post/visitorVideoSave",
-                    formData,
-                    { headers: { "Content-Type": "multipart/form-data" } }
-                );
-                console.log("API Response:", response.data);
-            } catch (error) {
-                console.error("Error uploading video:", error);
-            }
-        };
+//                 // ✅ Send visitor data
+//                 sendVisitorData(sessionReplayUrl);
+//               },
+//             });
+//           };
 
-        // Start recording
-        mediaRecorder.start();
-        console.log("Recording started...");
+//           if (typeof posthog === "undefined") {
+//             const script = document.createElement("script");
+//             script.src = "https://us.i.posthog.com/static/array.js";
+//             script.async = true;
+//             script.onload = initPosthog;
+//             script.onerror = (error) => {
+//               console.error("Failed to load PostHog script:", error);
+//             };
+//             document.head.appendChild(script);
+//           } else {
+//             initPosthog();
+//           }
+//         } catch (error) {
+//           console.error("Error initializing PostHog:", error);
+//         }
+//       } else {
+//         console.warn("PostHog not loaded: window or document not available.");
+//       }
+//     }
 
-        // Stop recording after 10 seconds
-        setTimeout(() => {
-            mediaRecorder.stop();
-            console.log("Recording stopped.");
-        }, 10000);
+//     // Trigger on page load
+//     handlePostHogTrackingOnly();
+//   });
 
-    } catch (error) {
-        console.error("Error accessing screen recording:", error);
-    }
+
+{
+  "domain": "example.com",
+  "country": "United States",
+  "ipAddress": "192.168.1.1",
+  "videoURL": "https://example.com/video.mp4",
+  "message": "This is a test message",
+  "userName": "John Doe",
+  "actionNumber": 1
 }
 
-// Start recording when the page loads
-window.onload = startScreenRecording;
+{"domain":"rohit-cybersify.myshopify.com",
+ "country":"Unknown", 
+ "ipAddress":"127.0.0.1", 
+ "videoURL":"Not available", 
+ "message":"User visited this page", 
+ "userName":"Guest", 
+ "actionNumber": 1}

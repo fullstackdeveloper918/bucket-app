@@ -38,15 +38,15 @@ import DeletePopup from "../components/DeletePopup/Deletepopup";
 const ReviewsCard = lazy(() => import("../components/ReviewsCard/ReviewsCard"));
 
 export async function loader({ request }) {
+  console.log(request.url, "request checksssssssssssssssssss");
   return json(
     await promiseHash({
       productReviews: getProductInfo(),
       totalCount: getTotalReviewCount(request),
-      singleReviews: await getSingleReviews(request), // ✅ add await here
-    })
+      singleReviews: getSingleReviews({ request }), // ✅ add await here
+    }),
   );
 }
-
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -54,6 +54,35 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  const reviewId = formData.get("reviewId");
+  const _method = formData.get("_method");
+
+  const isPublic = formData.get("isPublic");
+
+  console.log(reviewId, "reviewIdsss");
+  if (_method == "put") {
+    if (!reviewId) {
+      return json({ message: "Review ID is required" }, { status: 400 });
+    }
+
+    try {
+      const updatedReview = await db.review.update({
+        where: { id:reviewId },
+        data: { isPublic: isPublic == 1 ? false : true },
+      });
+
+      return json({
+        message: "Review marked as private",
+        updatedReview,
+      });
+    } catch (error) {
+      console.error("Error updating review:", error);
+      return json(
+        { message: "Failed to mark review as private" },
+        { status: 500 },
+      );
+    }
+  }
   if (request.method === "POST") {
     if (intent === "widgetStep") {
       const position = formData.get("position");
@@ -192,7 +221,7 @@ export default function AppsPage() {
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
-  console.log(singleReviews,"singleReview")
+  console.log(productReviews, singleReviews, "singleReview");
   const fetcher = useFetcher();
 
   const [activeTab, setActiveTab] = useState("Reviews");
@@ -207,6 +236,7 @@ export default function AppsPage() {
   const [sort, setSort] = useState(false);
   const [edit, setEdit] = useState(false);
   const [showImportPopup, setShowImportPopup] = useState(null);
+  const [editableReviews, setEditableReviews] = useState({});
 
   const [showProducts, setShowProducts] = useState(false);
 
@@ -253,9 +283,13 @@ We’re all about making our customers’ lives better with [Product Name], and 
     );
   };
 
+
+  
   const handleEditClick = (productId) => {
+    console.log(productId, fetcher, edit, "cljsdh");
     const data = fetcher.load(`?productId=${productId}`);
-    console.log(data,"dethcer data")
+    console.log(data, "dethcer data");
+
     setEdit(!edit);
   };
 
@@ -305,6 +339,9 @@ We’re all about making our customers’ lives better with [Product Name], and 
         });
       }
     }
+    
+
+
     //  else if(actionResponse?.step === 6) {
     //   if (actionResponse?.status === 200) {
     //     notify.success(actionResponse?.message, {
@@ -326,6 +363,19 @@ We’re all about making our customers’ lives better with [Product Name], and 
     //   }
     // }
   }, [actionResponse]);
+  
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.message) {
+      notify.success(fetcher?.data?.message, {
+        position: "top-center",
+        style: {
+          background: "green",
+          color: "white",
+        },
+      });
+    }
+  }, [fetcher.state, fetcher.data]);
+
 
   useEffect(() => {
     if (actionResponse?.step === 5) {
@@ -369,7 +419,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
 
   const paginatedReviews = productReviews.slice(
     (currentPage - 1) * reviewsPerPage,
-    currentPage * reviewsPerPage
+    currentPage * reviewsPerPage,
   );
 
   const handlePageClick = (page) => {
@@ -555,7 +605,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     {edit ? (
                       <>
                         <th>Rating</th>
-                        <th>Content</th>
+                        <th>Contents</th>
                       </>
                     ) : (
                       <>
@@ -568,12 +618,11 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </tr>
                 </thead>
                 <tbody>
-                    {console.log(edit
-                    , fetcher,"fetcher")}
+                  {console.log(fetcher?.data , "fetcher")}
                   {edit
-                    ? fetcher?.data?.singleReviews?.reviews.map((item) => (
+                    ? fetcher?.data?.updatedReview?.isPublic == true ? [fetcher?.data?.updatedReview] : fetcher?.data?.singleReviews?.reviews.map((item) => (
                         <React.Fragment>
-                          {console.log(item, "hence")}
+                          {console.log(item , "hence")}
                           <tr>
                             <td>
                               <img
@@ -583,11 +632,42 @@ We’re all about making our customers’ lives better with [Product Name], and 
                               />
                             </td>
                             <td>{item?.rating}*</td>
-                            <td>{item?.userName}</td>
+                            <td>{item?.comment}</td>
                             <td>
                               <div className={styles.buttonFlexer}>
                                 <label className={styles.switch}>
-                                  <input type="checkbox" />
+                                  <fetcher.Form method="post">
+                                    <input
+                                      type="hidden"
+                                      name="reviewId"
+                                      value={item.id}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="intent"
+                                      value="togglePublic"
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="_method"
+                                      value="put"
+                                    />  <input
+                                    type="hidden"
+                                    name="isPublic"
+                                    value={item?.isPublic}
+                                  />
+
+                                    <input
+                                      type="checkbox"
+                                      name="isPublic"
+                                      checked={!!item?.isPublic}
+                                      onChange={(e) => {
+                                        // Trigger fetcher.submit on checkbox change
+                                        fetcher.submit(e.target.form);
+                                      }}
+                                    />
+                                  </fetcher.Form>
+
                                   <span className={styles.slider}></span>
                                 </label>
 
@@ -742,55 +822,58 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 </tbody>
               </table>
               {paginatedReviews.map((review, index) => (
-        <div key={index}>
-          {/* your review rendering logic */}
-          <p>{review.comment}</p>
-        </div>
-      ))}
+                <div key={index}>
+                  {/* your review rendering logic */}
+                  <p>{review.comment}</p>
+                </div>
+              ))}
 
-      {productReviews.length > reviewsPerPage && (
-        <div className={styles.paginationFlex}>
-          <p>
-            Showing page {currentPage} of {totalPages}
-          </p>
+              {productReviews.length > reviewsPerPage && (
+                <div className={styles.paginationFlex}>
+                  <p>
+                    Showing page {currentPage} of {totalPages}
+                  </p>
 
-          <div className={styles.pagination}>
-            <a
-              href="#"
-              onClick={() => currentPage > 1 && handlePageClick(currentPage - 1)}
-              className={`${styles.prev} ${styles.marginGiven}`}
-              aria-label="Previous"
-            >
-              «
-            </a>
+                  <div className={styles.pagination}>
+                    <a
+                      href="#"
+                      onClick={() =>
+                        currentPage > 1 && handlePageClick(currentPage - 1)
+                      }
+                      className={`${styles.prev} ${styles.marginGiven}`}
+                      aria-label="Previous"
+                    >
+                      «
+                    </a>
 
-            {pageNumbers.map((num) => (
-              <a
-                href="#"
-                key={num}
-                onClick={() => handlePageClick(num)}
-                className={`${styles.prev} ${
-                  currentPage === num ? styles.active : ""
-                }`}
-                aria-label={`Page ${num}`}
-              >
-                {num}
-              </a>
-            ))}
+                    {pageNumbers.map((num) => (
+                      <a
+                        href="#"
+                        key={num}
+                        onClick={() => handlePageClick(num)}
+                        className={`${styles.prev} ${
+                          currentPage === num ? styles.active : ""
+                        }`}
+                        aria-label={`Page ${num}`}
+                      >
+                        {num}
+                      </a>
+                    ))}
 
-            <a
-              href="#"
-              onClick={() =>
-                currentPage < totalPages && handlePageClick(currentPage + 1)
-              }
-              className={`${styles.next} ${styles.marginGiven}`}
-              aria-label="Next"
-            >
-              »
-            </a>
-          </div>
-        </div>
-      )}
+                    <a
+                      href="#"
+                      onClick={() =>
+                        currentPage < totalPages &&
+                        handlePageClick(currentPage + 1)
+                      }
+                      className={`${styles.next} ${styles.marginGiven}`}
+                      aria-label="Next"
+                    >
+                      »
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

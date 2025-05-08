@@ -1,13 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "95ec3e496004fdaa9310abd63f41557a"
-application_url = "https://bucket-app-4j4z.onrender.com"
+client_id = "b16b83be7ba536572888fb25ded46478"
+application_url = "https://fitting-barely-medication-compromise.trycloudflare.com"
 embedded = true
-name = "bucket-new-app"
-handle = "bucket-new-app"
+name = "testing_bucket"
+handle = "testing_bucket"
 
 [webhooks]
-api_version = "2025-01"
+api_version = "2025-04"
 
   [[webhooks.subscriptions]]
   topics = [ "app/uninstalled" ]
@@ -19,15 +19,13 @@ api_version = "2025-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-#test
-#test2
-scopes = "write_products,read_customers,write_customers,read_draft_orders,write_draft_orders,read_products,customer_read_customers,customer_write_customers,customer_read_orders,customer_write_orders,customer_read_draft_orders,write_order_edits,read_order_edits,write_orders,read_orders,read_order_submission_rules,write_order_submission_rules"
+scopes = "write_orders,read_orders,write_products,read_price_rules,write_price_rules,write_discounts,read_discounts,read_themes,write_themes"
 
 [auth]
 redirect_urls = [
-  "https://bucket-app-4j4z.onrender.com/auth/callback",
-  "https://bucket-app-4j4z.onrender.com/auth/shopify/callback",
-  "https://bucket-app-4j4z.onrender.com/api/auth/callback"
+  "https://fitting-barely-medication-compromise.trycloudflare.com/auth/callback",
+  "https://fitting-barely-medication-compromise.trycloudflare.com/auth/shopify/callback",
+  "https://fitting-barely-medication-compromise.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

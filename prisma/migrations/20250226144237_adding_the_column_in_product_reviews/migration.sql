@@ -1,0 +1,12 @@
+-- AlterTable
+ALTER TABLE `review` ADD COLUMN `position` VARCHAR(191) NULL,
+    ADD COLUMN `section` VARCHAR(191) NULL,
+    ADD COLUMN `widget` JSON NULL,
+    MODIFY `shopDomain` VARCHAR(191) NULL,
+    MODIFY `productId` VARCHAR(191) NULL,
+    MODIFY `userName` VARCHAR(191) NULL,
+    MODIFY `rating` DOUBLE NULL,
+    MODIFY `createdAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
+    MODIFY `updatedAt` DATETIME(3) NULL,
+    MODIFY `isPublic` BOOLEAN NULL DEFAULT true,
+    MODIFY `productName` VARCHAR(191) NULL;
