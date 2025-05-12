@@ -593,6 +593,11 @@ section.customerreview_data .cutomers_All_reviews .image_bucket img {
 section.customerreview_data .cutomers_All_reviews .image_bucket img {
     border-radius: 24px 24px 0px 0px;
 }
+
+
+}
+.dynamic-star.clickeded svg{
+  fill: #FABF35;
 }
 /* list css */
 </style>
@@ -791,7 +796,12 @@ section.customerreview_data .cutomers_All_reviews .image_bucket img {
     style="padding: 10px 20px; background: #000; border-radius: 25px; border: none; font-size: 1rem; color: #fff; cursor: pointer; transition: background 0.3s;"
   >
   Submit Review!
+
   </button>
+  <img id="loaderreview" 
+     src="https://cdn.shopify.com/s/files/1/0619/3784/4303/files/Animation_-_1744185329762.gif?v=1744185431" 
+     style="display: none; width: 50px;" 
+     alt="Loading..." >
 </form>
 
 <div id="responseMessage" style="margin-top: 20px; color: green;"></div>
@@ -806,8 +816,8 @@ section.customerreview_data .cutomers_All_reviews .image_bucket img {
 
 document.addEventListener('DOMContentLoaded', function () {
 
-const appUrl=shopifyConfig.AppUrl;
-console.log("appUrl is "+appUrl)
+const appUrl="https://family-radar-lecture-glucose.trycloudflare.com";
+console.log("  is review "+appUrl)
     const fileDropArea = document.getElementById('fileDropArea');
     const fileUploadInput = document.getElementById('reviewFiles');
     const fileError = document.getElementById('fileError');
@@ -916,8 +926,9 @@ const proImgHTML = proImgElement ? proImgElement.innerHTML : '';
   const popup = document.getElementById("reviewPopup");
   popup.style.display = ""; // Removes the inline display property
 }
+const appUrl="https://family-radar-lecture-glucose.trycloudflare.com";
   // Fetch reviews and average rating
-fetch(`https://decade-terrorism-white-should.trycloudflare.com/app/api/get/singleproduct-reviews?productId=${productId}`)
+fetch(`${appUrl}/app/api/get/singleproduct-reviews?productId=${productId}`)
     .then(response => response.json())
     .then(data => {
       
@@ -934,8 +945,7 @@ fetch(`https://decade-terrorism-white-should.trycloudflare.com/app/api/get/singl
             reviewcount.innerHTML = totalcountis + " Reviews";
         }
 
-        // Select the progress element
-        console.log("jvdonec")
+       
         const progressBar5 = document.querySelector('.five_star .progress_bar progress#progress-bar-1');
         progressBar5.value = starCounts.fiveStars;
         const progressBar5count= document.querySelector('.five_star span#five-stars-count');
@@ -1064,7 +1074,7 @@ reviews.forEach((review, index) => {
 
 // Add event listeners for "Show More" and "Show Less"
 reviewsContainer.addEventListener('click', (event) => {
-  console.log("hjbdshj")
+ 
     if (event.target.classList.contains('toggle-comment')) {
         const index = event.target.getAttribute('data-index');
         const truncatedSpan = document.getElementById(`truncated-comment-${index}`);
@@ -1109,6 +1119,43 @@ reviewsContainer.addEventListener('click', (event) => {
 
     })
     .catch(error => {
+      $('.highest_reviews').html('No reviews');
+      $('.total_reviews').html('0 Reviews');
+      $(".highest_review_color").css({
+        "display": "flex",
+        "justify-content": "center"
+    });
+      $(".highest_review_color").append(`
+        <div style="color: #FABF35; font-size: 3.5rem;" class="highest_review_color">
+           <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+        </div>
+          <div style="color: #FABF35; font-size: 3.5rem;" class="highest_review_color">
+           <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+        </div>
+          <div style="color: #FABF35; font-size: 3.5rem;" class="highest_review_color">
+           <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+        </div>
+           <div style="color: #FABF35; font-size: 3.5rem;" class="highest_review_color">
+           <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+        </div>
+           <div style="color: #FABF35; font-size: 3.5rem;" class="highest_review_color">
+           <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
+    <path d="M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" stroke="#FABF35" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+        </div>
+
+        
+
+    `);
+      console.log("error is "+error)
         console.error('Error fetching reviews:', error);
     });
     // Existing functionality to show the review form
@@ -1123,25 +1170,40 @@ reviewsContainer.addEventListener('click', (event) => {
 
 
     document.querySelectorAll('div#dynamic-rating span.dynamic-star').forEach((star) => {
-    star.addEventListener('click', function () {
-        const idis = this.getAttribute('data-value');
-     
+      star.addEventListener("click", function(event) {
+        const clickedValue = parseInt(event.currentTarget.getAttribute("data-value"));
 
-        // Add the 'clicked' class to the clicked element and remove it from siblings
-        this.classList.add('clicked');
-        const siblings = this.parentElement.querySelectorAll('.dynamic-star');
-        siblings.forEach((sibling) => {
-            if (sibling !== this) {
-                sibling.classList.remove('clicked');
+        document.querySelectorAll(".dynamic-star").forEach(function(s) {
+            const starValue = parseInt(s.getAttribute("data-value"));
+            console.log("starValue", starValue, "clickedValue", clickedValue);
+            if (starValue <= clickedValue) {
+              
+                s.classList.add("clickeded");
+            } else {
+                s.classList.remove("clickeded");
             }
         });
-
-        // Set the value of input#rating-input
-        const ratingInput = document.querySelector('input#rating-input');
-        if (ratingInput) {
-            ratingInput.value = idis; // Update the input value with the clicked idis
-        }
     });
+    // star.addEventListener('click', function () {
+    //     const idis = this.getAttribute('data-value');
+     
+
+    //     // Add the 'clicked' class to the clicked element and remove it from siblings
+    //     this.classList.add('clicked');
+        
+    //     const siblings = this.parentElement.querySelectorAll('.dynamic-star');
+    //     siblings.forEach((sibling) => {
+    //         if (sibling !== this) {
+    //             sibling.classList.remove('clicked');
+    //         }
+    //     });
+
+    //     // Set the value of input#rating-input
+    //     const ratingInput = document.querySelector('input#rating-input');
+    //     if (ratingInput) {
+    //         ratingInput.value = idis; // Update the input value with the clicked idis
+    //     }
+    // });
 });
 
 
@@ -1156,13 +1218,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
 
         // Add the 'clicked' class to the clicked element and remove it from siblings
-        this.classList.add('clicked');
-        const siblings = this.parentElement.querySelectorAll('.dynamic-star');
-        siblings.forEach((sibling) => {
-            if (sibling !== this) {
-                sibling.classList.remove('clicked');
-            }
-        });
+        // this.classList.add('clicked');
+        // const siblings = this.parentElement.querySelectorAll('.dynamic-star');
+        // siblings.forEach((sibling) => {
+        //     if (sibling !== this) {
+        //         sibling.classList.remove('clicked');
+        //     }
+        // });
 
         // Set the value of input#rating-input
         const ratingInput = document.querySelector('input#rating-input');
@@ -1184,7 +1246,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   // Submit review button click event
   document.getElementById('submitReview').addEventListener('click', async () => {
-    
+    console.log("submitted")
+    let appUrl ="https://family-radar-lecture-glucose.trycloudflare.com";
+    const loaderreview = document.getElementById('loaderreview');
+    loaderreview.style.display = 'inline-block';
     const form = document.getElementById('reviewForm');
     const formData = new FormData(form);
     // Check if rating is provided (if rating-input is empty, rating hasn't been selected)
@@ -1202,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const productId = document.querySelector('.bucket_review').getAttribute('product_id');
 
     try {
-      const response = await fetch(`https://decade-terrorism-white-should.trycloudflare.com/app/api/get/singleproduct-reviews?productId=${productId}`);
+      const response = await fetch(`${appUrl}/app/api/get/singleproduct-reviews?productId=${productId}`);
       const data = await response.json();
 
       if (data.reviews) {
@@ -1214,17 +1279,157 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
     try {
-      const response = await fetch('https://decade-terrorism-white-should.trycloudflare.com/app/api/post/reviews', {
+      const response = await fetch(`${appUrl}/app/api/post/reviews`, {
         method: 'POST',
         body: formData,
       });
       const result = await response.json();
-    
+      loaderreview.style.display = 'none';
+    console.log("result final",result)
       if (response.ok) {
         // document.getElementById('responseMessage').textContent = result.message;
         document.getElementById('responseMessage').textContent = 'Thanks for your review!';
         form.reset();
-        fetchReviews();
+        $('section.popup').hide();
+        const productIdfinal = document.querySelector('.bucket_review').getAttribute('product_id');
+        const responsefinal = await fetch(`${appUrl}/app/api/get/singleproduct-reviews?productId=${productIdfinal}`);
+        const datafinal = await responsefinal.json();
+        console.log("data is "+datafinal)
+
+          const { reviews, averageRating,starCounts } = datafinal;
+        // Log data to the console for debugging
+      
+        const totalcountis = starCounts.fiveStars+starCounts.fourStars+starCounts.threeStars+starCounts.twoStars+starCounts.oneStar;
+     
+        const reviewcount = document.querySelector('.total_reviews');
+        if (totalcountis === "") {
+            reviewcount.innerHTML = "No Reviews";
+        } else {
+            reviewcount.innerHTML = totalcountis + " Reviews";
+        }
+
+        console.log("jvdonec")
+        const progressBar5 = document.querySelector('.five_star .progress_bar progress#progress-bar-1');
+        progressBar5.value = starCounts.fiveStars;
+        const progressBar5count= document.querySelector('.five_star span#five-stars-count');
+        if( starCounts.fiveStars == "")
+        {
+          progressBar5count.innerHTML= 0;
+        }else{
+          progressBar5count.innerHTML= starCounts.fiveStars;
+
+        }
+        const progressBar4 = document.querySelector('.four_star .progress_bar progress#progress-bar-1');
+         progressBar4.value = starCounts.fourStars;
+         const progressBar4count= document.querySelector('.four_star span#four_star-count');
+        progressBar4count.innerHTML= starCounts.fourStars;
+         const progressBar3 = document.querySelector('.three_star .progress_bar progress#progress-bar-1');
+        progressBar3.value = starCounts.threeStars;
+        const progressBar3count= document.querySelector('.three_star span#three_star-count');
+        progressBar3count.innerHTML= starCounts.threeStars;
+        const progressBar2 = document.querySelector('.two_star .progress_bar progress#progress-bar-1');
+         progressBar2.value = starCounts.twoStars;
+         const progressBar2count= document.querySelector('.two_star span#two_star-count');
+        progressBar2count.innerHTML= starCounts.twoStars;
+         const progressBar1 = document.querySelector('.single_star .progress_bar progress#progress-bar-1');
+         progressBar1.value = starCounts.oneStar;
+         const progressBar1count= document.querySelector('.single_star span#single_star-count');
+         progressBar1count.innerHTML= starCounts.oneStar;
+        const average_rating = document.querySelector('.highest_reviews');
+    // Format the value: Remove '.00' but retain significant decimals
+        average_rating.innerHTML = parseFloat(averageRating) % 1 === 0
+          ? parseInt(averageRating, 10)
+          : parseFloat(averageRating).toFixed(1);
+          // for stars fills
+          const starsContainer = document.querySelector('.highest_review_color');
+          // Calculate the number of filled and empty stars
+          const filledStars = Math.min(Math.floor(averageRating), 5); // Limit to a maximum of 5
+          console.log("filledStars" +filledStars)
+          const emptyStars = 5 - filledStars;
+          let starsHTML = '';
+          for (let i = 0; i < filledStars; i++) {
+    starsHTML += `
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="22" viewBox="0 0 21 22" fill="none">
+            <path d="M9.10663 1.74627L9.10609 1.74736L7.28085 5.39784C7.10382 5.75794 6.80301 6.07364 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619778 8.22253C0.517986 8.53922 0.606781 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62017 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74836 11.6629 1.74826 11.6629 1.74817C11.207 0.841416 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z" fill="#E8E8E8" stroke="#E8E8E8" stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+            <g clip-path="url(#clip0_2499_304)">
+                <path d="M8.58406 1.48635L6.7579 5.13868C6.50887 5.6471 5.84481 6.13476 5.28451 6.22815L1.9746 6.77807C-0.142092 7.13085 -0.640135 8.66649 0.885124 10.1814L3.45835 12.7546C3.89414 13.1904 4.13279 14.0308 3.9979 14.6326L3.26121 17.8181C2.68016 20.3394 4.01865 21.3147 6.24948 19.997L9.35188 18.1605C9.91218 17.8284 10.8356 17.8284 11.4063 18.1605L14.5087 19.997C16.7292 21.3147 18.078 20.329 17.497 17.8181L16.7603 14.6326C16.6254 14.0308 16.864 13.1904 17.2998 12.7546L19.8731 10.1814C21.3879 8.66649 20.9003 7.13085 18.7836 6.77807L15.4737 6.22815C14.9237 6.13476 14.2597 5.6471 14.0107 5.13868L12.1845 1.48635C11.1884 -0.49545 9.56977 -0.49545 8.58406 1.48635Z" fill="#FABF35"/>
+            </g>
+            <defs>
+                <clipPath id="clip0_2499_304">
+                    <rect width="21" height="22" fill="white"/>
+                </clipPath>
+            </defs>
+        </svg>
+    `;
+}
+
+          for (let i = 0; i < emptyStars; i++) {
+              starsHTML += `<svg xmlns='http://www.w3.org/2000/svg' width='21' height='21' viewBox='0 0 21 21' fill='none'>
+    <path d='M9.10663 1.74627L9.10609 1.74736L7.28084 5.39787C7.1038 5.75796 6.803 6.07365 6.48446 6.30869C6.16484 6.54453 5.7745 6.73818 5.38047 6.80385L5.38017 6.8039L2.07055 7.35377C1.11286 7.51339 0.721989 7.90454 0.619776 8.22253C0.517986 8.53921 0.606779 9.08232 1.29642 9.76726L1.29782 9.76867L3.87105 12.3419C4.17641 12.6473 4.38638 13.0625 4.50324 13.4707C4.62018 13.8792 4.66129 14.3415 4.56743 14.7603L4.56654 14.7642L3.82995 17.9491C3.55077 19.1606 3.80624 19.7017 4.04471 19.8756C4.2842 20.0501 4.88039 20.1278 5.95264 19.4945L9.05433 17.6583C9.4465 17.426 9.92712 17.3278 10.3752 17.3278C10.8238 17.3278 11.3048 17.4261 11.6998 17.656L11.6998 17.656L11.7036 17.6582L14.806 19.4948L14.8066 19.4951C15.8708 20.1266 16.4677 20.0482 16.7094 19.8718C16.9506 19.6958 17.2068 19.1527 16.9284 17.9496L16.9283 17.9496L16.1916 14.7642L16.1916 14.7642L16.1908 14.7603C16.0969 14.3415 16.138 13.8792 16.2549 13.4707C16.3718 13.0625 16.5818 12.6473 16.8871 12.3419L19.4604 9.76867C20.1454 9.0836 20.2357 8.53954 20.1342 8.22147C20.0328 7.90396 19.6447 7.51329 18.6876 7.35377L15.378 6.8039L15.378 6.8039L15.376 6.80356C14.9865 6.73742 14.599 6.54313 14.2817 6.30788C13.9652 6.07319 13.6646 5.75771 13.4877 5.39775L11.663 1.74846C11.663 1.74837 11.6629 1.74828 11.6629 1.74819C11.2071 0.84142 10.7089 0.583646 10.3804 0.583646C10.0529 0.583646 9.55731 0.840177 9.10663 1.74627Z' stroke='#FABF35' stroke-width="1.16729" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`; // Empty star
+          }
+          starsContainer.innerHTML = starsHTML;
+                  // Select the reviews container
+                  const reviewsContainer2 = document.querySelector('.cutomers_All_reviews');
+                  
+                
+const reviewsBucket = document.querySelector('.reviews_bucket'); // Assuming this is already populated
+const firstReview = reviews[0]; 
+const proImgElement = document.querySelector('.pro_img');
+const proImgHTML = proImgElement ? proImgElement.innerHTML : '';
+
+console.log("First Review:", firstReview);
+
+if (firstReview && reviewsBucket) {
+    // Prepend reviewsBucket to the reviewsContainer2
+    reviewsContainer2.prepend(reviewsBucket);
+  
+    // Create HTML structure for the first review and append it
+    const index = 0; // Since you're using the first review, set index to 0
+    const comment = firstReview.comment || ''; // Assuming there's a 'comment' field
+    const maxLength = 100; // Max length for truncating the comment
+    const truncatedComment = comment.length > maxLength ? comment.substring(0, maxLength) + '...' : comment;
+    const isLongComment = comment.length > maxLength;
+
+    const firstReviewHTML = `
+         <div class="reviews_bucket">
+            <div class="image_bucket"><div></div>
+                <img src='${firstReview.image || proImgHTML}' alt="Review Image"/>
+            </div>
+            <div class="main_review_bucket">
+                <div class="review_rating">
+                    <strong>Rating: ${Number(firstReview.rating)}</strong>
+                    <div class="stars">${generateStarRating(Number(firstReview.rating) || 0)}</div>
+                </div>
+                <div class="review_ratingname"><h3>${firstReview.userName || ''}</h3></div>
+                <div class="bucket_verfied">
+                    <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="19" viewBox="0 0 18 19" fill="none">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M9.20103 18.0232C13.9978 18.0232 17.8864 14.1346 17.8864 9.33775C17.8864 4.54093 13.9978 0.652344 9.20103 0.652344C4.40421 0.652344 0.515625 4.54093 0.515625 9.33775C0.515625 14.1346 4.40421 18.0232 9.20103 18.0232ZM13.388 7.3739C13.6525 7.01021 13.5721 6.50096 13.2084 6.23646C12.8447 5.97196 12.3355 6.05237 12.071 6.41606L8.28873 11.6166L6.24835 9.57624C5.93036 9.25825 5.41481 9.25825 5.09682 9.57624C4.77883 9.89423 4.77883 10.4098 5.09682 10.7278L7.81101 13.442C7.97939 13.6104 8.21306 13.6966 8.45047 13.678C8.68787 13.6593 8.90523 13.5377 9.04529 13.3451L13.388 7.3739Z" fill="#0F172A"/>
+                        </svg>
+                    </span>
+                    <h3>Verified Purchase</h3>
+                </div>
+              
+                <div class="review_comment">
+                    <p>
+                        <span id="truncated-comment-${index}">${truncatedComment}</span>
+                        ${isLongComment ? `<span id="full-comment-${index}" class="hidden">${comment}</span>` : ''}
+                        ${isLongComment ? `<button class="toggle-comment" data-index="${index}">Show More</button>` : ''}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    reviewsContainer2.innerHTML = firstReviewHTML + reviewsContainer2.innerHTML;
+
+} else {
+  reviewsContainer2.innerHTML = "No reviews available.";
+}
+
+
+    
+
       } else {
         document.getElementById('responseMessage').textContent = `Error: ${result.message}`;
       }
@@ -1266,6 +1471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return starsHTML;
   }
+  
 
   // Close the popup
   document.querySelector('.close').addEventListener('click', () => {

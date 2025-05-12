@@ -36,6 +36,8 @@ export async function loader({ request }) {
         ipAddress: true,
         videoURL: true,
         message: true,
+        userName: true,
+
         createdAt: true,
       },
     });
@@ -134,6 +136,7 @@ export default function ProfitsPage() {
     setSortBy(e.target.value);
   };
 
+
   // Filter and sort the data
   const filteredData = data.filter(
     (item) =>
@@ -177,8 +180,7 @@ export default function ProfitsPage() {
     pip,
     played,
     seeking,
-    volume,
-  } = state;
+    volume, } = state;
 
   const handleActive = (item) => {
     setActiveApp(item);
@@ -220,6 +222,11 @@ export default function ProfitsPage() {
 
   const elapsedTime = format(currentTime);
   const totalDuration = format(duration);
+  const handleBack = () => {
+    setComponent("first");
+  };
+
+  console.log(details.videoURL,"details.videoURL")
   return (
     <>
       <div className={styles.containerDivReplay}>
@@ -515,7 +522,7 @@ export default function ProfitsPage() {
           <>
             <div className={styles.flexWrapper}>
               <div className={styles.headingFlex}>
-                <button className={styles.btn_Back}>
+                <button className={styles.btn_Back}     onClick={handleBack}>
                   {" "}
                   <img src={arrowIcon} width={20} height={16} />{" "}
                 </button>
@@ -592,14 +599,37 @@ export default function ProfitsPage() {
                     </li>
                   </ul>
                 </div>
-
+{console.log(videoRef, details.videoURL,"here to see")}
                 <div className={styles.playlistView}>
                   <div>
                     <div className={styles.relativeDiv}>
-                      <ReactPlayer
+                    {/* <iframe
+  src={details.videoURL}
+  className={styles.videoPlayerImg}
+  width="100%"
+  height="600"
+  frameBorder="0"
+  allowFullScreen
+></iframe> */}
+
+<iframe
+  src={details.videoURL}
+    className={styles.videoPlayerImg}
+  width="100%"
+  height="600"
+  frameBorder="0"
+  allowFullScreen
+></iframe>
+
+
+
+
+                      {/* <ReactPlayer
                         ref={videoRef}
                         className={styles.videoPlayerImg}
-                        url={`https://dictionaries-hugh-bailey-reflection.trycloudflare.com/${details.videoURL}`}
+                        url={details.videoURL}
+                        // url={`https://dictionaries-hugh-bailey-reflection.trycloudflare.com/${details.videoURL}`}
+
                         pip={pip}
                         playing={playing}
                         controls={true}
@@ -617,7 +647,7 @@ export default function ProfitsPage() {
                             },
                           },
                         }}
-                      />
+                      /> */}
                     </div>
                   </div>
 

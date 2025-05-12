@@ -89,6 +89,7 @@ export async function loader({ request }) {
 
     const allDiscountId = await allIds.json();
 
+    console.log(allDiscountId, "This is all data");
     return json({ products, totalBundle, sales, allDiscountId });
   } catch (error) {
     console.error(error);
@@ -118,8 +119,8 @@ export async function action({ request }) {
       const method = formData.get("discount");
       const chooseAmount = formData.get("amount");
       const showButtonTitle = formData.get("titleSectionNew");
-      console.log(showButtonTitle, "formdatav here");
-      
+      console.log(showButtonTitle, bundle_id, "formdatav here");
+
       console.log(
         bundle_id,
         name,
@@ -179,6 +180,8 @@ export async function action({ request }) {
       if (showButtonTitle === "Show" && !bundle_id && titleExist) {
         return json({
           status: 500,
+          error: "Bundle name already exists. Please choose another title.",
+
           step: 4,
           message: "Bundle Title should be unique",
         });
@@ -223,6 +226,8 @@ export async function action({ request }) {
             data: productData,
           };
           productResponse = await axios.request(config);
+
+          console.log(productResponse, "here to see di");
         }
 
         let data;
@@ -359,6 +364,8 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         };
 
         const discountResponse = await axios.request(discountconfig);
+
+        console.log(discountResponse, "discountResponse");
         const discount_id =
           discountResponse?.data?.data?.discountAutomaticBasicCreate
             ?.automaticDiscountNode?.id;
@@ -647,7 +654,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       const discount_id = formData.get("discount_id");
       const product_bundle_id = formData.get("product_bundle_id");
 
-      console.log(productId,discount_id,product_bundle_id, "productIdkiski");
+      console.log(productId, discount_id, product_bundle_id, "productIdkiski");
 
       if (discount_id) {
         const data = JSON.stringify({
@@ -683,6 +690,8 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         // Make the request to Shopify
         const response = await axios.request(config);
         const responseData = response.data;
+
+        console.log(responseData,"responseData server")
       }
 
       const productDeleteData = await admin.graphql(
@@ -696,20 +705,22 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             }
           }
         }`,
+        
       );
 
-      const productDeleteConfig = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: `https://${shop}/admin/api/2025-04/graphql.json`,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-        },
-        data: productDeleteData,
-      };
+      console.log(productDeleteData,"productDeleteData")
+      // const productDeleteConfig = {
+      //   method: "post",
+      //   maxBodyLength: Infinity,
+      //   url: `https://${shop}/admin/api/2025-04/graphql.json`,
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     "X-Shopify-Access-Token": session?.accessToken,
+      //   },
+      //   data: productDeleteData,
+      // };
 
-      const productDeleteResponse = await axios.request(productDeleteConfig);
+      // const productDeleteResponse = await axios.request(productDeleteConfig);
 
       const result = await db.bundle.deleteMany({
         where: {
@@ -1071,11 +1082,12 @@ export default function PlansPage() {
       textBelow: "Show",
       background: "Show",
     });
-  };
+  };  console.log(allDiscountId,"allDiscountId")
+
 
   const handleActive = (e, item) => {
     e.preventDefault();
-    console.log(e,item,"items here to check")
+    console.log(e, item, "items here to check");
     setActive(false);
     setActiveApp(item);
     fetcher.submit(
@@ -1403,6 +1415,7 @@ export default function PlansPage() {
 
   const filteredBundles = getFilteredBundles();
 
+  console.log(filteredBundles, "filteredBundles");
   return (
     <>
       <Toaster />
@@ -2341,12 +2354,10 @@ export default function PlansPage() {
                                           Show
                                         </li>
                                         <li
-                                        name="titleSections"
-                                        
+                                          name="titleSections"
                                           onClick={() =>
                                             handleBtn("titleSection", "Hide")
                                           }
-
                                           value={showButton.titleSection}
                                         >
                                           Hide

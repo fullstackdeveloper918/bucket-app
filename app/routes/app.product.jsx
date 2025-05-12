@@ -25,6 +25,7 @@ import {
   getProductInfo,
   getSingleReviews,
   getTotalReviewCount,
+ getShopTotalReviewCount,
 } from "../api/product-reviews.server";
 import db from "../db.server";
 import { json } from "@remix-run/node";
@@ -38,15 +39,19 @@ import DeletePopup from "../components/DeletePopup/Deletepopup";
 const ReviewsCard = lazy(() => import("../components/ReviewsCard/ReviewsCard"));
 
 export async function loader({ request }) {
+  console.log(request.url, "request checksssssssssssssssssss");
+
+
   return json(
     await promiseHash({
       productReviews: getProductInfo(),
       totalCount: getTotalReviewCount(request),
-      singleReviews: await getSingleReviews(request), // ✅ add await here
-    })
+      singleReviews: getSingleReviews({ request }), // ✅ add await here
+    shopTotalReviews: getShopTotalReviewCount({ request }),
+
+    }),
   );
 }
-
 
 export async function action({ request }) {
   const { session } = await authenticate.admin(request);
@@ -54,6 +59,96 @@ export async function action({ request }) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  const reviewId = formData.get("reviewId");
+  const _method = formData.get("_method");
+
+  const isPublic = formData.get("isPublic");
+
+  console.log(reviewId, _method, isPublic, "reviewIdsss");
+
+  if (intent === "updateReview") {
+    const reviewId = formData.get("reviewId")?.toString();
+    const shopDomain = formData.get("shopDomain")?.toString() || "";
+    const productId = formData.get("productId")?.toString() || "";
+    const productName = formData.get("productName")?.toString() || "";
+    const userName = formData.get("userName")?.toString() || "";
+    const userEmail = formData.get("userEmail")?.toString() || "";
+    const rating = parseFloat(formData.get("rating")?.toString() || "0");
+    const comment = formData.get("comment")?.toString() || "";
+    const isPublic = formData.get("isPublic") === "true";
+    const photo = formData.get("photo");
+
+    console.log(reviewId, productId, isNaN(rating), "datas checking");
+    if (!reviewId || !productId || isNaN(rating)) {
+      return json({ message: "Missing required fields" }, { status: 400 });
+    }
+
+    try {
+      let photoUrl = null;
+
+      if (photo && typeof photo === "object" && photo.size > 0) {
+        const buffer = Buffer.from(await photo.arrayBuffer());
+        const fileName = `${Date.now()}-${photo.name}`;
+        const fs = require("fs");
+        const path = require("path");
+        const uploadPath = path.join("public", "uploads", fileName);
+        fs.writeFileSync(uploadPath, buffer);
+        photoUrl = `/uploads/${fileName}`;
+      }
+
+      const updatedReview = await db.review.update({
+        where: { id: reviewId },
+        data: {
+          shopDomain: shop,
+          productId,
+          productName,
+          userName,
+          userEmail: userEmail || null,
+          rating,
+          comment: comment || null,
+          isPublic,
+          ...(photoUrl && { photo: photoUrl }),
+        },
+      });
+
+      return json({
+        message: "Review updated successfully",
+        updatedReview,
+        status: 200,
+      });
+    } catch (error) {
+      console.error("Update review error:", error);
+      return json(
+        { message: "Failed to update review", error: error.message },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (_method == "put") {
+    if (!reviewId) {
+      return json({ message: "Review ID is required" }, { status: 400 });
+    }
+
+    try {
+      const updatedReview = await db.review.update({
+        where: { id: reviewId },
+        data: { isPublic: isPublic == 1 ? false : true },
+      });
+
+      console.log(updatedReview, "updatedReview");
+      return json({
+        message: "Review marked as private",
+        updatedReview,
+      });
+    } catch (error) {
+      console.error("Error updating review:", error);
+      return json(
+        { message: "Failed to mark review as private" },
+        { status: 500 },
+      );
+    }
+  }
   if (request.method === "POST") {
     if (intent === "widgetStep") {
       const position = formData.get("position");
@@ -188,11 +283,11 @@ export async function action({ request }) {
 }
 
 export default function AppsPage() {
-  const { productReviews, totalCount, singleReviews } = useLoaderData();
+  const { productReviews, totalCount, singleReviews,shopTotalReviews } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
-  console.log(singleReviews,"singleReview")
+  console.log(shopTotalReviews, "singleReviewed");
   const fetcher = useFetcher();
 
   const [activeTab, setActiveTab] = useState("Reviews");
@@ -207,6 +302,7 @@ export default function AppsPage() {
   const [sort, setSort] = useState(false);
   const [edit, setEdit] = useState(false);
   const [showImportPopup, setShowImportPopup] = useState(null);
+  const [editableReviews, setEditableReviews] = useState({});
 
   const [showProducts, setShowProducts] = useState(false);
 
@@ -254,8 +350,10 @@ We’re all about making our customers’ lives better with [Product Name], and 
   };
 
   const handleEditClick = (productId) => {
+    console.log(productId, fetcher, edit, "cljsdh");
     const data = fetcher.load(`?productId=${productId}`);
-    console.log(data,"dethcer data")
+    console.log(data, "dethcer data");
+
     setEdit(!edit);
   };
 
@@ -305,6 +403,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
         });
       }
     }
+
     //  else if(actionResponse?.step === 6) {
     //   if (actionResponse?.status === 200) {
     //     notify.success(actionResponse?.message, {
@@ -326,6 +425,18 @@ We’re all about making our customers’ lives better with [Product Name], and 
     //   }
     // }
   }, [actionResponse]);
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.message) {
+      notify.success(fetcher?.data?.message, {
+        position: "top-center",
+        style: {
+          background: "green",
+          color: "white",
+        },
+      });
+    }
+  }, [fetcher.state, fetcher.data]);
 
   useEffect(() => {
     if (actionResponse?.step === 5) {
@@ -369,7 +480,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
 
   const paginatedReviews = productReviews.slice(
     (currentPage - 1) * reviewsPerPage,
-    currentPage * reviewsPerPage
+    currentPage * reviewsPerPage,
   );
 
   const handlePageClick = (page) => {
@@ -380,6 +491,46 @@ We’re all about making our customers’ lives better with [Product Name], and 
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
   }
+
+  let arrayUpdateReview = [];
+  arrayUpdateReview.push(fetcher?.data?.updatedReview);
+
+  console.log(
+    fetcher?.data?.updatedReview,
+    arrayUpdateReview,
+    "arrayUpdateReview",
+  );
+
+  const [uploadedPhoto, setUploadedPhoto] = useState(null);
+
+  const [editModalContent, setEditModalContent] = useState(null);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const previewURL = URL.createObjectURL(file);
+    setUploadedPhoto(previewURL);
+  };
+
+  const removePhoto = () => {
+    setUploadedPhoto(null);
+  };
+
+  const editFn = (item) => {
+    setShowImportPopup(2);
+    setEditModalContent(item);
+  };
+  useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.message === "Review updated successfully"
+    ) {
+      notify.success("Review updated successfully");
+      setShowImportPopup(0); // or however you're closing your modal
+    }
+  }, [fetcher.state, fetcher.data]);
+  console.log(editModalContent, "editModalContent");
   return (
     <div className={styles.containerDiv}>
       <TitleBar title="Product Reviews"></TitleBar>
@@ -443,7 +594,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 )}
               </div>
             </div>
-
+{console.log(totalCount,"totalCount")}
             <div className={styles.inline_stack}>
               <div className={styles.inline_stackwraper}>
                 {Object.entries(totalCount).map(([item, value], index) => (
@@ -555,7 +706,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     {edit ? (
                       <>
                         <th>Rating</th>
-                        <th>Content</th>
+                        <th>Contents</th>
                       </>
                     ) : (
                       <>
@@ -568,110 +719,146 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </tr>
                 </thead>
                 <tbody>
-                    {console.log(edit
-                    , fetcher,"fetcher")}
+                  {console.log(
+                    fetcher?.data?.updatedReview?.isPublic == true,
+                    arrayUpdateReview,
+                    "fetcher",
+                  )}
                   {edit
-                    ? fetcher?.data?.singleReviews?.reviews.map((item) => (
-                        <React.Fragment>
-                          {console.log(item, "hence")}
-                          <tr>
-                            <td>
-                              <img
-                                src="https://archive.org/download/placeholder-image/placeholder-image.jpg"
-                                width={60}
-                                height={60}
-                              />
-                            </td>
-                            <td>{item?.rating}*</td>
-                            <td>{item?.userName}</td>
-                            <td>
-                              <div className={styles.buttonFlexer}>
-                                <label className={styles.switch}>
-                                  <input type="checkbox" />
-                                  <span className={styles.slider}></span>
-                                </label>
-
-                                <Form method="DELETE">
-                                  <input
-                                    type="hidden"
-                                    name="reviewId"
-                                    value={reviewId}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteReview(item)}
-                                    className={styles.deletedBtn}
-                                  >
-                                    <svg
-                                      width="16"
-                                      height="18"
-                                      viewBox="0 0 18 20"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        clipRule="evenodd"
-                                        d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
-                                        fill="#F24747"
+                    ? fetcher?.data?.updatedReview?.isPublic == true
+                      ? arrayUpdateReview
+                      : fetcher?.data?.singleReviews?.reviews.map((item) => (
+                          <React.Fragment>
+                            {console.log(item, "hence")}
+                            <tr>
+                              <td>
+                                <img
+                                  src="https://archive.org/download/placeholder-image/placeholder-image.jpg"
+                                  width={60}
+                                  height={60}
+                                />
+                              </td>
+                              <td>{item?.rating}*</td>
+                              <td>{item?.comment}</td>
+                              <td>
+                                <div className={styles.buttonFlexer}>
+                                  <label className={styles.switch}>
+                                    <fetcher.Form method="post">
+                                      <input
+                                        type="hidden"
+                                        name="reviewId"
+                                        value={item.id}
                                       />
-                                    </svg>
-                                  </button>
-                                  {showPopup && (
-                                    <DeletePopup
-                                      setShowPopup={setShowPopup}
-                                      state={navigation.state}
+                                      <input
+                                        type="hidden"
+                                        name="intent"
+                                        value="togglePublic"
+                                      />
+                                      <input
+                                        type="hidden"
+                                        name="_method"
+                                        value="put"
+                                      />{" "}
+                                      <input
+                                        type="hidden"
+                                        name="isPublic"
+                                        value={item?.isPublic}
+                                      />
+                                      <input
+                                        type="checkbox"
+                                        name="isPublic"
+                                        checked={!!item?.isPublic}
+                                        onChange={(e) => {
+                                          // Trigger fetcher.submit on checkbox change
+                                          fetcher.submit(e.target.form);
+                                        }}
+                                      />
+                                    </fetcher.Form>
+
+                                    <span className={styles.slider}></span>
+                                  </label>
+
+                                  <Form method="DELETE">
+                                    <input
+                                      type="hidden"
+                                      name="reviewId"
+                                      value={reviewId}
                                     />
-                                  )}
-                                </Form>
-                              </div>
-                            </td>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteReview(item)}
+                                      className={styles.deletedBtn}
+                                    >
+                                      <svg
+                                        width="16"
+                                        height="18"
+                                        viewBox="0 0 18 20"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          clipRule="evenodd"
+                                          d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
+                                          fill="#F24747"
+                                        />
+                                      </svg>
+                                    </button>
+                                    {showPopup && (
+                                      <DeletePopup
+                                        setShowPopup={setShowPopup}
+                                        state={navigation.state}
+                                      />
+                                    )}
+                                  </Form>
+                                </div>
+                              </td>
 
-                            <td>
-                              <div className="editbuttons">
-                                <button
-                                  style={{ cursor: "pointer" }}
-                                  onClick={() =>
-                                    handleEditClick(item.productId)
-                                  }
-                                  className={edit ? styles.importBtn : ""}
-                                >
-                                  <img
-                                    src={edit ? activeEdit : edit_icon}
-                                    width={14}
-                                    height={14}
-                                  />{" "}
-                                  <span
-                                    className={edit ? styles.gradientText : ""}
+                              <td>
+                                <div className="editbuttons">
+                                  <button
+                                    style={{ cursor: "pointer" }}
+                                    onClick={() => editFn(item)}
+                                    className={edit ? styles.importBtn : ""}
                                   >
-                                    Edit
-                                  </span>
-                                </button>
-                              </div>
-                            </td>
+                                    <img
+                                      src={edit ? activeEdit : edit_icon}
+                                      width={14}
+                                      height={14}
+                                    />{" "}
+                                    <span
+                                      className={
+                                        edit ? styles.gradientText : ""
+                                      }
+                                    >
+                                      Edit
+                                    </span>
+                                  </button>
+                                </div>
+                              </td>
 
-                            <td className={styles.ImportBtnwraper}>
-                              {edit ? (
-                                ""
-                              ) : (
-                                <button
-                                  style={{ cursor: "pointer" }}
-                                  className={styles.importBtn}
-                                >
-                                  <img
-                                    src={ImportIcon}
-                                    width={15}
-                                    height={21}
-                                  />
-                                  <span className={styles.gradientText}>
-                                    import
-                                  </span>
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        </React.Fragment>
-                      ))
+                              <td className={styles.ImportBtnwraper}>
+                                {edit ? (
+                                  ""
+                                ) : (
+                                  <button
+                                    style={{ cursor: "pointer" }}
+                                    className={styles.importBtn}
+                                  >
+                                    <img
+                                      src={ImportIcon}
+                                      width={15}
+                                      height={21}
+                                    />
+                                    <span className={styles.gradientText}>
+                                      import
+                                    </span>
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          </React.Fragment>
+                        ))
                     : productReviews.map((item, index) => (
                         <React.Fragment key={index}>
                           {console.log(item, "check item")}
@@ -742,55 +929,58 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 </tbody>
               </table>
               {paginatedReviews.map((review, index) => (
-        <div key={index}>
-          {/* your review rendering logic */}
-          <p>{review.comment}</p>
-        </div>
-      ))}
+                <div key={index}>
+                  {/* your review rendering logic */}
+                  <p>{review.comment}</p>
+                </div>
+              ))}
 
-      {productReviews.length > reviewsPerPage && (
-        <div className={styles.paginationFlex}>
-          <p>
-            Showing page {currentPage} of {totalPages}
-          </p>
+              {productReviews.length > reviewsPerPage && (
+                <div className={styles.paginationFlex}>
+                  <p>
+                    Showing page {currentPage} of {totalPages}
+                  </p>
 
-          <div className={styles.pagination}>
-            <a
-              href="#"
-              onClick={() => currentPage > 1 && handlePageClick(currentPage - 1)}
-              className={`${styles.prev} ${styles.marginGiven}`}
-              aria-label="Previous"
-            >
-              «
-            </a>
+                  <div className={styles.pagination}>
+                    <a
+                      href="#"
+                      onClick={() =>
+                        currentPage > 1 && handlePageClick(currentPage - 1)
+                      }
+                      className={`${styles.prev} ${styles.marginGiven}`}
+                      aria-label="Previous"
+                    >
+                      «
+                    </a>
 
-            {pageNumbers.map((num) => (
-              <a
-                href="#"
-                key={num}
-                onClick={() => handlePageClick(num)}
-                className={`${styles.prev} ${
-                  currentPage === num ? styles.active : ""
-                }`}
-                aria-label={`Page ${num}`}
-              >
-                {num}
-              </a>
-            ))}
+                    {pageNumbers.map((num) => (
+                      <a
+                        href="#"
+                        key={num}
+                        onClick={() => handlePageClick(num)}
+                        className={`${styles.prev} ${
+                          currentPage === num ? styles.active : ""
+                        }`}
+                        aria-label={`Page ${num}`}
+                      >
+                        {num}
+                      </a>
+                    ))}
 
-            <a
-              href="#"
-              onClick={() =>
-                currentPage < totalPages && handlePageClick(currentPage + 1)
-              }
-              className={`${styles.next} ${styles.marginGiven}`}
-              aria-label="Next"
-            >
-              »
-            </a>
-          </div>
-        </div>
-      )}
+                    <a
+                      href="#"
+                      onClick={() =>
+                        currentPage < totalPages &&
+                        handlePageClick(currentPage + 1)
+                      }
+                      className={`${styles.next} ${styles.marginGiven}`}
+                      aria-label="Next"
+                    >
+                      »
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1853,7 +2043,11 @@ We’re all about making our customers’ lives better with [Product Name], and 
         )}
 
         {showImportPopup == 2 && (
-          <div className={styles.modal_content}>
+          <fetcher.Form
+            method="post"
+            encType="multipart/form-data"
+            className={styles.modal_content}
+          >
             <div className={styles.left_content}>
               <div className={styles.ai_review}>
                 <img
@@ -1868,7 +2062,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     <strong style={{ textDecoration: "underline" }}>
                       {" "}
                       Shopify's Policy{" "}
-                    </strong>{" "}
+                    </strong>
                     . Edits should not change the review's original meaning and
                     must maintain transparency and the integrity of the source.
                     Make sure you comply with the following instructions
@@ -1892,66 +2086,126 @@ We’re all about making our customers’ lives better with [Product Name], and 
                   </ul>
                 </div>
               </div>
+
               <div className={styles.ai_review_check}>
                 <div className={styles.formGroup}>
-                  <input type="checkbox" id="save" checked />
-                  <label for="save">Pin review to the top of the page</label>
+                  <input
+                    type="checkbox"
+                    id="isPublic"
+                    name="isPublic"
+                    defaultChecked
+                  />
+                  <label htmlFor="isPublic">
+                    Pin review to the top of the page
+                  </label>
                 </div>
               </div>
+
               <div className={`${styles.timing_after} ${styles.maxWidth}`}>
                 <div className={styles.input_labelCustomize}>
-                  <label htmlFor="">Reviewer Name</label>
+                  <label htmlFor="userName">Reviewer Name</label>
                   <input
                     type="text"
-                    name="customerReviews"
-                    placeholder="John Doe"
-                    value="John Doe"
+                    name="userName"
+                    placeholder="Enter Name"
+                    defaultValue={editModalContent?.userName}
                   />
                 </div>
               </div>
-              <div>
-                <label htmlFor="">Reviewer Name</label>
+
+              <div
+                className={styles.timing_after_textarea}
+                style={{ margin: "0" }}
+              >
+                <label htmlFor="comment">Review Content</label>
+                <textarea
+                  name="comment"
+                  id="comment"
+                  defaultValue={editModalContent?.comment}
+                  placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing..."
+                ></textarea>
               </div>
+
               <div className={styles.timing_after} style={{ margin: "0" }}>
                 <div className={styles.modalTextarea}>
-                  <textarea
-                    name=""
-                    id=""
-                    placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing..."
-                  ></textarea>
+                  <label htmlFor="photoInput">Attached Images</label>
+                  {!uploadedPhoto ? (
+                    <div className={styles.addPhotoContainer}>
+                      <input
+                        type="file"
+                        id="photoInput"
+                        name="photo"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                      />
+                      <div className={styles.addPhotoButton}>
+                        <img
+                          src={AddGradient}
+                          alt="add"
+                          width={30}
+                          height={30}
+                        />
+                        <p>Add Photo</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={styles.uploadedPreview}>
+                      <img src={uploadedPhoto} alt="uploaded" width={100} />
+                      <button type="button" onClick={removePhoto}>
+                        ❌
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div>
-                <label htmlFor="">Reviewer Name</label>
-              </div>
-              <div>
-                <div className={styles.addPhotoContainer}>
-                  <input type="file" id="photoInput" accept="image/*" />
-                  <div className={styles.addPhotoButton}>
-                    <span>
-                      <img src={AddGradient} alt="add" width={30} height={30} />
-                    </span>
-                    <p>Add Photo</p>
-                  </div>
-                </div>
-              </div>
+
+              {/* Hidden Inputs for required fields */}
+              <input
+                type="hidden"
+                name="productId"
+                value={editModalContent?.productId}
+              />
+              <input
+                type="hidden"
+                name="productName"
+                value={editModalContent?.productName}
+              />
+              <input
+                type="hidden"
+                name="userEmail"
+                value={editModalContent?.userEmail}
+              />
+              <input
+                type="hidden"
+                name="reviewId"
+                value={editModalContent?.id}
+              />
+
+              <input
+                type="hidden"
+                name="rating"
+                value={editModalContent?.rating || 5}
+              />
+              <input type="hidden" name="intent" value="updateReview" />
             </div>
 
             <div className={`${styles.addBtn} ${styles.textEnd}`}>
               <button
                 className={styles.Backbtn}
                 onClick={() => setShowImportPopup(null)}
+                type="button"
               >
                 Cancel
               </button>
               <button
-                onClick={() => setShowImportPopup(null)}
+                type="submit"
                 className={styles.NextBtn}
+                disabled={fetcher.state !== "idle"}
               >
-                Launch
+                {fetcher.state !== "idle" ? "Submitting..." : "Launch"}
               </button>
             </div>
-          </div>
+          </fetcher.Form>
         )}
       </div>
     </div>

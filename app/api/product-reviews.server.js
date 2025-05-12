@@ -1,5 +1,66 @@
 import db from "../db.server";
 
+
+export const getShopTotalReviewCount = async ({ request } = {}) => {
+  try {
+    // if (!request || !request.url) {
+    //   return { shopDomain: "", totalProducts: 0 };
+    // }
+
+    const url = new URL(request.url);
+    const shopDomain = url.searchParams.get("shopDomain");
+
+    if (!shopDomain) {
+      return { shopDomain: "", totalProducts: 0 };
+    }
+
+    // Get the total number of products from Shopify using GraphQL
+    const productsQuery = `
+      query getProducts($cursor: String) {
+        products(first: 100, after: $cursor) {
+          edges {
+            cursor
+            node {
+              id
+              title
+            }
+          }
+          pageInfo {
+            hasNextPage
+          }
+        }
+      }`;
+
+    let hasNextPage = true;
+    let cursor = null;
+    let totalProducts = 0;
+
+    while (hasNextPage) {
+      const response = await admin.graphql(productsQuery, {
+        variables: { cursor },
+      });
+
+      const result = await response.json();
+      const products = result.data.products;
+
+      totalProducts += products.edges.length;
+
+      hasNextPage = products.pageInfo.hasNextPage;
+      cursor = hasNextPage ? products.edges[products.edges.length - 1].cursor : null;
+    }
+
+    return {
+      shopDomain,
+      totalProducts,
+    };
+  } catch (error) {
+    console.error("Error fetching shop total products:", error);
+    return { shopDomain: "", totalProducts: 0 };
+  }
+};
+
+
+
 export const getTotalReviewCount = async ({ request } = {}) => {
   try {
     if (!request || !request.url) {
