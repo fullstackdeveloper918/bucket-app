@@ -26,6 +26,8 @@ import {
   getSingleReviews,
   getTotalReviewCount,
  getShopTotalReviewCount,
+ getShopAllProducts,
+ 
 } from "../api/product-reviews.server";
 import db from "../db.server";
 import { json } from "@remix-run/node";
@@ -48,7 +50,7 @@ export async function loader({ request }) {
       totalCount: getTotalReviewCount(request),
       singleReviews: getSingleReviews({ request }), // ✅ add await here
     shopTotalReviews: getShopTotalReviewCount({ request }),
-
+shopAllProducts : getShopAllProducts({request})
     }),
   );
 }
@@ -283,11 +285,11 @@ export async function action({ request }) {
 }
 
 export default function AppsPage() {
-  const { productReviews, totalCount, singleReviews,shopTotalReviews } = useLoaderData();
+  const { productReviews, totalCount,shopAllProducts, singleReviews,shopTotalReviews } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
-  console.log(shopTotalReviews, "singleReviewed");
+  console.log(shopAllProducts, "singleReviewed");
   const fetcher = useFetcher();
 
   const [activeTab, setActiveTab] = useState("Reviews");
@@ -476,14 +478,17 @@ We’re all about making our customers’ lives better with [Product Name], and 
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 10;
 
-  const totalPages = Math.ceil(productReviews.length / reviewsPerPage);
+  const totalPages = Math.ceil(shopAllProducts?.products.length / reviewsPerPage);
 
-  const paginatedReviews = productReviews.slice(
+  const paginatedReviews = shopAllProducts?.products.slice(
     (currentPage - 1) * reviewsPerPage,
     currentPage * reviewsPerPage,
   );
 
-  const handlePageClick = (page) => {
+  console.log(paginatedReviews,"paginatedReviews")
+
+  const handlePageClick = (e,page) => {
+    e.preventDefault()
     setCurrentPage(page);
   };
 
@@ -724,10 +729,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
                     arrayUpdateReview,
                     "fetcher",
                   )}
-                  {edit
-                    ? fetcher?.data?.updatedReview?.isPublic == true
-                      ? arrayUpdateReview
-                      : fetcher?.data?.singleReviews?.reviews.map((item) => (
+                  {edit == true ?
+                    fetcher?.data?.singleReviews?.reviews.map((item) => (
                           <React.Fragment>
                             {console.log(item, "hence")}
                             <tr>
@@ -859,7 +862,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                             </tr>
                           </React.Fragment>
                         ))
-                    : productReviews.map((item, index) => (
+                    : paginatedReviews.map((item, index) => (
                         <React.Fragment key={index}>
                           {console.log(item, "check item")}
                           <tr>
@@ -870,7 +873,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
                                 height={73}
                               />
                             </td>
-                            <td>{item?.productName}</td>
+                            <td>{item?.title}</td>
                             <td>{item?.totalReviews}</td>
                             <td>
                               {edit && (
@@ -935,52 +938,57 @@ We’re all about making our customers’ lives better with [Product Name], and 
                 </div>
               ))}
 
-              {productReviews.length > reviewsPerPage && (
-                <div className={styles.paginationFlex}>
-                  <p>
-                    Showing page {currentPage} of {totalPages}
-                  </p>
+      {shopAllProducts?.products?.length > reviewsPerPage && (
+  <div className={styles.paginationFlex}>
+    <p>
+      Showing page {currentPage} of {totalPages}
+    </p>
 
-                  <div className={styles.pagination}>
-                    <a
-                      href="#"
-                      onClick={() =>
-                        currentPage > 1 && handlePageClick(currentPage - 1)
-                      }
-                      className={`${styles.prev} ${styles.marginGiven}`}
-                      aria-label="Previous"
-                    >
-                      «
-                    </a>
+    <div className={styles.pagination}>
+      <a
+        href="#"
+        onClick={() =>
+          currentPage > 1 && handlePageClick(currentPage - 1)
+        }
+        className={`${styles.prev} ${styles.marginGiven}`}
+        aria-label="Previous"
+      >
+        «
+      </a>
 
-                    {pageNumbers.map((num) => (
-                      <a
-                        href="#"
-                        key={num}
-                        onClick={() => handlePageClick(num)}
-                        className={`${styles.prev} ${
-                          currentPage === num ? styles.active : ""
-                        }`}
-                        aria-label={`Page ${num}`}
-                      >
-                        {num}
-                      </a>
-                    ))}
+      {pageNumbers
+        .slice(
+          Math.max(0, currentPage - 3), // start index
+          Math.min(totalPages, currentPage + 2) // end index
+        )
+        .map((num) => (
+          <a
+            href="#"
+            key={num}
+            onClick={(e) => handlePageClick(e,num)}
+            className={`${styles.prev} ${
+              currentPage === num ? styles.active : ""
+            }`}
+            aria-label={`Page ${num}`}
+          >
+            {num}
+          </a>
+        ))}
 
-                    <a
-                      href="#"
-                      onClick={() =>
-                        currentPage < totalPages &&
-                        handlePageClick(currentPage + 1)
-                      }
-                      className={`${styles.next} ${styles.marginGiven}`}
-                      aria-label="Next"
-                    >
-                      »
-                    </a>
-                  </div>
-                </div>
-              )}
+      <a
+        href="#"
+        onClick={() =>
+          currentPage < totalPages && handlePageClick(currentPage + 1)
+        }
+        className={`${styles.next} ${styles.marginGiven}`}
+        aria-label="Next"
+      >
+        »
+      </a>
+    </div>
+  </div>
+)}
+
             </div>
           </div>
         </div>

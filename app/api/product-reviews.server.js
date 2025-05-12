@@ -1,20 +1,111 @@
 import db from "../db.server";
+import { authenticate } from "../shopify.server";
+
+
+
+export const getShopAllProducts = async ({ request } = {}) => {
+  try {
+    if (!request || !request.url) {
+      return { shopDomain: "", products: [] };
+    }
+
+    const { admin } = await authenticate.admin(request);
+
+    const url = new URL(request.url);
+    const shopDomain = url.searchParams.get("shop");
+
+    if (!shopDomain) {
+      return { shopDomain: "", products: [] };
+    }
+
+    const productsQuery = `
+      query getProducts($cursor: String) {
+        products(first: 100, after: $cursor) {
+          edges {
+            cursor
+            node {
+              id
+              title
+              handle
+              status
+              totalInventory
+              createdAt
+              updatedAt
+              vendor
+              tags
+              productType
+              variants(first: 10) {
+                edges {
+                  node {
+                    id
+                    title
+                    price
+                    sku
+                    inventoryQuantity
+                  }
+                }
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+          }
+        }
+      }
+    `;
+
+    let hasNextPage = true;
+    let cursor = null;
+    let allProducts = [];
+
+    while (hasNextPage) {
+      const response = await admin.graphql(productsQuery, {
+        variables: { cursor },
+      });
+
+      const result = await response.json();
+
+      if (!result?.data?.products) {
+        console.error("Invalid GraphQL response:", result);
+        break;
+      }
+
+      const products = result.data.products;
+      const productNodes = products.edges.map((edge) => edge.node);
+
+      allProducts.push(...productNodes);
+
+      hasNextPage = products.pageInfo.hasNextPage;
+      cursor = hasNextPage ? products.edges[products.edges.length - 1].cursor : null;
+    }
+
+    return {
+      shopDomain,
+      total: allProducts.length,
+      products: allProducts,
+    };
+  } catch (error) {
+    console.error("Error fetching shop products:", error);
+    return { shopDomain: "", products: [] };
+  }
+};
 
 
 export const getShopTotalReviewCount = async ({ request } = {}) => {
   try {
-    // if (!request || !request.url) {
-    //   return { shopDomain: "", totalProducts: 0 };
-    // }
-
-    const url = new URL(request.url);
-    const shopDomain = url.searchParams.get("shopDomain");
-
-    if (!shopDomain) {
-      return { shopDomain: "", totalProducts: 0 };
+    if (!request || !request.url) {
+      return { shopDomain: "ssss", totalProducts: 0 };
     }
 
-    // Get the total number of products from Shopify using GraphQL
+    const { admin } = await authenticate.admin(request);
+
+    const url = new URL(request.url);
+    const shopDomain = url.searchParams.get("shop");
+console.log(url,shopDomain,"ku meri shsj")
+    if (!shopDomain) {
+      return { shopDomain: "aaaass", totalProducts: 0 };
+    }
+
     const productsQuery = `
       query getProducts($cursor: String) {
         products(first: 100, after: $cursor) {
@@ -29,7 +120,8 @@ export const getShopTotalReviewCount = async ({ request } = {}) => {
             hasNextPage
           }
         }
-      }`;
+      }
+    `;
 
     let hasNextPage = true;
     let cursor = null;
@@ -41,6 +133,12 @@ export const getShopTotalReviewCount = async ({ request } = {}) => {
       });
 
       const result = await response.json();
+
+      if (!result?.data?.products) {
+        console.error("Invalid GraphQL response:", result);
+        break;
+      }
+
       const products = result.data.products;
 
       totalProducts += products.edges.length;
@@ -55,11 +153,9 @@ export const getShopTotalReviewCount = async ({ request } = {}) => {
     };
   } catch (error) {
     console.error("Error fetching shop total products:", error);
-    return { shopDomain: "", totalProducts: 0 };
+    return { shopDomain: "qqqsss", totalProducts: 0 };
   }
 };
-
-
 
 export const getTotalReviewCount = async ({ request } = {}) => {
   try {
