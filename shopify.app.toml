@@ -3,7 +3,7 @@
 client_id = "58227abf1b572fb0200c52086fffff53"
 name = "adaptive-vertical-app"
 handle = "adaptive-vertical-app-12"
-application_url = "https://family-radar-lecture-glucose.trycloudflare.com"
+application_url = "https://gg-inclusive-neil-discussed.trycloudflare.com"
 embedded = true
 
 [build]
@@ -28,9 +28,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://family-radar-lecture-glucose.trycloudflare.com/auth/callback",
-  "https://family-radar-lecture-glucose.trycloudflare.com/auth/shopify/callback",
-  "https://family-radar-lecture-glucose.trycloudflare.com/api/auth/callback"
+  "https://gg-inclusive-neil-discussed.trycloudflare.com/auth/callback",
+  "https://gg-inclusive-neil-discussed.trycloudflare.com/auth/shopify/callback",
+  "https://gg-inclusive-neil-discussed.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

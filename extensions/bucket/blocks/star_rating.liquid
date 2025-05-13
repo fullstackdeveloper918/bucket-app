@@ -816,8 +816,8 @@ section.customerreview_data .cutomers_All_reviews .image_bucket img {
 
 document.addEventListener('DOMContentLoaded', function () {
 
-const appUrl="https://family-radar-lecture-glucose.trycloudflare.com";
-console.log("  is review "+appUrl)
+const appUrl="https://bangkok-mazda-washington-placing.trycloudflare.com";
+console.log("appUrl is review "+appUrl)
     const fileDropArea = document.getElementById('fileDropArea');
     const fileUploadInput = document.getElementById('reviewFiles');
     const fileError = document.getElementById('fileError');
@@ -926,7 +926,7 @@ const proImgHTML = proImgElement ? proImgElement.innerHTML : '';
   const popup = document.getElementById("reviewPopup");
   popup.style.display = ""; // Removes the inline display property
 }
-const appUrl="https://family-radar-lecture-glucose.trycloudflare.com";
+const appUrl="https://bangkok-mazda-washington-placing.trycloudflare.com";
   // Fetch reviews and average rating
 fetch(`${appUrl}/app/api/get/singleproduct-reviews?productId=${productId}`)
     .then(response => response.json())
@@ -1247,7 +1247,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Submit review button click event
   document.getElementById('submitReview').addEventListener('click', async () => {
     console.log("submitted")
-    let appUrl ="https://family-radar-lecture-glucose.trycloudflare.com";
+    const appUrl="https://bangkok-mazda-washington-placing.trycloudflare.com";
+
     const loaderreview = document.getElementById('loaderreview');
     loaderreview.style.display = 'inline-block';
     const form = document.getElementById('reviewForm');

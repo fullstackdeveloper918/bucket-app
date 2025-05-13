@@ -25,8 +25,6 @@ import {
   getProductInfo,
   getSingleReviews,
   getTotalReviewCount,
-  getShopTotalReviewCount,
-  getShopAllProducts,
 } from "../api/product-reviews.server";
 import db from "../db.server";
 import { json } from "@remix-run/node";
@@ -41,263 +39,191 @@ const ReviewsCard = lazy(() => import("../components/ReviewsCard/ReviewsCard"));
 
 export async function loader({ request }) {
   console.log(request.url, "request checksssssssssssssssssss");
-  const url = new URL(request.url);
-  const page = Number(url.searchParams.get("page") || "1");
-  const cursor = url.searchParams.get("cursor") || null;
   return json(
     await promiseHash({
       productReviews: getProductInfo(),
       totalCount: getTotalReviewCount(request),
       singleReviews: getSingleReviews({ request }), // ✅ add await here
-      shopTotalReviews: getShopTotalReviewCount({ request }),
-      shopAllProducts: getShopAllProducts({ request }),
-      page,
-      cursor,
     }),
   );
 }
 
-export async function action({ request }) {
-  const { session } = await authenticate.admin(request);
-  const { shop } = session;
-  const formData = await request.formData();
-  const intent = formData.get("intent");
+  export async function action({ request }) {
+    const { session } = await authenticate.admin(request);
+    const { shop } = session;
+    const formData = await request.formData();
+    const intent = formData.get("intent");
 
-  const reviewId = formData.get("reviewId");
-  const _method = formData.get("_method");
+    const reviewId = formData.get("reviewId");
+    const _method = formData.get("_method");
 
-  const isPublic = formData.get("isPublic");
+    const isPublic = formData.get("isPublic");
 
-  console.log(reviewId, _method, isPublic, "reviewIdsss");
+    console.log(reviewId,_method,isPublic, "reviewIdsss");
 
-  if (intent === "updateReview") {
-    const reviewId = formData.get("reviewId")?.toString();
-    const shopDomain = formData.get("shopDomain")?.toString() || "";
-    const productId = formData.get("productId")?.toString() || "";
-    const productName = formData.get("productName")?.toString() || "";
-    const userName = formData.get("userName")?.toString() || "";
-    const userEmail = formData.get("userEmail")?.toString() || "";
-    const rating = parseFloat(formData.get("rating")?.toString() || "0");
-    const comment = formData.get("comment")?.toString() || "";
-    const isPublic = formData.get("isPublic") === "true";
-    const photo = formData.get("photo");
-
-    console.log(reviewId, productId, isNaN(rating), "datas checking");
-    if (!reviewId || !productId || isNaN(rating)) {
-      return json({ message: "Missing required fields" }, { status: 400 });
-    }
-
-    try {
-      let photoUrl = null;
-
-      if (photo && typeof photo === "object" && photo.size > 0) {
-        const buffer = Buffer.from(await photo.arrayBuffer());
-        const fileName = `${Date.now()}-${photo.name}`;
-        const fs = require("fs");
-        const path = require("path");
-        const uploadPath = path.join("public", "uploads", fileName);
-        fs.writeFileSync(uploadPath, buffer);
-        photoUrl = `/uploads/${fileName}`;
+    if (_method == "put") {
+      if (!reviewId) {
+        return json({ message: "Review ID is required" }, { status: 400 });
       }
 
-      const updatedReview = await db.review.update({
-        where: { id: reviewId },
-        data: {
-          shopDomain: shop,
-          productId,
-          productName,
-          userName,
-          userEmail: userEmail || null,
-          rating,
-          comment: comment || null,
-          isPublic,
-          ...(photoUrl && { photo: photoUrl }),
-        },
-      });
-
-      return json({
-        message: "Review updated successfully",
-        updatedReview,
-        status: 200,
-      });
-    } catch (error) {
-      console.error("Update review error:", error);
-      return json(
-        { message: "Failed to update review", error: error.message },
-        { status: 500 },
-      );
-    }
-  }
-
-  if (_method == "put") {
-    if (!reviewId) {
-      return json({ message: "Review ID is required" }, { status: 400 });
-    }
-
-    try {
-      const updatedReview = await db.review.update({
-        where: { id: reviewId },
-        data: { isPublic: isPublic == 1 ? false : true },
-      });
-
-      console.log(updatedReview, "updatedReview");
-      return json({
-        message: "Review marked as private",
-        updatedReview,
-      });
-    } catch (error) {
-      console.error("Error updating review:", error);
-      return json(
-        { message: "Failed to mark review as private" },
-        { status: 500 },
-      );
-    }
-  }
-  if (request.method === "POST") {
-    if (intent === "widgetStep") {
-      const position = formData.get("position");
-      const section = formData.get("section");
-      const text = formData.get("text");
-      const textSize = formData.get("textSize");
-      const textColor = formData.get("textColor");
-      const starsColor = formData.get("starsColor");
-      const barsRatingColor = formData.get("barsRatingColor");
-      const addReviewBtnText = formData.get("addReviewBtnText");
-      const buttonColor = formData.get("buttonColor");
-      const verifiedPurchase = formData.get("verifiedPurchase");
-      const backgroundColor = formData.get("backgroundColor");
-      const backgroundShadow = formData.get("backgroundShadow");
-
       try {
-        const savedWidget = await db.review.create({
-          data: {
-            position,
-            section,
-            text,
-            textSize,
-            textColor,
-            starsColor,
-            barsRatingColor,
-            addReviewBtnText,
-            buttonColor,
-            verifiedPurchase,
-            backgroundColor,
-            backgroundShadow,
-            shopDomain: shop,
-          },
+        const updatedReview = await db.review.update({
+          where: { id:reviewId },
+          data: { isPublic: isPublic == 1 ? false : true },
         });
 
+        console.log(updatedReview,"updatedReview")
         return json({
-          message: "Data saved successfully",
-          data: savedWidget,
-          status: 200,
-          step: 3,
+          message: "Review marked as private",
+          updatedReview,
         });
       } catch (error) {
-        console.error("Error processing the request:", error);
-        return json({
-          message: "Failed to process the request",
-          error: error.message,
-          status: 500,
-          step: 3,
-        });
+        console.error("Error updating review:", error);
+        return json(
+          { message: "Failed to mark review as private" },
+          { status: 500 },
+        );
       }
-    } else if (intent === "handleActive") {
-      const active = formData.get("active");
-      const appType = "review";
+    }
+    if (request.method === "POST") {
+      if (intent === "widgetStep") {
+        const position = formData.get("position");
+        const section = formData.get("section");
+        const text = formData.get("text");
+        const textSize = formData.get("textSize");
+        const textColor = formData.get("textColor");
+        const starsColor = formData.get("starsColor");
+        const barsRatingColor = formData.get("barsRatingColor");
+        const addReviewBtnText = formData.get("addReviewBtnText");
+        const buttonColor = formData.get("buttonColor");
+        const verifiedPurchase = formData.get("verifiedPurchase");
+        const backgroundColor = formData.get("backgroundColor");
+        const backgroundShadow = formData.get("backgroundShadow");
 
-      try {
-        const existingApp = await prisma.appActiveInactive.findFirst({
-          where: { AppType: appType },
-        });
-
-        if (existingApp) {
-          const updatedApp = await prisma.appActiveInactive.update({
-            where: { id: existingApp.id },
-            data: { status: active === "Active" ? 1 : 0 },
-          });
-
-          return json({
-            message: "App status updated successfully",
-            data: updatedApp,
-            status: 200,
-            step: 6,
-          });
-        } else {
-          const newApp = await prisma.appActiveInactive.create({
+        try {
+          const savedWidget = await db.review.create({
             data: {
-              AppType: appType,
-              status: active === "Active" ? 1 : 0,
+              position,
+              section,
+              text,
+              textSize,
+              textColor,
+              starsColor,
+              barsRatingColor,
+              addReviewBtnText,
+              buttonColor,
+              verifiedPurchase,
+              backgroundColor,
+              backgroundShadow,
+              shopDomain: shop,
             },
           });
 
           return json({
-            message: "App status created successfully",
-            data: newApp,
+            message: "Data saved successfully",
+            data: savedWidget,
             status: 200,
-            step: 6,
+            step: 3,
+          });
+        } catch (error) {
+          console.error("Error processing the request:", error);
+          return json({
+            message: "Failed to process the request",
+            error: error.message,
+            status: 500,
+            step: 3,
           });
         }
-      } catch (err) {
-        console.error("Main Function Error:", err);
+      } else if (intent === "handleActive") {
+        const active = formData.get("active");
+        const appType = "review";
+
+        try {
+          const existingApp = await prisma.appActiveInactive.findFirst({
+            where: { AppType: appType },
+          });
+
+          if (existingApp) {
+            const updatedApp = await prisma.appActiveInactive.update({
+              where: { id: existingApp.id },
+              data: { status: active === "Active" ? 1 : 0 },
+            });
+
+            return json({
+              message: "App status updated successfully",
+              data: updatedApp,
+              status: 200,
+              step: 6,
+            });
+          } else {
+            const newApp = await prisma.appActiveInactive.create({
+              data: {
+                AppType: appType,
+                status: active === "Active" ? 1 : 0,
+              },
+            });
+
+            return json({
+              message: "App status created successfully",
+              data: newApp,
+              status: 200,
+              step: 6,
+            });
+          }
+        } catch (err) {
+          console.error("Main Function Error:", err);
+          return json({
+            message: "Something went wrong",
+            step: 6,
+            status: 500,
+          });
+        }
+      } else {
         return json({
-          message: "Something went wrong",
-          step: 6,
-          status: 500,
+          message: "Unknown intent",
+          status: 400,
         });
       }
-    } else {
-      return json({
-        message: "Unknown intent",
-        status: 400,
-      });
     }
-  }
 
-  // DELETE method
-  if (request.method === "DELETE") {
-    const reviewId = formData.get("reviewId");
-    try {
-      const deletedReview = await db.review.delete({
-        where: { id: reviewId },
-      });
-      return json({
-        message: "Review successfully deleted",
-        status: 200,
-        method: "delete",
-        step: 5,
-      });
-    } catch (error) {
-      console.error("Error deleting review:", error);
-      return json({
-        message: "Failed to delete review",
-        error: error.message,
-        status: 500,
-        method: "delete",
-        step: 5,
-      });
+    // DELETE method
+    if (request.method === "DELETE") {
+      const reviewId = formData.get("reviewId");
+      try {
+        const deletedReview = await db.review.delete({
+          where: { id: reviewId },
+        });
+        return json({
+          message: "Review successfully deleted",
+          status: 200,
+          method: "delete",
+          step: 5,
+        });
+      } catch (error) {
+        console.error("Error deleting review:", error);
+        return json({
+          message: "Failed to delete review",
+          error: error.message,
+          status: 500,
+          method: "delete",
+          step: 5,
+        });
+      }
     }
-  }
 
-  // fallback return if method is not handled
-  return json({
-    message: "Invalid request method or missing intent",
-    status: 400,
-  });
-}
+    // fallback return if method is not handled
+    return json({
+      message: "Invalid request method or missing intent",
+      status: 400,
+    });
+  }
 
 export default function AppsPage() {
-  const {
-    productReviews,
-    totalCount,
-    shopAllProducts,
-    singleReviews,
-    shopTotalReviews,
-  } = useLoaderData();
+  const { productReviews, totalCount, singleReviews } = useLoaderData();
   const actionResponse = useActionData();
   const navigation = useNavigation();
 
-  console.log(shopAllProducts, "singleReviewed");
+  console.log(productReviews, singleReviews, "singleReview");
   const fetcher = useFetcher();
 
   const [activeTab, setActiveTab] = useState("Reviews");
@@ -359,6 +285,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
     );
   };
 
+
+  
   const handleEditClick = (productId) => {
     console.log(productId, fetcher, edit, "cljsdh");
     const data = fetcher.load(`?productId=${productId}`);
@@ -381,7 +309,6 @@ We’re all about making our customers’ lives better with [Product Name], and 
     }));
   };
 
-  console.log(fetcher?.data?.singleReviews, "lallslslsl");
   const handleImportSourceChange = (e) => {
     setImportSource(e.target.value); // Update the state when the selected option changes
   };
@@ -414,6 +341,8 @@ We’re all about making our customers’ lives better with [Product Name], and 
         });
       }
     }
+    
+
 
     //  else if(actionResponse?.step === 6) {
     //   if (actionResponse?.status === 200) {
@@ -436,7 +365,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
     //   }
     // }
   }, [actionResponse]);
-
+  
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.message) {
       notify.success(fetcher?.data?.message, {
@@ -448,6 +377,7 @@ We’re all about making our customers’ lives better with [Product Name], and 
       });
     }
   }, [fetcher.state, fetcher.data]);
+
 
   useEffect(() => {
     if (actionResponse?.step === 5) {
@@ -487,136 +417,30 @@ We’re all about making our customers’ lives better with [Product Name], and 
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 10;
 
-  const totalPages = Math.ceil(
-    shopAllProducts?.products.length / reviewsPerPage,
+  const totalPages = Math.ceil(productReviews.length / reviewsPerPage);
+
+  const paginatedReviews = productReviews.slice(
+    (currentPage - 1) * reviewsPerPage,
+    currentPage * reviewsPerPage,
   );
 
-  const paginatedReviews = shopAllProducts?.products;
-
-  const [reviewCounts, setReviewCounts] = useState({});
-const [paginatedReviewses
-  ,setPaginatedReviewses
-] = useState()
-
-  useEffect(() => {
-  if (!paginatedReviews || paginatedReviews.length === 0) return;
-
-  const counts = {};
-  const newReviewCounts = {};
-  const uniqueIds = [];
-
-  // Count productId occurrences and collect up to 10 unique IDs
-  for (const product of paginatedReviews) {
-    const productId = product.id.replace("gid://shopify/Product/", "");
-    counts[productId] = (counts[productId] || 0) + 1;
-
-    if (!uniqueIds.includes(productId) && uniqueIds.length < 10) {
-      uniqueIds.push(productId);
-    }
-  }
-
-  // Fetch data for only the unique 10 product IDs
-  for (const productId of uniqueIds) {
-    const data = fetcher.load(`?productId=${productId}`);
-    newReviewCounts[productId] = {
-      data,
-      reviewCount: counts[productId],
-    };
-  }
-
-  // Add reviewCount to paginatedReviews
-  const updatedReviews = paginatedReviews.map((product) => {
-    const productId = product.id.replace("gid://shopify/Product/", "");
-    const reviewData = newReviewCounts[productId];
-console.log(reviewData,"reviewData")
-    return {
-      ...product,
-      reviewCount: reviewData ? reviewData.reviewCount : 0, // Set reviewCount if available
-    };
-  });
-
-  setReviewCounts(newReviewCounts);
-  setPaginatedReviewses(updatedReviews); // Update the paginatedReviews with review counts
-}, [paginatedReviews]);
-
-  console.log(paginatedReviewses
-    , "paginatedReviews");
-
-  const [cursorMap, setCursorMap] = useState({ 1: null }); // page 1 has no cursor
-
-  const handlePageClick = (e, page) => {
-    e.preventDefault();
-    console.log(page, "pages edjf");
-    const cursor = cursorMap[page] || null;
-    const url = new URL(window.location.href);
-    url.searchParams.set("page", page);
-
-    if (cursor) {
-      url.searchParams.set("cursor", cursor);
-    } else {
-      url.searchParams.delete("cursor");
-    }
-    window.location.href = url.toString(); // this reloads the page with new data
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
   };
-
-  useEffect(() => {
-    if (shopAllProducts?.nextCursor && !cursorMap[currentPage + 1]) {
-      setCursorMap((prev) => ({
-        ...prev,
-        [currentPage + 1]: shopAllProducts.nextCursor,
-      }));
-    }
-    const url = new URL(window.location.href); // Get the current URL
-    const page = url.searchParams.get("page"); // Get the "page" query parameter
-
-    console.log(page, "phes");
-    setCurrentPage(page ? parseInt(page, 10) : 1);
-  }, [shopAllProducts, currentPage]);
 
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
     pageNumbers.push(i);
   }
 
-  let arrayUpdateReview = [];
-  arrayUpdateReview.push(fetcher?.data?.updatedReview);
+let arrayUpdateReview
+ = [];
+arrayUpdateReview.push(fetcher?.data?.updatedReview);
 
-  console.log(
-    fetcher?.data?.updatedReview,
-    arrayUpdateReview,
-    "arrayUpdateReview",
-  );
 
-  const [uploadedPhoto, setUploadedPhoto] = useState(null);
+console.log(fetcher?.data?.updatedReview,
+  arrayUpdateReview,"arrayUpdateReview")
 
-  const [editModalContent, setEditModalContent] = useState(null);
-
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const previewURL = URL.createObjectURL(file);
-    setUploadedPhoto(previewURL);
-  };
-
-  const removePhoto = () => {
-    setUploadedPhoto(null);
-  };
-
-  const editFn = (item) => {
-    setShowImportPopup(2);
-    setEditModalContent(item);
-  };
-  useEffect(() => {
-    if (
-      fetcher.state === "idle" &&
-      fetcher.data?.message === "Review updated successfully"
-    ) {
-      notify.success("Review updated successfully");
-      setShowImportPopup(0); // or however you're closing your modal
-    }
-  }, [fetcher.state, fetcher.data]);
-  console.log(editModalContent, "editModalContent");
   return (
     <div className={styles.containerDiv}>
       <TitleBar title="Product Reviews"></TitleBar>
@@ -680,7 +504,7 @@ console.log(reviewData,"reviewData")
                 )}
               </div>
             </div>
-            {console.log(totalCount, "totalCount")}
+
             <div className={styles.inline_stack}>
               <div className={styles.inline_stackwraper}>
                 {Object.entries(totalCount).map(([item, value], index) => (
@@ -804,239 +628,298 @@ console.log(reviewData,"reviewData")
                     <th></th>
                   </tr>
                 </thead>
-                <tbody>
-                  {console.log(
-                    fetcher?.data?.updatedReview?.isPublic == true,
-                    arrayUpdateReview,
-                    "fetcher",
-                  )}
-                  {edit == true
-                    ? fetcher?.data?.singleReviews?.reviews.map((item) => (
-                        <React.Fragment>
-                          {console.log(item, "hence")}
-                          <tr>
-                            <td>
-                              <img
-                                src={item.featuredImage?.url}
-                                width={60}
-                                height={60}
-                              />
-                            </td>
-                            <td>{item?.rating}*</td>
-                            <td>{item?.comment}</td>
-                            <td>
-                              <div className={styles.buttonFlexer}>
-                                <label className={styles.switch}>
-                                  <fetcher.Form method="post">
-                                    <input
-                                      type="hidden"
-                                      name="reviewId"
-                                      value={item.id}
-                                    />
-                                    <input
-                                      type="hidden"
-                                      name="intent"
-                                      value="togglePublic"
-                                    />
-                                    <input
-                                      type="hidden"
-                                      name="_method"
-                                      value="put"
-                                    />{" "}
-                                    <input
-                                      type="hidden"
-                                      name="isPublic"
-                                      value={item?.isPublic}
-                                    />
-                                    <input
-                                      type="checkbox"
-                                      name="isPublic"
-                                      checked={!!item?.isPublic}
-                                      onChange={(e) => {
-                                        // Trigger fetcher.submit on checkbox change
-                                        fetcher.submit(e.target.form);
-                                      }}
-                                    />
-                                  </fetcher.Form>
+          <tbody>
+  {console.log(fetcher?.data?.updatedReview?.isPublic == true, arrayUpdateReview, "fetcher")}
+  {edit
+    ? fetcher?.data?.updatedReview?.isPublic == true
+      ? arrayUpdateReview.map((review) => (
+          <React.Fragment key={review.id}>
+            <tr>
+              <td>
+                <img
+                  src="https://archive.org/download/placeholder-image/placeholder-image.jpg"
+                  width={60}
+                  height={60}
+                />
+              </td>
+              <td>{review?.rating}*</td>
+              <td>{review?.comment}</td>
+              <td>
+                <div className={styles.buttonFlexer}>
+                  <label className={styles.switch}>
+                    <fetcher.Form method="post">
+                      <input
+                        type="hidden"
+                        name="reviewId"
+                        value={review.id}
+                      />
+                      <input
+                        type="hidden"
+                        name="intent"
+                        value="togglePublic"
+                      />
+                      <input
+                        type="hidden"
+                        name="_method"
+                        value="put"
+                      />
+                      <input
+                        type="hidden"
+                        name="isPublic"
+                        value={review?.isPublic}
+                      />
+                      <input
+                        type="checkbox"
+                        name="isPublic"
+                        checked={!!review?.isPublic}
+                        onChange={(e) => {
+                          // Trigger fetcher.submit on checkbox change
+                          fetcher.submit(e.target.form);
+                        }}
+                      />
+                    </fetcher.Form>
+                    <span className={styles.slider}></span>
+                  </label>
 
-                                  <span className={styles.slider}></span>
-                                </label>
+                  <Form method="DELETE">
+                    <input
+                      type="hidden"
+                      name="reviewId"
+                      value={review.id}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteReview(review)}
+                      className={styles.deletedBtn}
+                    >
+                      <svg
+                        width="16"
+                        height="18"
+                        viewBox="0 0 18 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
+                          fill="#F24747"
+                        />
+                      </svg>
+                    </button>
+                    {showPopup && (
+                      <DeletePopup
+                        setShowPopup={setShowPopup}
+                        state={navigation.state}
+                      />
+                    )}
+                  </Form>
+                </div>
+              </td>
+              <td>
+                <div className="editbuttons">
+                  <button
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleEditClick(review.productId)}
+                    className={edit ? styles.importBtn : ""}
+                  >
+                    <img
+                      src={edit ? activeEdit : edit_icon}
+                      width={14}
+                      height={14}
+                    />
+                    <span className={edit ? styles.gradientText : ""}>
+                      Edit
+                    </span>
+                  </button>
+                </div>
+              </td>
+              <td className={styles.ImportBtnwraper}>
+                {edit ? (
+                  ""
+                ) : (
+                  <button
+                    style={{ cursor: "pointer" }}
+                    className={styles.importBtn}
+                  >
+                    <img
+                      src={ImportIcon}
+                      width={15}
+                      height={21}
+                    />
+                    <span className={styles.gradientText}>import</span>
+                  </button>
+                )}
+              </td>
+            </tr>
+          </React.Fragment>
+        ))
+      : fetcher?.data?.singleReviews?.reviews.map((item) => (
+          <React.Fragment key={item.id}>
+            <tr>
+              <td>
+                <img
+                  src="https://img.freepik.com/premium-psd/locket-isolated-transparent-background_191095-29173.jpg?w=826"
+                  width={73}
+                  height={73}
+                />
+              </td>
+              <td>{item?.productName}</td>
+              <td>{item?.totalReviews}</td>
+              <td>
+                {edit && (
+                  <div className={styles.buttonFlexer}>
+                    <label className={styles.switch}>
+                      <input type="checkbox" />
+                      <span className={styles.slider}></span>
+                    </label>
+                  </div>
+                )}
+              </td>
 
-                                <Form method="DELETE">
-                                  <input
-                                    type="hidden"
-                                    name="reviewId"
-                                    value={reviewId}
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteReview(item)}
-                                    className={styles.deletedBtn}
-                                  >
-                                    <svg
-                                      width="16"
-                                      height="18"
-                                      viewBox="0 0 18 20"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        clipRule="evenodd"
-                                        d="M12.8573 2.83637V3.05236C13.7665 3.13559 14.6683 3.24505 15.5617 3.37998C15.8925 3.42994 16.2221 3.48338 16.5506 3.54028C16.9393 3.60761 17.1998 3.9773 17.1325 4.366C17.0652 4.7547 16.6955 5.01522 16.3068 4.94789C16.2405 4.93641 16.1741 4.92507 16.1078 4.91388L15.1502 17.362C15.0357 18.8506 13.7944 20 12.3015 20H4.84161C3.34865 20 2.10739 18.8506 1.99289 17.362L1.03534 4.91388C0.968948 4.92507 0.902608 4.93641 0.836318 4.94789C0.447617 5.01522 0.07793 4.7547 0.0105981 4.366C-0.0567338 3.9773 0.203787 3.60761 0.592487 3.54028C0.920962 3.48338 1.25062 3.42994 1.58141 3.37998C2.47484 3.24505 3.37657 3.13559 4.28583 3.05236V2.83637C4.28583 1.34639 5.44062 0.0744596 6.9672 0.0256258C7.49992 0.00858464 8.03474 0 8.57155 0C9.10835 0 9.64318 0.00858464 10.1759 0.0256258C11.7025 0.0744596 12.8573 1.34639 12.8573 2.83637ZM7.01287 1.45347C7.53037 1.43691 8.04997 1.42857 8.57155 1.42857C9.09312 1.42857 9.61272 1.43691 10.1302 1.45347C10.8489 1.47646 11.4287 2.07994 11.4287 2.83637V2.94364C10.4836 2.88625 9.53092 2.85714 8.57155 2.85714C7.61217 2.85714 6.65951 2.88625 5.7144 2.94364V2.83637C5.7144 2.07994 6.29419 1.47646 7.01287 1.45347ZM6.67497 7.11541C6.65981 6.72121 6.32796 6.41394 5.93376 6.4291C5.53957 6.44426 5.2323 6.77611 5.24746 7.17031L5.57713 15.7417C5.59229 16.1359 5.92414 16.4432 6.31834 16.428C6.71254 16.4129 7.01981 16.081 7.00464 15.6868L6.67497 7.11541ZM11.8948 7.17031C11.9099 6.77611 11.6026 6.44426 11.2084 6.4291C10.8143 6.41394 10.4824 6.72121 10.4672 7.11541L10.1376 15.6868C10.1224 16.081 10.4297 16.4129 10.8239 16.428C11.2181 16.4432 11.5499 16.1359 11.5651 15.7417L11.8948 7.17031Z"
-                                        fill="#F24747"
-                                      />
-                                    </svg>
-                                  </button>
-                                  {showPopup && (
-                                    <DeletePopup
-                                      setShowPopup={setShowPopup}
-                                      state={navigation.state}
-                                    />
-                                  )}
-                                </Form>
-                              </div>
-                            </td>
+              <td>
+                <button
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleEditClick(item.productId)}
+                  className={edit ? styles.importBtn : ""}
+                >
+                  <img
+                    src={edit ? activeEdit : edit_icon}
+                    width={14}
+                    height={14}
+                  />
+                  <span className={edit ? styles.gradientText : ""}>Edit</span>
+                </button>
+              </td>
 
-                            <td>
-                              <div className="editbuttons">
-                                <button
-                                  style={{ cursor: "pointer" }}
-                                  onClick={() => editFn(item)}
-                                  className={edit ? styles.importBtn : ""}
-                                >
-                                  <img
-                                    src={edit ? activeEdit : edit_icon}
-                                    width={14}
-                                    height={14}
-                                  />{" "}
-                                  <span
-                                    className={edit ? styles.gradientText : ""}
-                                  >
-                                    Edit
-                                  </span>
-                                </button>
-                              </div>
-                            </td>
+              <td className={styles.ImportBtnwraper}>
+                {edit ? (
+                  ""
+                ) : (
+                  <button
+                    style={{ cursor: "pointer" }}
+                    className={styles.importBtn}
+                  >
+                    <img
+                      src={ImportIcon}
+                      width={15}
+                      height={21}
+                    />
+                    <span className={styles.gradientText}>import</span>
+                  </button>
+                )}
+              </td>
+            </tr>
+          </React.Fragment>
+        ))
+    : productReviews.map((item, index) => (
+        <React.Fragment key={index}>
+          <tr>
+            <td>
+              <img
+                src="https://img.freepik.com/premium-psd/locket-isolated-transparent-background_191095-29173.jpg?w=826"
+                width={73}
+                height={73}
+              />
+            </td>
+            <td>{item?.productName}</td>
+            <td>{item?.totalReviews}</td>
+            <td>
+              {edit && (
+                <div className={styles.buttonFlexer}>
+                  <label className={styles.switch}>
+                    <input type="checkbox" />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+              )}
+            </td>
 
-                            <td className={styles.ImportBtnwraper}>
-                              {edit ? (
-                                ""
-                              ) : (
-                                <button
-                                  style={{ cursor: "pointer" }}
-                                  className={styles.importBtn}
-                                >
-                                  <img
-                                    src={ImportIcon}
-                                    width={15}
-                                    height={21}
-                                  />
-                                  <span className={styles.gradientText}>
-                                    import
-                                  </span>
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        </React.Fragment>
-                      ))
-                    : paginatedReviewses?.map((item, index) => (
-                        <React.Fragment key={index}>
-                          {console.log(item, "check item")}
-                          <tr>
-                            <td>
-                              <img
-                                src={item.featuredImage?.url}
-                                width={73}
-                                height={73}
-                              />
-                            </td>
-                            <td>{item?.title}</td>
-                            <td>{item?.reviewCount}</td>
-                            <td>
-                              {edit && (
-                                <div className={styles.buttonFlexer}>
-                                  <label className={styles.switch}>
-                                    <input type="checkbox" />
-                                    <span className={styles.slider}></span>
-                                  </label>
-                                </div>
-                              )}
-                            </td>
+            <td>
+              <button
+                style={{ cursor: "pointer" }}
+                onClick={() => handleEditClick(item.productId)}
+                className={edit ? styles.importBtn : ""}
+              >
+                <img
+                  src={edit ? activeEdit : edit_icon}
+                  width={14}
+                  height={14}
+                />
+                <span className={edit ? styles.gradientText : ""}>Edit</span>
+              </button>
+            </td>
 
-                            <td>
-                              <button
-                                style={{ cursor: "pointer" }}
-                                onClick={() => handleEditClick(item.productId)}
-                                className={edit ? styles.importBtn : ""}
-                              >
-                                <img
-                                  src={edit ? activeEdit : edit_icon}
-                                  width={14}
-                                  height={14}
-                                />{" "}
-                                <span
-                                  className={edit ? styles.gradientText : ""}
-                                >
-                                  Edit
-                                </span>
-                              </button>
-                            </td>
+            <td className={styles.ImportBtnwraper}>
+              {edit ? (
+                ""
+              ) : (
+                <button
+                  style={{ cursor: "pointer" }}
+                  className={styles.importBtn}
+                >
+                  <img
+                    src={ImportIcon}
+                    width={15}
+                    height={21}
+                  />
+                  <span className={styles.gradientText}>import</span>
+                </button>
+              )}
+            </td>
+          </tr>
+        </React.Fragment>
+      ))}
+</tbody>
 
-                            <td>
-                              {edit ? (
-                                ""
-                              ) : (
-                                <button
-                                  style={{ cursor: "pointer" }}
-                                  onClick={() => setShowImportPopup(1)}
-                                  className={styles.importBtn}
-                                >
-                                  <img
-                                    src={ImportIcon}
-                                    width={15}
-                                    height={21}
-                                  />
-                                  <span className={styles.gradientText}>
-                                    {" "}
-                                    import
-                                  </span>
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        </React.Fragment>
-                      ))}
-                </tbody>
               </table>
-              {paginatedReviewses?.map((review, index) => (
+              {paginatedReviews.map((review, index) => (
                 <div key={index}>
                   {/* your review rendering logic */}
                   <p>{review.comment}</p>
                 </div>
               ))}
 
-              {shopAllProducts?.products?.length > 0 && (
+              {productReviews.length > reviewsPerPage && (
                 <div className={styles.paginationFlex}>
-                  <p>Showing page {currentPage}</p>
+                  <p>
+                    Showing page {currentPage} of {totalPages}
+                  </p>
+
                   <div className={styles.pagination}>
                     <a
                       href="#"
-                      onClick={(e) => handlePageClick(e, currentPage - 1)}
+                      onClick={() =>
+                        currentPage > 1 && handlePageClick(currentPage - 1)
+                      }
                       className={`${styles.prev} ${styles.marginGiven}`}
                       aria-label="Previous"
-                      disabled={currentPage === 1}
                     >
                       «
                     </a>
 
+                    {pageNumbers.map((num) => (
+                      <a
+                        href="#"
+                        key={num}
+                        onClick={() => handlePageClick(num)}
+                        className={`${styles.prev} ${
+                          currentPage === num ? styles.active : ""
+                        }`}
+                        aria-label={`Page ${num}`}
+                      >
+                        {num}
+                      </a>
+                    ))}
+
                     <a
                       href="#"
-                      onClick={(e) => handlePageClick(e, currentPage + 1)}
-                      className={`${styles.nexhandlePageClickt} ${styles.marginGiven}`}
+                      onClick={() =>
+                        currentPage < totalPages &&
+                        handlePageClick(currentPage + 1)
+                      }
+                      className={`${styles.next} ${styles.marginGiven}`}
                       aria-label="Next"
-                      disabled={!shopAllProducts?.nextCursor}
                     >
                       »
                     </a>
@@ -2105,11 +1988,7 @@ console.log(reviewData,"reviewData")
         )}
 
         {showImportPopup == 2 && (
-          <fetcher.Form
-            method="post"
-            encType="multipart/form-data"
-            className={styles.modal_content}
-          >
+          <div className={styles.modal_content}>
             <div className={styles.left_content}>
               <div className={styles.ai_review}>
                 <img
@@ -2124,7 +2003,7 @@ console.log(reviewData,"reviewData")
                     <strong style={{ textDecoration: "underline" }}>
                       {" "}
                       Shopify's Policy{" "}
-                    </strong>
+                    </strong>{" "}
                     . Edits should not change the review's original meaning and
                     must maintain transparency and the integrity of the source.
                     Make sure you comply with the following instructions
@@ -2148,126 +2027,66 @@ console.log(reviewData,"reviewData")
                   </ul>
                 </div>
               </div>
-
               <div className={styles.ai_review_check}>
                 <div className={styles.formGroup}>
-                  <input
-                    type="checkbox"
-                    id="isPublic"
-                    name="isPublic"
-                    defaultChecked
-                  />
-                  <label htmlFor="isPublic">
-                    Pin review to the top of the page
-                  </label>
+                  <input type="checkbox" id="save" checked />
+                  <label for="save">Pin review to the top of the page</label>
                 </div>
               </div>
-
               <div className={`${styles.timing_after} ${styles.maxWidth}`}>
                 <div className={styles.input_labelCustomize}>
-                  <label htmlFor="userName">Reviewer Name</label>
+                  <label htmlFor="">Reviewer Name</label>
                   <input
                     type="text"
-                    name="userName"
-                    placeholder="Enter Name"
-                    defaultValue={editModalContent?.userName}
+                    name="customerReviews"
+                    placeholder="John Doe"
+                    value="John Doe"
                   />
                 </div>
               </div>
-
-              <div
-                className={styles.timing_after_textarea}
-                style={{ margin: "0" }}
-              >
-                <label htmlFor="comment">Review Content</label>
-                <textarea
-                  name="comment"
-                  id="comment"
-                  defaultValue={editModalContent?.comment}
-                  placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing..."
-                ></textarea>
+              <div>
+                <label htmlFor="">Reviewer Name</label>
               </div>
-
               <div className={styles.timing_after} style={{ margin: "0" }}>
                 <div className={styles.modalTextarea}>
-                  <label htmlFor="photoInput">Attached Images</label>
-                  {!uploadedPhoto ? (
-                    <div className={styles.addPhotoContainer}>
-                      <input
-                        type="file"
-                        id="photoInput"
-                        name="photo"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                      />
-                      <div className={styles.addPhotoButton}>
-                        <img
-                          src={AddGradient}
-                          alt="add"
-                          width={30}
-                          height={30}
-                        />
-                        <p>Add Photo</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={styles.uploadedPreview}>
-                      <img src={uploadedPhoto} alt="uploaded" width={100} />
-                      <button type="button" onClick={removePhoto}>
-                        ❌
-                      </button>
-                    </div>
-                  )}
+                  <textarea
+                    name=""
+                    id=""
+                    placeholder="Lorem ipsum dolor sit amet, consectetur adipiscing..."
+                  ></textarea>
                 </div>
               </div>
-
-              {/* Hidden Inputs for required fields */}
-              <input
-                type="hidden"
-                name="productId"
-                value={editModalContent?.productId}
-              />
-              <input
-                type="hidden"
-                name="productName"
-                value={editModalContent?.productName}
-              />
-              <input
-                type="hidden"
-                name="userEmail"
-                value={editModalContent?.userEmail}
-              />
-              <input
-                type="hidden"
-                name="reviewId"
-                value={editModalContent?.id}
-              />
-
-              <input
-                type="hidden"
-                name="rating"
-                value={editModalContent?.rating || 5}
-              />
-              <input type="hidden" name="intent" value="updateReview" />
+              <div>
+                <label htmlFor="">Reviewer Name</label>
+              </div>
+              <div>
+                <div className={styles.addPhotoContainer}>
+                  <input type="file" id="photoInput" accept="image/*" />
+                  <div className={styles.addPhotoButton}>
+                    <span>
+                      <img src={AddGradient} alt="add" width={30} height={30} />
+                    </span>
+                    <p>Add Photo</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className={`${styles.addBtn} ${styles.textEnd}`}>
               <button
                 className={styles.Backbtn}
                 onClick={() => setShowImportPopup(null)}
-                type="button"
               >
                 Cancel
               </button>
               <button
-                type="submit"
+                onClick={() => setShowImportPopup(null)}
                 className={styles.NextBtn}
-                disabled={fetcher.state !== "idle"}
               >
-                {fetcher.state !== "idle" ? "Submitting..." : "Launch"}
+                Launch
               </button>
             </div>
-          </fetcher.Form>
+          </div>
         )}
       </div>
     </div>

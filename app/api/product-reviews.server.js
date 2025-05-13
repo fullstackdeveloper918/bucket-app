@@ -6,21 +6,22 @@ import { authenticate } from "../shopify.server";
 export const getShopAllProducts = async ({ request } = {}) => {
   try {
     if (!request || !request.url) {
-      return { shopDomain: "", products: [] };
+      return { shopDomain: "", products: [], nextCursor: null };
     }
 
     const { admin } = await authenticate.admin(request);
 
     const url = new URL(request.url);
     const shopDomain = url.searchParams.get("shop");
+    const cursor = url.searchParams.get("cursor") || null; // Accept cursor as query param
 
     if (!shopDomain) {
-      return { shopDomain: "", products: [] };
+      return { shopDomain: "", products: [], nextCursor: null };
     }
 
     const productsQuery = `
       query getProducts($cursor: String) {
-        products(first: 100, after: $cursor) {
+        products(first: 10, after: $cursor) {
           edges {
             cursor
             node {
@@ -34,6 +35,10 @@ export const getShopAllProducts = async ({ request } = {}) => {
               vendor
               tags
               productType
+              featuredImage {
+                url
+                altText
+              }
               variants(first: 10) {
                 edges {
                   node {
@@ -54,39 +59,32 @@ export const getShopAllProducts = async ({ request } = {}) => {
       }
     `;
 
-    let hasNextPage = true;
-    let cursor = null;
-    let allProducts = [];
+    const response = await admin.graphql(productsQuery, {
+      variables: { cursor },
+    });
 
-    while (hasNextPage) {
-      const response = await admin.graphql(productsQuery, {
-        variables: { cursor },
-      });
+    const result = await response.json();
 
-      const result = await response.json();
-
-      if (!result?.data?.products) {
-        console.error("Invalid GraphQL response:", result);
-        break;
-      }
-
-      const products = result.data.products;
-      const productNodes = products.edges.map((edge) => edge.node);
-
-      allProducts.push(...productNodes);
-
-      hasNextPage = products.pageInfo.hasNextPage;
-      cursor = hasNextPage ? products.edges[products.edges.length - 1].cursor : null;
+    if (!result?.data?.products) {
+      console.error("Invalid GraphQL response:", result);
+      return { shopDomain, products: [], nextCursor: null };
     }
+
+    const { edges, pageInfo } = result.data.products;
+
+    const products = edges.map((edge) => edge.node);
+    const nextCursor = pageInfo.hasNextPage
+      ? edges[edges.length - 1].cursor
+      : null;
 
     return {
       shopDomain,
-      total: allProducts.length,
-      products: allProducts,
+      products,
+      nextCursor,
     };
   } catch (error) {
-    console.error("Error fetching shop products:", error);
-    return { shopDomain: "", products: [] };
+    console.error("Error fetching paginated products:", error);
+    return { shopDomain: "", products: [], nextCursor: null };
   }
 };
 
