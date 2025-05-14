@@ -409,7 +409,6 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
 
-        console.log(updatedDiscount, "hence bundleData");
 
         const savedDiscount = await db.bundle.create({
           data: bundleData,
