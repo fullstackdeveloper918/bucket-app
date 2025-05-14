@@ -1,18 +1,13 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "58227abf1b572fb0200c52086fffff53"
-name = "adaptive-vertical-app"
-handle = "adaptive-vertical-app-12"
-application_url = "https://witch-query-stick-until.trycloudflare.com"
+client_id = "95ec3e496004fdaa9310abd63f41557a"
+application_url = "https://bucket-app-4j4z.onrender.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
-dev_store_url = "rohit-cybersify.myshopify.com"
-automatically_update_urls_on_dev = true
+name = "bucket-new-app"
+handle = "bucket-new-app"
 
 [webhooks]
-api_version = "2025-04"
+api_version = "2025-01"
 
   [[webhooks.subscriptions]]
   topics = [ "app/uninstalled" ]
@@ -24,14 +19,21 @@ api_version = "2025-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+#test
+#test2
+scopes = "write_products,read_customers,write_customers,read_draft_orders,write_draft_orders,read_products,customer_read_customers,customer_write_customers,customer_read_orders,customer_write_orders,customer_read_draft_orders,write_order_edits,read_order_edits,write_orders,read_orders,read_order_submission_rules,write_order_submission_rules"
 
 [auth]
 redirect_urls = [
-  "https://witch-query-stick-until.trycloudflare.com/auth/callback",
-  "https://witch-query-stick-until.trycloudflare.com/auth/shopify/callback",
-  "https://witch-query-stick-until.trycloudflare.com/api/auth/callback"
+  "https://bucket-app-4j4z.onrender.com/auth/callback",
+  "https://bucket-app-4j4z.onrender.com/auth/shopify/callback",
+  "https://bucket-app-4j4z.onrender.com/api/auth/callback"
 ]
 
 [pos]
 embedded = false
+
+[build]
+dev_store_url = "rohit-cybersify.myshopify.com"
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
