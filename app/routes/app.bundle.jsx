@@ -409,7 +409,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
           });
         }
 
-        console.log(bundleData, "hence bundleData");
+        console.log(updatedDiscount, "hence bundleData");
 
         const savedDiscount = await db.bundle.create({
           data: bundleData,
@@ -433,9 +433,9 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       }
     } else if (intent === "deactivate") {
   const bundle_id = formData.get("bundle_id"); // Shopify GID
-  const active = formData.get("active"); // "0" or "1"
+  const isActive = formData.get("isActive"); // "0" or "1"
 
-  console.log(active, "active neww");
+  console.log(isActive, "active neww");
 
   // GraphQL mutation to deactivate the discount
   const data = JSON.stringify({
@@ -477,7 +477,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
       return {
         error: "Failed to deactivate bundle",
         details: responseData.userErrors,
-        active,
+        isActive,
       };
     }
 
@@ -489,7 +489,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
     if (!bundleRecord) {
       return {
         error: "No bundle found with this discount_id in database.",
-        active,
+        isActive,
       };
     }
 
@@ -497,7 +497,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
     await db.bundle.update({
       where: { id: bundleRecord.id },
       data: {
-        isActive: active
+        isActive: parseInt(isActive)
       },
     });
 
@@ -505,14 +505,14 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
     return {
       success: "Bundle Deactivated Successfully",
       deletedDiscountId: responseData?.deletedDiscountId,
-      active,
+      isActive,
     };
   } catch (err) {
     console.log(err, "check err");
     return {
       error: "Failed to deactivate bundle",
       message: err.message,
-      active,
+      isActive,
     };
   }
 }
@@ -924,7 +924,7 @@ export default function PlansPage() {
 
     fetcher.submit(
       {
-        active: newValue,
+        isActive: newValue,
         bundle_id: card?.discount_id,
         intent: "deactivate",
       },

@@ -3,7 +3,7 @@
 client_id = "58227abf1b572fb0200c52086fffff53"
 name = "adaptive-vertical-app"
 handle = "adaptive-vertical-app-12"
-application_url = "https://witch-query-stick-until.trycloudflare.com"
+application_url = "https://ear-obligations-pipe-min.trycloudflare.com"
 embedded = true
 
 [build]
@@ -28,9 +28,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://witch-query-stick-until.trycloudflare.com/auth/callback",
-  "https://witch-query-stick-until.trycloudflare.com/auth/shopify/callback",
-  "https://witch-query-stick-until.trycloudflare.com/api/auth/callback"
+  "https://ear-obligations-pipe-min.trycloudflare.com/auth/callback",
+  "https://ear-obligations-pipe-min.trycloudflare.com/auth/shopify/callback",
+  "https://ear-obligations-pipe-min.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
