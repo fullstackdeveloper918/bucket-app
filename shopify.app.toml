@@ -3,7 +3,7 @@
 client_id = "58227abf1b572fb0200c52086fffff53"
 name = "adaptive-vertical-app"
 handle = "adaptive-vertical-app-12"
-application_url = "https://gg-inclusive-neil-discussed.trycloudflare.com"
+application_url = "https://witch-query-stick-until.trycloudflare.com"
 embedded = true
 
 [build]
@@ -28,9 +28,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://gg-inclusive-neil-discussed.trycloudflare.com/auth/callback",
-  "https://gg-inclusive-neil-discussed.trycloudflare.com/auth/shopify/callback",
-  "https://gg-inclusive-neil-discussed.trycloudflare.com/api/auth/callback"
+  "https://witch-query-stick-until.trycloudflare.com/auth/callback",
+  "https://witch-query-stick-until.trycloudflare.com/auth/shopify/callback",
+  "https://witch-query-stick-until.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

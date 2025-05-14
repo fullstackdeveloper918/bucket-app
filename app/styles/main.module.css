@@ -284,7 +284,7 @@
 
 .tableWarpper table tr td button {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.5877550840377808px;
@@ -382,38 +382,6 @@
   margin: 30px 0px 0px;
 }
 
-.timing_after_textarea{
-
-      width: 100%;
-    display: flex
-;
-    flex-direction: column;
-    gap: 20px;
-    position: sticky;
-    top: 20px;
-}
- .timing_after_textarea
- textarea {
-  box-shadow: 6px 6px 47.8px 0px #00000026;
-  background: #f9fbff;
-  border: 0px;
-  min-height: 200px;
-  max-width: 100%;
-  width: 100%;
-  border-radius: 19px;
-  padding: 15px 15px;
-  font-family: Poppins;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 28.98px;
-  letter-spacing: -0.01em;
-  text-align: left;
-  text-underline-position: from-font;
-  text-decoration-skip-ink: none;
-  color: #000;
-  resize: unset;
-}
-
 .timing_after>div {
   width: 100%;
   display: flex;
@@ -475,7 +443,7 @@
 
 .timing_after>div .inputTiming input::placeholder {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -497,7 +465,7 @@
 .active_tabs button {
   width: 100%;
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -554,7 +522,7 @@
 .right_content {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 60px;
 }
 
 .marginTop20 {
@@ -658,7 +626,7 @@
 }
 .input_labelCustomize p {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 700;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -700,7 +668,7 @@
 
 .input_labelContent {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -718,7 +686,7 @@
 
 .product_title p {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 700;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -949,7 +917,7 @@
   border-radius: 15px;
   padding: 10px 20px;
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -2045,7 +2013,7 @@
   max-width: 100%;
   box-shadow: 0px 8.61px 51.65px 0px #E2ECF980;
   position: relative;
-  max-height: 700px !important;
+  max-height: 700px;
   overflow-y: auto;
   scrollbar-width: none;
   border-radius: 40px;
@@ -2080,25 +2048,7 @@
   text-underline-position: from-font;
   text-decoration-skip-ink: none;
 }
-.uploadedPreview{
-  float: left;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: left;
-  flex-direction: column;
-  gap: 10px;
-}
-.uploadedPreview button{
-     color: red;
-    border: 2px solid red;
-    border-radius: 100%;
-    padding: 3px;
-    position: absolute;
-    top: 30px;
-    left: 130px;
-    cursor: pointer;
-}
+
 .deletPopup p{
   font-family: Poppins;
   font-size: 18px;
@@ -2230,7 +2180,7 @@ justify-content: center;
 .ai_review p,
 .ai_review ul li {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -2259,9 +2209,9 @@ justify-content: center;
   max-width: 100%;
   width: 100%;
   border-radius: 19px;
-  padding: 15px 15px;
+  padding: 25px 40px;
   font-family: Poppins;
-  font-size: 16px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -2280,11 +2230,10 @@ justify-content: center;
   border-radius: 15px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: end;
   cursor: pointer;
   position: relative;
-  padding: 22px 0;
-
+  padding-bottom: 22px;
 }
 
 .addPhotoContainer p {
@@ -2301,17 +2250,9 @@ justify-content: center;
   opacity: 0;
   width: 100%;
   height: 100%;
-    cursor: pointer;
-
-      top: 0px;
 }
 
 .addPhotoButton {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  gap: 10px;
   text-align: center;
 }
 
@@ -2920,7 +2861,7 @@ input:checked+.slider:before {
 
 .audio_player .sessionContent p {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 400;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -3019,7 +2960,7 @@ a.prev.dot {
 
 .paginationFlex p {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -3302,7 +3243,7 @@ a.prev.dot {
   background-color: rgb(217 235 225);
   color: rgba(0, 172, 79, 1);
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -3372,7 +3313,7 @@ a.prev.dot {
   height: 68px;
   border-radius: 19px;
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -3783,7 +3724,7 @@ span.nuberstep {
     min-height: 30px;
     border-radius: 10px;
     padding: 15px 24px;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     line-height: 22px;
   }
@@ -3955,13 +3896,13 @@ span.nuberstep {
 
   .ai_review p,
   ._ai_review ul li {
-    font-size: 15.32px;
+    font-size: 14.32px;
     line-height: 26.98px;
   }
 
   .addPhotoContainer {
     width: 180px;
-    height: 135px;
+    height: 115px;
   }
 
   .visitor_not_captured .NextBtn,
@@ -4334,7 +4275,7 @@ span.nuberstep {
 
 .tableWarpper table tr td button {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.5877550840377808px;
@@ -4415,7 +4356,7 @@ fill:#00AC4F;
   border-radius: 12px;
   color: rgba(0, 172, 79, 1);
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -4565,7 +4506,7 @@ a.prev.dot {
 
 .paginationFlex p {
   font-family: Poppins;
-  font-size: 16.32px;
+  font-size: 19.32px;
   font-weight: 500;
   line-height: 28.98px;
   letter-spacing: -0.01em;
@@ -4811,7 +4752,7 @@ cursor: pointer;
     min-height: 58px;
     border-radius: 10px;
     padding: 15px 24px;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     line-height: 22px;
   }

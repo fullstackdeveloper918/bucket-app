@@ -65,11 +65,10 @@
 }
 
 .ContentWraper {
-    float: left;
-    width: 100%;
-    display: flex;
-    gap: 10px;
-    flex-direction: column;
+  float: left;
+  width: 100%;
+  display: flex;
+  gap: 20px;
 }
 .upper_box .ContentWraper h6 {
   font-family: Poppins;

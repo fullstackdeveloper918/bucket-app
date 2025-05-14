@@ -2,17 +2,20 @@ import db from "../db.server";
 import { authenticate } from "../shopify.server";
 
 
-
 export const getShopAllProducts = async ({ request } = {}) => {
   try {
+
     if (!request || !request.url) {
       return { shopDomain: "", products: [], nextCursor: null };
     }
 
-    const { admin } = await authenticate.admin(request);
+const { admin, session } = await authenticate.admin(request);
+const shopDomain = session?.shop;
+
 
     const url = new URL(request.url);
-    const shopDomain = url.searchParams.get("shop");
+
+    console.log(url,"chusta")
     const cursor = url.searchParams.get("cursor") || null; // Accept cursor as query param
 
     if (!shopDomain) {
@@ -87,6 +90,53 @@ export const getShopAllProducts = async ({ request } = {}) => {
     return { shopDomain: "", products: [], nextCursor: null };
   }
 };
+// ✅ Simpler and easier for internal use
+export const getTotalReviewCount = async ({ request }) => {
+  if (!request || !request.url) {
+    return { totalReviews: 0, averageRating: 0 };
+  }
+
+  const url = new URL(request.url);
+  const isPublic = url.searchParams.get("isPublic");
+const {  session } = await authenticate.admin(request);
+const shopDomain = session?.shop;
+
+  const isPublicFilter = isPublic === "true" ? true : isPublic === "false" ? false : undefined;
+
+  try {
+    const whereCondition = {};
+
+    if (isPublicFilter !== undefined) {
+      whereCondition.isPublic = isPublicFilter;
+    }
+
+    if (shopDomain) {
+      whereCondition.shopDomain = shopDomain;
+    }
+
+    const totalReviews = await db.review.count({
+      where: whereCondition,
+    });
+
+    const averageRatingData = await db.review.aggregate({
+      _avg: { rating: true },
+      where: whereCondition,
+    });
+
+    const averageRating = averageRatingData._avg.rating || 0;
+
+    return {
+      totalReviews,
+      averageRating: parseFloat(averageRating.toFixed(1)),
+    };
+  } catch (error) {
+    console.error("Error fetching review statistics:", error);
+    return { totalReviews: 0, averageRating: 0 };
+  }
+};
+
+
+
 
 
 export const getShopTotalReviewCount = async ({ request } = {}) => {
@@ -155,46 +205,46 @@ console.log(url,shopDomain,"ku meri shsj")
   }
 };
 
-export const getTotalReviewCount = async ({ request } = {}) => {
-  try {
-    if (!request || !request.url) {
-      return { "Total Reviews": 0, "Average Rating": 0.0 };
-    }
+// export const getTotalReviewCount = async ({ request } = {}) => {
+//   try {
+//     if (!request || !request.url) {
+//       return { "Total Reviews": 0, "Average Rating": 0.0 };
+//     }
 
-    const url = new URL(request.url);
-    const isPublicParam = url.searchParams.get("isPublic");
+//     const url = new URL(request.url);
+//     const isPublicParam = url.searchParams.get("isPublic");
 
-    const isPublicFilter =
-      isPublicParam === "true"
-        ? true
-        : isPublicParam === "false"
-        ? false
-        : undefined;
+//     const isPublicFilter =
+//       isPublicParam === "true"
+//         ? true
+//         : isPublicParam === "false"
+//         ? false
+//         : undefined;
 
-    const whereCondition =
-      isPublicFilter !== undefined ? { isPublic: isPublicFilter } : undefined;
+//     const whereCondition =
+//       isPublicFilter !== undefined ? { isPublic: isPublicFilter } : undefined;
 
-    const totalReviews = await db.review.count({ where: whereCondition });
+//     const totalReviews = await db.review.count({ where: whereCondition });
 
-    const aggregateResult = await db.review.aggregate({
-      _avg: { rating: true },
-      where: whereCondition,
-    });
+//     const aggregateResult = await db.review.aggregate({
+//       _avg: { rating: true },
+//       where: whereCondition,
+//     });
 
-    const rating = aggregateResult?._avg?.rating ?? 0;
+//     const rating = aggregateResult?._avg?.rating ?? 0;
 
-    return {
-      "Total Reviews": totalReviews ?? 0,
-      "Average Rating": parseFloat(rating.toFixed(1)),
-    };
-  } catch (error) {
-    console.error("Error fetching review statistics:", error);
-    return {
-      "Total Reviews": 0,
-      "Average Rating": 0.0,
-    };
-  }
-};
+//     return {
+//       "Total Reviews": totalReviews ?? 0,
+//       "Average Rating": parseFloat(rating.toFixed(1)),
+//     };
+//   } catch (error) {
+//     console.error("Error fetching review statistics:", error);
+//     return {
+//       "Total Reviews": 0,
+//       "Average Rating": 0.0,
+//     };
+//   }
+// };
 
 export const getProductInfo = async () => {
   try {

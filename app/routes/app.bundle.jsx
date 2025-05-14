@@ -432,39 +432,91 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         });
       }
     } else if (intent === "deactivate") {
-      const active = formData.get("active");
-      let data = JSON.stringify({
-        query:
-          "mutation discountAutomaticDeactivate($id: ID!) { discountAutomaticDeactivate(id: $id) { automaticDiscountNode { automaticDiscount { ... on DiscountAutomaticBxgy { status startsAt endsAt } } } userErrors { field message } } }",
-        variables: {
-          id: bundle_id,
-        },
-      });
-      let config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: `https://${shop}/admin/api/2025-01/graphql.json`,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": session?.accessToken,
-          Cookie:
-            "_master_udr=eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaEpJaWxrTlRaalptVTJNUzFqTURVd0xUUTVPR1F0WVRGaU9DMHlOelpoTWpOa016azRPVGNHT2daRlJnPT0iLCJleHAiOiIyMDI3LTAyLTEyVDA1OjM3OjU5Ljc0NVoiLCJwdXIiOiJjb29raWUuX21hc3Rlcl91ZHIifX0%3D--6a2ae39f942f1b36d2674a0bdaf23f7b38b88770; _secure_admin_session_id=efdc1b1f18ec43e79a4d28387c8a81cb; _secure_admin_session_id_csrf=efdc1b1f18ec43e79a4d28387c8a81cb",
-        },
-        data: data,
-      };
+  const bundle_id = formData.get("bundle_id"); // Shopify GID
+  const active = formData.get("active"); // "0" or "1"
 
-      try {
-        const deactivateResponse = await axios.request(config);
-        console.log(
-          deactivateResponse?.data?.data?.discountAutomaticDeactivate,
-          "deactivateResponse",
-        );
-        return { error: "Bundle Deactivated Successfully" };
-      } catch (err) {
-        console.log(err, "check err");
-        return { error: "Failed to deactivate bundle" };
+  console.log(active, "active neww");
+
+  // GraphQL mutation to deactivate the discount
+  const data = JSON.stringify({
+    query: `
+      mutation discountAutomaticDeactivate($id: ID!) {
+        discountAutomaticDeactivate(id: $id) {
+          deletedDiscountId
+          userErrors {
+            field
+            message
+          }
+        }
       }
-    } else if (intent === "handleAllDiscount") {
+    `,
+    variables: {
+      id: bundle_id,
+    },
+  });
+
+  const config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: `https://${shop}/admin/api/2025-01/graphql.json`,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": session?.accessToken,
+    },
+    data: data,
+  };
+
+  try {
+    // 1. Deactivate discount on Shopify
+    const deactivateResponse = await axios.request(config);
+    const responseData =
+      deactivateResponse?.data?.data?.discountAutomaticDeactivate;
+
+    if (responseData?.userErrors?.length > 0) {
+      console.log("Deactivation Errors:", responseData.userErrors);
+      return {
+        error: "Failed to deactivate bundle",
+        details: responseData.userErrors,
+        active,
+      };
+    }
+
+    // 2. Find bundle in DB using discount_id (NOT UNIQUE, so use findFirst)
+    const bundleRecord = await db.bundle.findFirst({
+      where: { discount_id: bundle_id },
+    });
+
+    if (!bundleRecord) {
+      return {
+        error: "No bundle found with this discount_id in database.",
+        active,
+      };
+    }
+
+    // 3. Update isActive flag using ID
+    await db.bundle.update({
+      where: { id: bundleRecord.id },
+      data: {
+        isActive: active
+      },
+    });
+
+    console.log("Discount Deactivated:", responseData?.deletedDiscountId);
+    return {
+      success: "Bundle Deactivated Successfully",
+      deletedDiscountId: responseData?.deletedDiscountId,
+      active,
+    };
+  } catch (err) {
+    console.log(err, "check err");
+    return {
+      error: "Failed to deactivate bundle",
+      message: err.message,
+      active,
+    };
+  }
+}
+else if (intent === "handleAllDiscount") {
       const discountId = JSON.parse(formData.get("discountID"));
       const active = formData.get("active");
       const appType = "bundle";
@@ -691,7 +743,7 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
         const response = await axios.request(config);
         const responseData = response.data;
 
-        console.log(responseData,"responseData server")
+        console.log(responseData, "responseData server");
       }
 
       const productDeleteData = await admin.graphql(
@@ -705,10 +757,9 @@ discountAutomaticBasicCreate(automaticBasicDiscount: $automaticBasicDiscount) {
             }
           }
         }`,
-        
       );
 
-      console.log(productDeleteData,"productDeleteData")
+      console.log(productDeleteData, "productDeleteData");
       // const productDeleteConfig = {
       //   method: "post",
       //   maxBodyLength: Infinity,
@@ -865,14 +916,18 @@ export default function PlansPage() {
       discount: item,
     }));
   };
-
   const handleOnChange = (e, card) => {
     e.preventDefault();
-    console.log(card, "card");
-    setChecked(!checked);
+    const newValue = e?.target.value == 1 ? 0 : 1;
+    setChecked(newValue);
     setCheckBoxId();
+
     fetcher.submit(
-      { active: !checked, bundle_id: card?.discount_id, intent: "deactivate" },
+      {
+        active: newValue,
+        bundle_id: card?.discount_id,
+        intent: "deactivate",
+      },
       { method: "POST" },
     );
   };
@@ -1082,8 +1137,8 @@ export default function PlansPage() {
       textBelow: "Show",
       background: "Show",
     });
-  };  console.log(allDiscountId,"allDiscountId")
-
+  };
+  console.log(allDiscountId, "allDiscountId");
 
   const handleActive = (e, item) => {
     e.preventDefault();
